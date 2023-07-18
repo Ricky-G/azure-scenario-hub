@@ -13,12 +13,9 @@ param privateEndpointSubnetName string
 @description('The name of the Private Endpoint for the Event Grid topic')
 param privateEndpointName string
 
-resource eventGridTopic 'Microsoft.EventGrid/topics@2022-06-15' = {
+resource eventGridTopic 'Microsoft.EventGrid/topics@2020-06-01' = {
   name: eventGridTopicName
   location: location
-  identity: {
-    type: 'SystemAssigned'
-  }
   properties: {}
 }
 
@@ -64,7 +61,7 @@ resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneG
   properties: {
     privateDnsZoneConfigs: [
       {
-        name: 'EventGridPrivateLinkConfig'
+        name: 'config1'
         properties: {
           privateDnsZoneId: privateDnsZone.id
         }

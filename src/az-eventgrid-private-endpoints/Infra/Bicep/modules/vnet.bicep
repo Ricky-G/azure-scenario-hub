@@ -69,6 +69,19 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         name: 'LogicAppSubnet'
         properties: {
           addressPrefix: logicAppSubnetPrefix
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.Web'
+            }
+          ]
+          delegations: [
+            {
+              name: 'delegation'
+              properties: {
+                serviceName: 'Microsoft.Web/serverFarms'
+              }
+            }
+          ]
           privateEndpointNetworkPolicies: 'Enabled' 
           privateLinkServiceNetworkPolicies: 'Enabled' 
         }

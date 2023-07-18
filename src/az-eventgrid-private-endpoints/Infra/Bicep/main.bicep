@@ -4,16 +4,22 @@ targetScope='subscription'
 param location string = 'eastus'
 
 @description('The name of the virtual network')
-param vnetName string
+param vnetName string = 'myVnet'
 
 @description('The name of the Bastion host')
-param bastionHostName string
+param bastionHostName string = 'PrivateEventGridBastionHost'
 
 @description('The name of the Event Grid topic')
-param eventGridTopicName string
+param eventGridTopicName string = 'PrivateEventGridTopic12'
 
 @description('The name of the Private Endpoint for the Event Grid topic')
-param privateEndpointName string
+param privateEndpointName string = 'PrivateEventGridTopic12PrivateEndpoint'
+
+@description('The name of the storage account')
+param storageAccountName string = 'logicappstorageaccount15'
+
+@description('The name of the file share to use for the logic apps')
+param logicAppFileShareName string = 'logicappsfileshare'
 
 @description('The name of the resource group')
 param resourceGroupName string = 'rg-private-event-grids-test'
@@ -35,10 +41,10 @@ module vnet 'modules/vnet.bicep' = {
 }
 
 // Deploy Application Insights and Log Analytics Workspace
-module appInsightsModule 'modules/app-insights.bicep' = {
+module appInsights 'modules/app-insights.bicep' = {
   name: 'appInsightsDeploy'
   params: {
-    namePrefix: namePrefix
+    name: 'ApIn'
     location: location
   }
   scope: privateEventGridTestResourceGroup
@@ -75,21 +81,38 @@ module eventGridTopic 'modules/event-grid-topic.bicep' = {
 module storageAccount 'modules/storage-account.bicep' = {
   name: 'storageAccountDeployment'
   params: {
-    storageAccountName: 'logicappstorageaccount15'
+    storageAccountName: storageAccountName
+    location: location
+    fileShareName: logicAppFileShareName
+  }
+  scope: privateEventGridTestResourceGroup
+}
+
+// Deploy the app service plan
+module appServicePlan 'modules/app-service-plan.bicep' = {
+  name: 'appServicePlanDeployment'
+  params: {
+    appServicePlanName: 'myAppServicePlan'
     location: location
   }
   scope: privateEventGridTestResourceGroup
 }
 
 // Deploy the Logic App
-module logicApp 'modules/logicapp-standard.bicep' = {
+module logicApp 'modules/logicapp.bicep' = {
   name: 'logicAppDeployment'
+  dependsOn: [
+    appServicePlan
+  ]
   params: {
     logicAppName: 'PublishEventsToEventGridLogicApp'
-    appServicePlanName: 'myAppServicePlan'
     location: location
+    storageAccountConnectionString: storageAccount.outputs.storageConnectionString
+    appServicePlanId: appServicePlan.outputs.appServicePlanId
+    appInsightsEndpoint: appInsights.outputs.appInsightsEndpoint
+    appInsightsInstrumentationKey: appInsights.outputs.appInsightsInstrumentationKey
     subnetId: vnet.outputs.logicAppSubnetId
-    storageAccountConnectionString: storageAccount.outputs.connectionString
+    fileShareName: logicAppFileShareName
   }
   scope: privateEventGridTestResourceGroup
 }

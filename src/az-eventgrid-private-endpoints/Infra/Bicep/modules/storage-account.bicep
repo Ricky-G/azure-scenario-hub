@@ -1,6 +1,8 @@
-@minLength(3)
-@maxLength(11)
-param namePrefix string
+// Parameters
+@description('The name of the storage account.')
+param storageAccountName string
+
+@description('The SKU of the storage account.')
 @allowed([
   'Standard_LRS'
   'Standard_GRS'
@@ -12,13 +14,16 @@ param namePrefix string
   'Standard_RAGZRS'
 ])
 param storageSKU string = 'Standard_LRS'
+
+@description('The location where the storage account will be deployed.')
 param location string
+
+@description('The name of the file share.')
 param fileShareName string
 
-var uniqueStorageName = '${namePrefix}${uniqueString(resourceGroup().id)}st01'
-
+// Resources
 resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
-  name: uniqueStorageName
+  name: storageAccountName
   location: location
   sku: {
     name: storageSKU
@@ -33,6 +38,7 @@ resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-0
   name: '${stg.name}/default/${fileShareName}'
 }
 
+// Outputs
 var blobStorageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${stg.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(stg.id, stg.apiVersion).keys[0].value}'
 output storageName string = stg.name
 output storageEndpoint string = stg.properties.primaryEndpoints.blob
