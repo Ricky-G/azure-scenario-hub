@@ -3,9 +3,18 @@
 # Please see the documentation for all configuration options:
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
+# Dependabot version 2 configuration file
 version: 2
+
+# Define the updates to run
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # Update Bicep packages in all directories that contain Bicep files
+  - package-ecosystem: "bicep"
+    directory: "src/**/bicep"
+    schedule:
+      interval: "weekly"
+  # Update Terraform packages in all directories that contain Terraform files
+  - package-ecosystem: "terraform"
+    directory: "src/**/terraform"
     schedule:
       interval: "weekly"
