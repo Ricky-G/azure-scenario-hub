@@ -23,6 +23,11 @@ Ensure you have the following before beginning:
 - Azure CLI installed on your machine.
 - Familiarity with Azure Event Grid, Logic Apps, and VNets.
 
+```
+This scenario demonstrates the utilization of private endpoints for Event Grid and is not intended for production use without thorough review.
+```
+
+
 ## Getting Started
 
 1. Clone this repository to your local machine.
@@ -43,9 +48,6 @@ Ensure you have the following before beginning:
      resourceGroupName='rg-private-event-grids-test'
 
 This command deploys the core infrastructure using the `main.bicep` file and sets all possible parameters to the specified values. The resources will be created in the specified resource group (`rg-private-event-grids-test`) and location (`eastus`). You can customize these values to fit your specific needs. Once the deployment is complete, you can proceed to set up the Event Grid, Private Endpoint, and Logic App using the instructions in the `event-grid-setup.md`, `private-endpoint-setup.md`, and `logic-app-setup.md` files.
-
-I need to write anothe paragraph here
-this repo is for testing purposes only and 
 
 ## TODO
 The Terraform code for this repository is still a work in progress.
