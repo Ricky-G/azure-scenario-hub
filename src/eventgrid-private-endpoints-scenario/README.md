@@ -14,6 +14,7 @@ This scenario illustrates a typical integration environment contained within a V
 However, of these, only the LogicApps Subnet is actively utilized. A Logic App residing in this subnet publishes messages to an Event Grid topic, which is hosted within the Private Endpoint Subnet.
 
 ![Event Grid Private Endpoints Scenario](eventgrid-private-endpoints-scenario.drawio.svg)
+> :warning: **Warning:** This scenario demonstrates the utilization of private endpoints for Event Grid and is not intended for production use without thorough review.
 
 ## Prerequisites
 
@@ -22,8 +23,6 @@ Ensure you have the following before beginning:
 - An active Azure subscription.
 - Azure CLI installed on your machine.
 - Familiarity with Azure Event Grid, Logic Apps, and VNets.
-
-> :warning: **Warning:** This scenario demonstrates the utilization of private endpoints for Event Grid and is not intended for production use without thorough review.
 
 ## Getting Started
 
