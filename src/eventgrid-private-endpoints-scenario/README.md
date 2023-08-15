@@ -23,9 +23,7 @@ Ensure you have the following before beginning:
 - Azure CLI installed on your machine.
 - Familiarity with Azure Event Grid, Logic Apps, and VNets.
 
-| :warning: Warning |
-|------|
-| This scenario demonstrates the utilization of private endpoints for Event Grid and is not intended for production use without thorough review. |
+> :warning: **Warning:** This scenario demonstrates the utilization of private endpoints for Event Grid and is not intended for production use without thorough review.
 
 ## Getting Started
 
