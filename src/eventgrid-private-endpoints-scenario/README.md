@@ -41,6 +41,7 @@ Ensure you have the following before beginning:
      logAnalyticsWorkspaceName='LogAnalyticsWorkspace' `
      logicAppFileShareName='logicappsfileshare' `
      resourceGroupName='rg-private-event-grids-test'
+    ```
 
 This command deploys the core infrastructure using the `main.bicep` file and sets all possible parameters to the specified values. The resources will be created in the specified resource group (`rg-private-event-grids-test`) and location (`eastus`). You can customize these values to fit your specific needs. Once the deployment is complete, you can proceed to set up the Event Grid, Private Endpoint, and Logic App using the instructions in the `event-grid-setup.md`, `private-endpoint-setup.md`, and `logic-app-setup.md` files.
 
