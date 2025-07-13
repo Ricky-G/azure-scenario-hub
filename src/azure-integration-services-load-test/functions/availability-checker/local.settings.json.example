@@ -1,0 +1,12 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "APPLICATIONINSIGHTS_CONNECTION_STRING": "InstrumentationKey=YOUR_APP_INSIGHTS_KEY",
+    "AUDITSADAPTOR_URL": "https://auditsadaptor.azurewebsites.net",
+    "AUDITSTORE_URL": "https://auditstore.azurewebsites.net",
+    "HISTORYADAPTOR_URL": "https://historyadaptor.azurewebsites.net",
+    "HISTORYSTORE_URL": "https://historystore.azurewebsites.net"
+  }
+}

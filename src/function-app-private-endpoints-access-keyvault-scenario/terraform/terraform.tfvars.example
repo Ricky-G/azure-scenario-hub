@@ -1,0 +1,17 @@
+# Example Terraform variables file
+# Copy this file to terraform.tfvars and update with your values
+
+# Optional: Specify a custom app name
+# app_name = "my-func-app"
+
+# Azure region for resources
+location = "eastus2"
+
+# Optional: Specify a custom resource group name
+# resource_group_name = "rg-my-function-app"
+
+# Function runtime (node, dotnet, or java)
+runtime = "node"
+
+# App Service Plan SKU (EP1, EP2, or EP3)
+sku = "EP1"
