@@ -80,9 +80,9 @@ Each function app includes:
 ## Quick Start Deployment
 
 ### Prerequisites
-- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) installed
+- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) installed
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) installed
-- [Azure Functions Core Tools v4](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local) installed
+- [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local) installed
 - Azure subscription with appropriate permissions
 
 ### Complete Deployment (2 Steps)
@@ -301,24 +301,212 @@ curl https://$historyStore.azurewebsites.net/api/health
 
 ## Load Testing
 
-This architecture is designed for load testing scenarios:
+This scenario includes comprehensive load testing tools to evaluate EP1 App Service Plan performance, Service Bus throughput, and end-to-end message processing latency.
 
-1. **Concurrent HTTP Requests** - Send parallel requests to adaptor functions
-2. **Service Bus Throughput** - Monitor message processing rates
-3. **Function Scaling** - Observe auto-scaling behavior under load
-4. **Private Endpoint Performance** - Validate no public internet traffic
+### Quick Start Load Testing
+
+#### 1. Set Function URLs
+After deployment, get your function URLs and set environment variables:
+
+**PowerShell:**
+```powershell
+# Get function URLs from deployment
+$AUDITS_URL = az functionapp show --name $AUDITS_ADAPTOR --resource-group $env:RESOURCE_GROUP --query defaultHostName -o tsv
+$HISTORY_URL = az functionapp show --name $HISTORY_ADAPTOR --resource-group $env:RESOURCE_GROUP --query defaultHostName -o tsv
+
+# Set environment variables
+$env:AUDITS_FUNCTION_URL = "https://$AUDITS_URL"
+$env:HISTORY_FUNCTION_URL = "https://$HISTORY_URL"
+```
+
+**Bash:**
+```bash
+# Get function URLs from deployment
+AUDITS_URL=$(az functionapp show --name $AUDITS_ADAPTOR --resource-group $RESOURCE_GROUP --query defaultHostName -o tsv)
+HISTORY_URL=$(az functionapp show --name $HISTORY_ADAPTOR --resource-group $RESOURCE_GROUP --query defaultHostName -o tsv)
+
+# Set environment variables
+export AUDITS_FUNCTION_URL="https://$AUDITS_URL"
+export HISTORY_FUNCTION_URL="https://$HISTORY_URL"
+```
+
+#### 2. Choose Your Load Testing Method
+
+**Option A: Quick PowerShell Test (Immediate)**
+```powershell
+# Navigate to load-tests folder
+cd load-tests
+
+# Run baseline test (10 users, 60 seconds)
+.\quick-load-test.ps1 -Users 10 -Duration 60 -IncludeHealthChecks
+
+# Run normal load test (50 users, 5 minutes)
+.\quick-load-test.ps1 -Users 50 -Duration 300
+
+# Run stress test (100 users, 10 minutes)  
+.\quick-load-test.ps1 -Users 100 -Duration 600
+```
+
+**Option B: Comprehensive Locust Testing (Recommended)**
+```bash
+# Install Locust (one-time setup)
+pip install locust requests
+
+# Navigate to load-tests folder
+cd load-tests
+
+# Run baseline test
+locust -f locustfile.py --headless -u 10 -r 2 -t 60s --host=$AUDITS_FUNCTION_URL
+
+# Run normal load test
+locust -f locustfile.py --headless -u 50 -r 5 -t 300s --host=$AUDITS_FUNCTION_URL
+
+# Run peak load test
+locust -f locustfile.py --headless -u 100 -r 10 -t 600s --host=$AUDITS_FUNCTION_URL
+
+# Interactive mode with Web UI (recommended for analysis)
+locust -f locustfile.py --host=$AUDITS_FUNCTION_URL
+# Then open http://localhost:8089 in your browser
+```
+
+#### 3. Monitor Results in Real-Time
+
+Open Azure Portal and navigate to your Application Insights resource to monitor:
+- **Live Metrics** - Real-time function execution and performance
+- **Performance** - Response times and throughput  
+- **Failures** - Error rates and exception details
+
+### Load Testing Scenarios
+
+#### Scenario 1: Baseline Performance (Start Here)
+- **Users**: 10 concurrent
+- **Duration**: 60 seconds  
+- **Goal**: Establish baseline metrics for comparison
+
+#### Scenario 2: Normal Load
+- **Users**: 50 concurrent
+- **Duration**: 5 minutes
+- **Goal**: Test typical operating conditions
+
+#### Scenario 3: Peak Load  
+- **Users**: 100 concurrent
+- **Duration**: 10 minutes
+- **Goal**: Test high-traffic scenarios
+
+#### Scenario 4: Stress Test
+- **Users**: 200+ concurrent
+- **Duration**: 15 minutes
+- **Goal**: Find breaking points and observe EP1 scaling behavior
+
+### Key Metrics to Monitor
+
+| Metric | Target | Where to Check |
+|--------|--------|----------------|
+| HTTP Response Time | < 500ms (95th percentile) | Locust UI / PowerShell output |
+| Error Rate | < 1% | Application Insights - Failures |
+| End-to-End Latency | < 2 seconds | Application Insights - Custom Events |
+| Throughput | 1000+ req/min | Application Insights - Performance |
+| Function Scaling | Auto-scale behavior | Application Insights - Live Metrics |
+
+### Application Insights Analysis
+
+Use these KQL queries in Application Insights to analyze your load test results:
+
+```kusto
+// Function performance during load test
+requests
+| where timestamp > ago(30m)
+| where name in ("AuditsAdaptor", "HistoryAdaptor") 
+| summarize 
+    RequestCount = count(),
+    AvgDuration = avg(duration),
+    P95Duration = percentile(duration, 95),
+    SuccessRate = avg(toint(success)) * 100
+    by name, bin(timestamp, 1m)
+| render timechart
+
+// Service Bus message processing times
+customEvents
+| where timestamp > ago(30m)
+| where name in ("AuditMessageProcessed", "HistoryMessageProcessed")
+| extend ProcessingTime = todouble(customMeasurements.ProcessingTimeMs)
+| summarize 
+    AvgProcessingTime = avg(ProcessingTime),
+    P95ProcessingTime = percentile(ProcessingTime, 95)
+    by name, bin(timestamp, 1m)
+| render timechart
+
+// EP1 scaling behavior
+customMetrics
+| where timestamp > ago(30m)
+| where name == "FunctionInstanceCount"
+| summarize InstanceCount = max(value) by bin(timestamp, 1m)
+| render timechart
+```
+
+### Analyzing EP1 Performance
+
+#### What to Look For:
+1. **Cold Start Impact**: Monitor initial response times when scaling up
+2. **Scaling Speed**: How quickly does EP1 add instances under load?
+3. **Instance Efficiency**: Performance per instance at different scales
+4. **Breaking Points**: Where do response times degrade or errors increase?
+
+#### EP1 Scaling Observations:
+- **Pre-warmed instances**: EP1 keeps instances warm to reduce cold starts
+- **Auto-scaling**: Monitors CPU, memory, and queue depth for scaling decisions  
+- **Scale-out time**: Usually 30-60 seconds to add new instances
+- **Maximum instances**: Default limit of 20 instances (configurable)
+
+### Troubleshooting Load Test Issues
+
+**High Response Times:**
+- Check Function App scaling in Application Insights Live Metrics
+- Monitor Service Bus active message count
+- Verify private endpoint connectivity
+
+**High Error Rates:**
+- Check Function App logs for exceptions
+- Monitor Service Bus dead letter queues
+- Verify connection strings and authentication
+
+**Low Throughput:**
+- Check Function App concurrency settings
+- Monitor EP1 plan resource utilization
+- Verify network connectivity through private endpoints
 
 ### Sample Load Test Script
 
+For quick manual testing:
+
 ```bash
-# Generate load on audit endpoint
+# Generate concurrent load on audit endpoint
 for i in {1..100}; do
-  curl -X POST https://$auditsAdaptor.azurewebsites.net/api/audits \
+  curl -X POST https://$AUDITS_URL/api/audits \
     -H "Content-Type: application/json" \
-    -d "{\"action\":\"test-$i\",\"user\":\"loadtest\"}" &
+    -d "{\"action\":\"test-$i\",\"user\":\"loadtest\",\"details\":\"Load test message $i\"}" &
+done
+wait
+
+# Generate load on history endpoint  
+for i in {1..100}; do
+  curl -X POST https://$HISTORY_URL/api/history \
+    -H "Content-Type: application/json" \
+    -d "{\"eventType\":\"test-$i\",\"entityId\":\"entity-$i\",\"operation\":\"load-test\"}" &
 done
 wait
 ```
+
+### Advanced Load Testing
+
+For comprehensive testing with Azure Load Testing service:
+
+1. **Create Azure Load Testing Resource** (optional, for enterprise scale)
+2. **Upload `azure-load-test-config.yaml`** from the load-tests folder
+3. **Configure test parameters** for your specific requirements
+4. **Run tests** and analyze integrated Azure monitoring results
+
+See the `load-tests/README.md` file for detailed instructions on all load testing options.
 
 ## Monitoring
 

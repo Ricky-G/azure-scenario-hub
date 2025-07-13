@@ -1,16 +1,18 @@
 # Azure Scenario Hub 🚀
 
-Welcome to the Azure Scenario Hub - your one-stop collection of ready-to-deploy Azure architectures! Whether you're learning Azure, building a proof-of-concept, or need a quick start for your next project, you'll find battle-tested scenarios here.
+A collection of ready-to-deploy Azure architecture scenarios. Infrastructure-as-code templates for common patterns, designed for rapid deployment and learning.
+
+> **Note**: These scenarios are designed for experimentation, learning, and lab environments. For production deployments, consider using [Azure Verified Modules](https://aka.ms/avm) and follow your organization's security and compliance requirements.
 
 ## 🎯 What is this?
 
-Think of this repository as your Azure cookbook. Each "recipe" is a complete, working scenario that demonstrates real-world Azure patterns. Just pick a scenario, deploy it, and start experimenting!
+A collection of Azure infrastructure templates for experimentation and learning. Each scenario provides complete working code for common architectural patterns, eliminating the need to build from scratch.
 
-### Perfect for:
-- **Developers** - Skip the boilerplate and focus on building your application
-- **Architects** - Validate designs with working reference implementations  
-- **Students** - Learn Azure with hands-on, practical examples
-- **Teams** - Accelerate PoCs and demos with pre-built infrastructure
+### Use cases:
+- **Application Development** - Deploy infrastructure quickly to focus on application logic
+- **Architecture Validation** - Test designs with working reference implementations  
+- **Learning Azure** - Hands-on examples of Azure service integrations
+- **Rapid Prototyping** - Pre-built infrastructure for PoCs and experiments
 
 ## 🏗️ Available Scenarios
 
@@ -23,8 +25,14 @@ Think of this repository as your Azure cookbook. Each "recipe" is a complete, wo
 | [Private Container Apps Environment](./src/private-container-apps-environment-scenario/) | Microservices platform with complete network isolation | 🚧 Coming Soon | Internal load balancing, private ingress |
 | [Public Container Apps Environment](./src/public-container-apps-environment-scenario/) | Container hosting with public accessibility | 🚧 Coming Soon | Auto-scaling, public endpoints |
 
+### Integration & Messaging
+
+| Scenario | Description | Status | Key Features |
+|----------|-------------|--------|--------------|
+| [Azure Integration Services Load Test](./src/azure-integration-services-load-test/) | Microservices architecture with Function Apps and Service Bus Premium | ✅ Ready | 5 independent functions, Service Bus topics, private endpoints, Application Insights telemetry |
+
 ### More scenarios coming soon! 
-Want to see a specific scenario? [Open an issue](https://github.com/Ricky-G/azure-scenario-hub/issues) and let us know!
+Have a specific scenario request? [Open an issue](https://github.com/Ricky-G/azure-scenario-hub/issues) to suggest it.
 
 ## 🚀 Get Started in 3 Steps
 
@@ -38,13 +46,13 @@ cd azure-scenario-hub
 Browse the `src/` directory and choose the architecture you need.
 
 ### 3. Deploy!
-Each scenario has a simple README with copy-paste commands. Most deploy in under 5 minutes!
+Each scenario includes deployment instructions with tested commands. Most deployments complete in under 5 minutes.
 
 ## 📋 What You'll Need
 
 - **Azure Subscription** - [Get a free one here](https://azure.microsoft.com/free/)
 - **Azure CLI** - [Install guide](https://docs.microsoft.com/cli/azure/install-azure-cli)
-- **5 minutes** - Seriously, that's it!
+- **5 minutes** - Standard deployment time
 
 ## 🛠️ Tech Stack
 
@@ -74,20 +82,20 @@ scenario-name/
 
 ## 🤝 Contributing
 
-Got a cool Azure scenario? We'd love to include it!
+To contribute a new Azure scenario:
 
 1. Fork this repository
-2. Create your scenario following our structure
-3. Make sure it deploys successfully
+2. Create your scenario following the established structure
+3. Test deployment in a clean Azure subscription
 4. Submit a pull request
 
-Check our [Contributing Guide](CONTRIBUTING.md) for details.
+Check the [Contributing Guide](CONTRIBUTING.md) for detailed requirements.
 
 ## 📞 Need Help?
 
 - **Questions?** [Open an issue](https://github.com/Ricky-G/azure-scenario-hub/issues)
-- **Found a bug?** Let us know!
-- **Want to chat?** Start a [discussion](https://github.com/Ricky-G/azure-scenario-hub/discussions)
+- **Bug reports** - Submit detailed reproduction steps
+- **General discussion** - Use [discussions](https://github.com/Ricky-G/azure-scenario-hub/discussions)
 
 ## 📝 License
 

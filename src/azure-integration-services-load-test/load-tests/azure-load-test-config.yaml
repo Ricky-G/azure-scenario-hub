@@ -1,0 +1,118 @@
+# Azure Load Testing Configuration
+# This file configures Azure Load Testing service for comprehensive load testing
+
+version: v0.1
+testName: azure-integration-services-load-test
+testPlan: locustfile.py
+description: |
+  Comprehensive load testing for Azure Integration Services scenario.
+  Tests HTTP endpoints and measures end-to-end message processing through Service Bus.
+
+engineInstances: 1  # Start with 1, scale up for higher loads
+
+# Test configuration
+configurationFiles:
+  - locustfile.py
+
+# Environment variables for the test
+env:
+  - name: AUDITS_FUNCTION_URL
+    value: "https://func-audits-loadtest.azurewebsites.net"  # Replace with actual URL
+  - name: HISTORY_FUNCTION_URL  
+    value: "https://func-history-loadtest.azurewebsites.net"  # Replace with actual URL
+
+# Test execution parameters
+testRunParameters:
+  # Baseline test parameters
+  baseline:
+    virtualUsers: 10
+    rampUpTime: 30s
+    duration: 120s
+    
+  # Normal load test parameters  
+  normal:
+    virtualUsers: 50
+    rampUpTime: 60s
+    duration: 300s
+    
+  # Peak load test parameters
+  peak:
+    virtualUsers: 100
+    rampUpTime: 120s
+    duration: 600s
+    
+  # Stress test parameters
+  stress:
+    virtualUsers: 200
+    rampUpTime: 180s
+    duration: 900s
+
+# Monitoring and metrics collection
+monitoring:
+  resourceIds:
+    # Add your Function Apps resource IDs
+    - "/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Web/sites/func-audits-loadtest"
+    - "/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Web/sites/func-history-loadtest"
+    - "/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Web/sites/func-audit-store-loadtest"
+    - "/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Web/sites/func-history-store-loadtest"
+    - "/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Web/sites/func-availability-checker-loadtest"
+    # Add Service Bus resource ID
+    - "/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.ServiceBus/namespaces/sb-loadtest"
+    # Add Application Insights resource ID
+    - "/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/microsoft.insights/components/ai-loadtest"
+
+# Success criteria
+passFailCriteria:
+  passFailMetrics:
+    # Response time criteria
+    - metric: response_time_ms
+      aggregate: avg
+      condition: ">"
+      value: 500
+      action: continue
+      
+    - metric: response_time_ms  
+      aggregate: p95
+      condition: ">"
+      value: 1000
+      action: continue
+      
+    # Error rate criteria
+    - metric: error_rate
+      aggregate: avg
+      condition: ">"
+      value: 1.0
+      action: stop
+      
+    # Throughput criteria
+    - metric: requests_per_sec
+      aggregate: avg
+      condition: "<"
+      value: 10
+      action: continue
+
+# Additional configuration
+additionalConfiguration:
+  # Split traffic across regions if using multiple instances
+  splitTrafficEnabled: false
+  
+  # Enable detailed logging
+  logLevel: INFO
+  
+  # Configure network settings
+  networkConfiguration:
+    # If testing private endpoints, configure subnet
+    subnetId: "/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Network/virtualNetworks/{vnet-name}/subnets/{subnet-name}"
+
+# Reporting configuration  
+reporting:
+  # Generate detailed reports
+  generateDetailedReport: true
+  
+  # Export results to storage
+  exportResults: true
+  
+  # Configure dashboard
+  dashboard:
+    autoRefresh: true
+    refreshInterval: 30s
