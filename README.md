@@ -29,7 +29,7 @@ A collection of Azure infrastructure templates for experimentation and learning.
 
 | Scenario | Description | Status | Key Features |
 |----------|-------------|--------|--------------|
-| [Azure Integration Services Load Test](./src/azure-integration-services-load-test/) | Microservices architecture with Function Apps and Service Bus Premium | ✅ Ready | 5 independent functions, Service Bus topics, private endpoints, Application Insights telemetry |
+| [Azure Integration Services Load Test](./src/azure-integration-services-load-test/) | Load testing scenario for microservices architecture with Function Apps and Service Bus Premium | ✅ Ready | 5 independent functions, Service Bus topics, private endpoints, comprehensive load testing tools |
 
 ### More scenarios coming soon! 
 Have a specific scenario request? [Open an issue](https://github.com/Ricky-G/azure-scenario-hub/issues) to suggest it.
@@ -51,7 +51,7 @@ Each scenario includes deployment instructions with tested commands. Most deploy
 ## 📋 What You'll Need
 
 - **Azure Subscription** - [Get a free one here](https://azure.microsoft.com/free/)
-- **Azure CLI** - [Install guide](https://docs.microsoft.com/cli/azure/install-azure-cli)
+- **Azure CLI** - [Install guide](https://learn.microsoft.com/cli/azure/install-azure-cli)
 - **5 minutes** - Standard deployment time
 
 ## 🛠️ Tech Stack
