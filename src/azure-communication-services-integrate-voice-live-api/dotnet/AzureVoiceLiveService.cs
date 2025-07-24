@@ -45,7 +45,7 @@ namespace CallAutomation.AzureAI.VoiceLive
 
             // The URL to connect to - ensure no double slashes
             var baseUrl = azureVoiceLiveEndpoint.Replace("https://", "wss://").TrimEnd('/');
-            var azureVoiceLiveWebsocketUrl = new Uri($"{baseUrl}/voice-live/realtime?api-version=2025-05-01-preview&x-ms-client-request-id={Guid.NewGuid()}&model={voiceLiveModel}&api-key={azureVoiceLiveApiKey}");
+            var azureVoiceLiveWebsocketUrl = new Uri($"{baseUrl}/voice-agent/realtime?api-version=2025-05-01-preview&x-ms-client-request-id={Guid.NewGuid()}&model={voiceLiveModel}&api-key={azureVoiceLiveApiKey}");
 
             // Create a new WebSocket client
             m_azureVoiceLiveWebsocket = new ClientWebSocket();
