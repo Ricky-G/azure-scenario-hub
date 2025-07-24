@@ -31,6 +31,12 @@ A collection of Azure infrastructure templates for experimentation and learning.
 |----------|-------------|--------|--------------|
 | [Azure Integration Services Load Test](./src/azure-integration-services-load-test/) | Load testing scenario for microservices architecture with Function Apps and Service Bus Premium | ✅ Ready | 5 independent functions, Service Bus topics, private endpoints, comprehensive load testing tools |
 
+### AI
+
+| Scenario | Description | Status | Key Features |
+|----------|-------------|--------|--------------|
+| [Azure Communication Services with Voice Live API](./src/azure-communication-services-integrate-voice-live-api/) | Real-time conversational AI over phone calls with ACS Call Automation and Azure OpenAI Voice Live API | ✅ Ready | Phone call automation, real-time audio streaming, voice AI interactions, dual implementation ([.NET](./src/azure-communication-services-integrate-voice-live-api/dotnet/README.md) & [Python](./src/azure-communication-services-integrate-voice-live-api/python/README.md)) |
+
 ### More scenarios coming soon! 
 Have a specific scenario request? [Open an issue](https://github.com/Ricky-G/azure-scenario-hub/issues) to suggest it.
 

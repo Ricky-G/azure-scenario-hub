@@ -1,0 +1,45 @@
+# Secrets and configuration files
+appsettings.json
+appsettings.*.json
+!appsettings.Example.json
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build outputs
+bin/
+obj/
+out/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
