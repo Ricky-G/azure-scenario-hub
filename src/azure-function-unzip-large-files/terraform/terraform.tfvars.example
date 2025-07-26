@@ -1,0 +1,10 @@
+# Example Terraform variables file
+# Copy this file to terraform.tfvars and update with your values
+
+resource_group_name = "rg-function-unzip-large-files"
+location            = "eastus"
+storage_account_name = "stgunzipfiles123" # Must be globally unique
+storage_account_replication_type = "LRS"
+source_container_name = "zipped"
+destination_container_name = "unzipped"
+zip_password = "CHANGE_ME_TO_STRONG_PASSWORD" # Required - use a strong password

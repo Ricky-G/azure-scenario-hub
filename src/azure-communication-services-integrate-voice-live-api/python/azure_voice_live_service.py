@@ -52,6 +52,7 @@ class AzureVoiceLiveService:
     async def connect(self) -> bool:
         """
         Establish WebSocket connection to Azure Voice Live API using managed identity authentication.
+        Includes automatic retry on 401 authentication failures.
         
         Returns:
             True if connection successful, False otherwise
@@ -61,13 +62,26 @@ class AzureVoiceLiveService:
             if self.websocket and not self.websocket.closed:
                 await self.websocket.close()
                 
-            voice_live_url = settings.get_voice_live_websocket_url(self.client_request_id)
+            # Try connecting with current tokens
+            return await self._connect_with_retry()
             
-            logger.info("Connecting to Voice Live API using Azure Managed Identity...")
-            # Get WebSocket headers with Authorization token
+        except Exception as e:
+            logger.error(f"Failed to connect to Voice Live API: {e}")
+            return False
+    
+    async def _connect_with_retry(self) -> bool:
+        """
+        Connect to Voice Live API with automatic 401 retry.
+        
+        Implements single-retry pattern for token refresh on authentication failures.
+        This is essential for production environments where tokens may expire.
+        """
+        try:
+            voice_live_url = settings.get_voice_live_websocket_url()
             headers = settings.get_websocket_headers(self.client_request_id)
             
-            # Connect to Voice Live WebSocket with authentication headers
+            logger.info("Connecting to Voice Live API using Azure Managed Identity...")
+            
             self.websocket = await websockets.connect(
                 voice_live_url,
                 extra_headers=headers,
@@ -88,9 +102,35 @@ class AzureVoiceLiveService:
                 
             return True
             
-        except Exception as e:
-            logger.error(f"Failed to connect to Voice Live API: {e}")
-            return False
+        except websockets.InvalidStatusCode as e:
+            if e.status_code == 401:
+                # Authentication failed - refresh tokens and retry once
+                logger.warning("Voice Live authentication failed (401), refreshing tokens and retrying...")
+                
+                settings.force_refresh_tokens()
+                voice_live_url = settings.get_voice_live_websocket_url()
+                headers = settings.get_websocket_headers(self.client_request_id)
+                
+                self.websocket = await websockets.connect(
+                    voice_live_url,
+                    extra_headers=headers,
+                    ping_interval=30,
+                    ping_timeout=10,
+                    close_timeout=10
+                )
+                
+                logger.info("Voice Live WebSocket connected after token refresh")
+                
+                # Start message handling and session setup
+                asyncio.create_task(self._receive_messages())
+                await self._update_session()
+                await asyncio.sleep(0.2)
+                self.running = True
+                
+                return True
+            else:
+                # Other HTTP errors, don't retry
+                raise
     
     async def wait_for_connection(self) -> None:
         """Wait for Voice Live connection to be established."""
@@ -125,17 +165,15 @@ class AzureVoiceLiveService:
                 logger.error(f"Error closing Voice Live connection: {e}")
     
     async def _update_session(self) -> None:
-        """Update Voice Live session configuration - agent mode only."""
+        """Update Voice Live session configuration for agent mode."""
         try:
-            # In agent mode, exclude instructions (they're read-only and pre-configured)
             session_update = SessionUpdate.create_default()
             await self.websocket.send(session_update)
         except Exception as e:
             logger.error(f"Error updating session: {e}")
     
     async def _create_conversation(self) -> None:
-        """Create initial conversation with system prompt - not needed in agent mode."""
-        # Agent mode: instructions are pre-configured in the agent, skip conversation creation
+        """Not needed in agent mode - instructions are pre-configured."""
         return
     
     async def _start_response(self) -> None:
@@ -188,6 +226,7 @@ class AzureVoiceLiveService:
                 
             elif message_type == "response.audio.delta":
                 # Forward audio response to ACS
+                logger.info("🎵 Received audio delta from AI - forwarding to caller")
                 await self._handle_audio_delta(data)
                 
             elif message_type == "input_audio_buffer.speech_started":
@@ -206,7 +245,26 @@ class AzureVoiceLiveService:
                 logger.error(f"Voice Live API error: {error_info}")
                 
             else:
-                logger.debug(f"Unhandled message type: {message_type}")
+                # Log unhandled message types for troubleshooting
+                expected_informational = [
+                    "response.audio.done", 
+                    "response.audio_transcript.done",
+                    "response.content_part.done",
+                    "response.output_item.done",
+                    "response.output_item.added",
+                    "response.content_part.added",
+                    "response.audio_transcript.delta",
+                    "conversation.item.created",
+                    "conversation.item.input_audio_transcription.completed",
+                    "input_audio_buffer.speech_stopped",
+                    "input_audio_buffer.committed"
+                ]
+                
+                if message_type in expected_informational:
+                    # These are normal informational messages, log at debug level
+                    pass  # Suppress to reduce log noise
+                else:
+                    logger.info("⚠️  Unhandled message type: %s", message_type)
                 
         except Exception as e:
             logger.error(f"Error processing Voice Live message: {e}")
@@ -214,6 +272,9 @@ class AzureVoiceLiveService:
     async def _handle_audio_delta(self, data: dict) -> None:
         """
         Handle audio delta from Voice Live API and forward to ACS.
+        
+        Resamples audio from 24kHz (Voice Live API) to 16kHz (ACS requirement).
+        Sends complete audio chunks immediately to avoid timing issues.
         
         Args:
             data: Audio delta message data
@@ -231,14 +292,12 @@ class AzureVoiceLiveService:
                 # Resample from 24kHz (Voice Live) to 16kHz (ACS)
                 resampled_audio = AudioResampler.resample_24k_to_16k(audio_bytes)
                 
-                # Send entire resampled audio buffer immediately (like .NET implementation)
-                # Do NOT chunk with delays - this causes timing issues with ACS
+                # Send entire resampled audio buffer immediately to avoid timing issues
                 if len(resampled_audio) > 0:
                     outbound_message = OutboundAudioData.create(resampled_audio, "VoiceLiveAI")
                     
-                    # Send to ACS media handler - allow sending even during graceful shutdown
+                    # Send to ACS - check WebSocket availability during graceful shutdown
                     if self.media_handler and hasattr(self.media_handler, 'websocket') and self.media_handler.websocket:
-                        # Check if WebSocket is still available rather than just the running flag
                         try:
                             await self.media_handler.send_message(outbound_message)
                         except Exception as e:

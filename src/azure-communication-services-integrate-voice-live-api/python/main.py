@@ -1,19 +1,17 @@
 """
 Main FastAPI application for Azure Communication Services with Voice Live API integration.
-Equivalent to the .NET Program.cs implementation.
+Handles WebSocket connections for real-time media streaming and AI voice interactions.
 """
-import asyncio
 import json
 import logging
 import uuid
+from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any
 
 import uvicorn
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException, Query
-from fastapi.responses import JSONResponse
 from websockets.exceptions import ConnectionClosed
-from azure.eventgrid import EventGridEvent, SystemEventNames
 from azure.communication.callautomation import (
     CallAutomationClient,
     MediaStreamingOptions,
@@ -22,12 +20,10 @@ from azure.communication.callautomation import (
     StreamingTransportType,
     AudioFormat
 )
-from azure.identity import DefaultAzureCredential
 
 from config import settings
 from helpers import ACSHelper, URLHelper
 from acs_media_handler import ACSMediaStreamingHandler
-from models import StreamingDataParser
 
 # Configure logging
 logging.basicConfig(
@@ -49,11 +45,37 @@ logging.getLogger('azure.identity._credentials.default').setLevel(logging.WARNIN
 # Only show important Azure authentication events
 logging.getLogger('azure.identity._credentials.chained').setLevel(logging.INFO)  # Token acquisition only
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """FastAPI lifespan context manager for startup and shutdown events."""
+    # Startup
+    logger.info("Azure Communication Services Voice Live API service started")
+    
+    # Pre-warm token cache to reduce first call latency
+    try:
+        logger.info("Pre-warming Azure token cache...")
+        import time
+        start_time = time.time()
+        settings.get_azure_tokens()  # This will cache the tokens
+        end_time = time.time()
+        logger.info("Token cache pre-warmed in %.1f seconds", end_time - start_time)
+    except (ImportError, AttributeError, ValueError) as e:
+        logger.warning("Failed to pre-warm token cache: %s", e)
+        logger.warning("Tokens will be fetched on first call (may cause delay)")
+    
+    yield
+    
+    # Shutdown
+    logger.info("Azure Communication Services Voice Live API service shutting down")
+
+
 # FastAPI application instance
 app = FastAPI(
     title="Azure Communication Services with Voice Live API",
     description="Python implementation of ACS Call Automation with Azure OpenAI Voice Live API",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # Initialize ACS Call Automation client
@@ -63,20 +85,8 @@ try:
     )
     logger.info("Azure Communication Services client initialized successfully")
 except Exception as e:
-    logger.error(f"Failed to initialize ACS client: {e}")
+    logger.error("Failed to initialize ACS client: %s", e)
     raise
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Application startup event handler."""
-    logger.info("Azure Communication Services Voice Live API service started")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Application shutdown event handler."""
-    logger.info("Azure Communication Services Voice Live API service shutting down")
 
 
 @app.get("/")
@@ -87,7 +97,7 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint for debugging and monitoring."""
+    """Health check endpoint for service monitoring."""
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
@@ -98,7 +108,7 @@ async def health_check():
 
 @app.get("/test-ws")
 async def websocket_test(websocket: WebSocket):
-    """WebSocket test endpoint for debugging connections."""
+    """WebSocket test endpoint for connection validation."""
     await websocket.accept()
     
     try:
@@ -112,8 +122,8 @@ async def websocket_test(websocket: WebSocket):
             
     except WebSocketDisconnect:
         logger.info("WebSocket test connection closed")
-    except Exception as e:
-        logger.error(f"WebSocket test error: {e}")
+    except (ConnectionClosed, OSError) as e:
+        logger.error("WebSocket test error: %s", e)
 
 
 @app.post("/api/incomingCall")
@@ -134,7 +144,6 @@ async def handle_incoming_call(request: Request):
         events = []
         
         try:
-            import json
             event_data = json.loads(body.decode('utf-8'))
             
             # Handle both single event and array of events
@@ -143,9 +152,9 @@ async def handle_incoming_call(request: Request):
             else:
                 events = [event_data]
                 
-        except Exception as e:
-            logger.error(f"Error parsing Event Grid events: {e}")
-            raise HTTPException(status_code=400, detail="Invalid Event Grid event format")
+        except json.JSONDecodeError as e:
+            logger.error("Error parsing Event Grid events: %s", e)
+            raise HTTPException(status_code=400, detail="Invalid Event Grid event format") from e
         
         logger.info("Incoming call event received")
         
@@ -161,10 +170,12 @@ async def handle_incoming_call(request: Request):
         
         return {"status": "success"}
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error handling incoming call: {e}")
+        logger.error("Error handling incoming call: %s", e)
         logger.exception("Full exception details:")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/api/callbacks/{context_id}")
@@ -188,20 +199,20 @@ async def handle_callback_events(
         body = await request.body()
         events = json.loads(body.decode('utf-8'))
         
-        logger.info(f"Callback event received for context: {context_id}, caller: {callerId}")
+        logger.info("Callback event received for context: %s, caller: %s", context_id, callerId)
         
         # Process each event
         for event in events:
             # Handle specific event types if needed
             event_type = event.get('type', '')
             if event_type:
-                logger.info(f"Processing event type: {event_type}")
+                logger.info("Processing event type: %s", event_type)
         
         return {"status": "success"}
         
     except Exception as e:
-        logger.error(f"Error handling callback events: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Error handling callback events: %s", e)
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.websocket("/ws")
@@ -228,19 +239,19 @@ async def websocket_endpoint(websocket: WebSocket):
         await media_handler.process_websocket()
         
     except WebSocketDisconnect as e:
-        logger.info(f"ACS WebSocket connection closed by client: {e}")
+        logger.info("ACS WebSocket connection closed by client: %s", e)
     except ConnectionClosed as e:
-        logger.info(f"ACS WebSocket connection closed: {e}")
-    except Exception as e:
-        logger.error(f"WebSocket error: {e}")
+        logger.info("ACS WebSocket connection closed: %s", e)
+    except (OSError, RuntimeError) as e:
+        logger.error("WebSocket error: %s", e)
         logger.exception("Full exception details:")
     finally:
         # Ensure cleanup happens even if media_handler wasn't created
         if media_handler:
             try:
                 await media_handler.close()
-            except Exception as cleanup_error:
-                logger.error(f"Error during handler cleanup: {cleanup_error}")
+            except (OSError, RuntimeError) as cleanup_error:
+                logger.error("Error during handler cleanup: %s", cleanup_error)
         logger.info("WebSocket connection cleanup completed")
 
 
@@ -263,7 +274,7 @@ async def _process_incoming_call_event(event: Dict[str, Any]) -> None:
             logger.error("Missing required call information")
             return
         
-        logger.info(f"Processing call from: {caller_id}")
+        logger.info("Processing call from: %s", caller_id)
         
         # Generate callback URL
         context_id = str(uuid.uuid4())
@@ -288,19 +299,15 @@ async def _process_incoming_call_event(event: Dict[str, Any]) -> None:
             callback_url=callback_url,
             media_streaming=media_streaming_options
         )
-        logger.info(f"Call answered successfully - Connection ID: {answer_result.call_connection_id}")
+        logger.info("Call answered successfully - Connection ID: %s", answer_result.call_connection_id)
         logger.info("Call answered - Voice Live will connect shortly and begin AI conversation")
         
-    except Exception as e:
-        logger.error(f"Error processing incoming call event: {e}")
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error("Error processing incoming call event: %s", e)
         logger.exception("Full exception details:")
 
 
 if __name__ == "__main__":
-    """
-    Main entry point for running the application.
-    Starts the FastAPI server with uvicorn.
-    """
     logger.info("Starting Azure Communication Services Voice Live API service")
     
     uvicorn.run(

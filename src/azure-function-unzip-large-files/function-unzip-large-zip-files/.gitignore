@@ -1,0 +1,9 @@
+.env
+local.settings.json
+__pycache__/
+*.py[cod]
+*$py.class
+.python_packages
+.venv/
+.vscode/
+.pytest_cache/

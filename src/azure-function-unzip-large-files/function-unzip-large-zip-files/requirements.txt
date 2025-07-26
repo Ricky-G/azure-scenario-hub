@@ -1,0 +1,4 @@
+azure-functions
+azure-storage-blob
+pyzipper
+python-dotenv

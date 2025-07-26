@@ -23,7 +23,12 @@ class AudioData(StreamingDataBase):
     is_silent: bool = False
     
     def get_timestamp_ms(self) -> int:
-        """Get timestamp as milliseconds since epoch."""
+        """
+        Get timestamp as milliseconds since epoch.
+        
+        Handles both integer timestamps and ISO 8601 string formats 
+        from different ACS message sources.
+        """
         if isinstance(self.timestamp, int):
             return self.timestamp
         elif isinstance(self.timestamp, str):
@@ -80,7 +85,6 @@ class OutboundAudioData(BaseModel):
     @classmethod
     def create(cls, audio_bytes: bytes, participant_id: str = "VoiceLiveAI") -> str:
         """Create JSON string for outbound audio data in the exact format ACS expects."""
-        # Use ISO format with milliseconds like .NET implementation
         timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
         
         data = {
@@ -101,7 +105,6 @@ class StopAudioData(BaseModel):
     @classmethod
     def create(cls) -> str:
         """Create JSON string to stop audio playback."""
-        # Use ISO format with milliseconds like .NET implementation
         timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
         
         data = {
@@ -164,29 +167,25 @@ class StreamingDataParser:
                 return UnknownStreamingData(properties=data)
                 
         except Exception as e:
-            # Add debug logging to see what data we're receiving
             import logging
             logger = logging.getLogger(__name__)
             
-            # Special handling for timestamp parsing errors
+            # Handle timestamp parsing errors gracefully
             if "invalid literal for int()" in str(e) and "timestamp" in str(json_data):
-                logger.warning(f"Timestamp parsing error - trying to handle ISO format: {e}")
-                # Try to re-parse with string timestamp handling
+                logger.warning(f"Timestamp parsing error, using string format: {e}")
                 try:
                     if isinstance(json_data, dict):
                         audio_data = json_data.get("audioData", json_data)
                         return AudioData(
                             data=audio_data.get("data", ""),
-                            timestamp=str(audio_data.get("timestamp", "0")),  # Keep as string
+                            timestamp=str(audio_data.get("timestamp", "0")),
                             participant_raw_id=audio_data.get("participantRawID", ""),
                             is_silent=audio_data.get("silent", False)
                         )
-                except Exception as e2:
-                    logger.error(f"Secondary parsing attempt failed: {e2}")
+                except Exception:
+                    pass  # Fall through to generic error handling
             
             logger.error(f"Error parsing streaming data: {e}")
-            logger.debug(f"Received data type: {type(json_data)}")
-            logger.debug(f"Received data sample: {str(json_data)[:200]}...")
             return UnknownStreamingData(properties={"error": str(e), "received_data_type": str(type(json_data))})
 
 
@@ -220,14 +219,12 @@ class SessionUpdate(VoiceLiveMessage):
                 "voice": {
                     "name": "en-US-Aria:DragonHDLatestNeural",
                     "type": "azure-standard",
-                    "temperature": 0.7  # Slightly lower for more consistent responses
+                    "temperature": 0.7
                 },
-                "max_response_output_tokens": 200,  # Shorter responses for phone calls
+                "max_response_output_tokens": 200,
                 "modalities": ["text", "audio"]
             }
         }
-        
-        # Instructions are not included in agent mode - they're pre-configured in the agent
         
         return json.dumps(session_config)
 

@@ -27,7 +27,9 @@ def check_environment():
     """Check if environment variables are properly configured."""
     required_vars = [
         'ACS_CONNECTION_STRING',
-        'AZURE_VOICE_LIVE_ENDPOINT'
+        'AZURE_VOICE_LIVE_ENDPOINT',
+        'AGENT_ID',
+        'AGENT_PROJECT_NAME'
     ]
     
     missing_vars = []

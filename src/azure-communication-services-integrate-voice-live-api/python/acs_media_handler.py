@@ -5,7 +5,6 @@ Manages WebSocket connection from ACS and forwards audio to Voice Live API.
 import asyncio
 import json
 import logging
-import math
 from typing import Optional
 import websockets
 from websockets.exceptions import ConnectionClosed, WebSocketException
@@ -23,7 +22,7 @@ class ACSMediaStreamingHandler:
     Processes incoming audio data and forwards to Azure Voice Live API.
     """
     
-    def __init__(self, websocket: websockets.WebSocketServerProtocol):
+    def __init__(self, websocket):
         """
         Initialize ACS media streaming handler.
         
@@ -62,6 +61,7 @@ class ACSMediaStreamingHandler:
             receive_task = asyncio.create_task(self._start_receiving_from_acs())
             
             # Connect to Voice Live API in parallel
+            # This dual connection pattern ensures both services are ready before processing begins
             connect_task = asyncio.create_task(self._initialize_voice_live())
             
             # Wait for both tasks to complete or either to fail
@@ -84,7 +84,7 @@ class ACSMediaStreamingHandler:
                     raise task.exception()
             
         except Exception as e:
-            logger.error(f"Error in process_websocket: {e}")
+            logger.error("Error in process_websocket: %s", e)
             logger.exception("Full exception details:")
         finally:
             await self._cleanup()
@@ -108,10 +108,10 @@ class ACSMediaStreamingHandler:
                 await self.send_message(stop_message)
                 logger.info("Sent stop command to interrupt holding message")
             except Exception as stop_error:
-                logger.warning(f"Could not send stop command: {stop_error}")
+                logger.warning("Could not send stop command: %s", stop_error)
             
         except Exception as e:
-            logger.error(f"Error initializing Voice Live: {e}")
+            logger.error("Error initializing Voice Live: %s", e)
             raise
     
     async def send_message(self, message: str) -> None:
@@ -126,24 +126,23 @@ class ACSMediaStreamingHandler:
         if self.websocket and not self.cleanup_started:
             try:
                 await self.websocket.send_text(message)
-                logger.debug(f"Message sent to ACS successfully ({len(message)} chars)")
             except ConnectionClosed as e:
-                logger.warning(f"WebSocket connection closed during send: {e}")
+                logger.warning("WebSocket connection closed during send: %s", e)
                 # Don't immediately stop - let the receive loop handle the disconnection
             except WebSocketException as e:
-                logger.error(f"WebSocket error during send: {e}")
+                logger.error("WebSocket error during send: %s", e)
                 # For WebSocket-specific errors, we might want to stop
                 if "1006" in str(e) or "1001" in str(e):
                     self.running = False
             except Exception as e:
                 if not self.cleanup_started:
-                    logger.error(f"Error sending message to ACS: {e}")
+                    logger.error("Error sending message to ACS: %s", e)
                     # Only stop for severe errors, not transient ones
                     if "broken pipe" in str(e).lower() or "connection reset" in str(e).lower():
                         self.running = False
         else:
             if self.cleanup_started:
-                logger.debug("Cannot send message - cleanup in progress")
+                return  # Skip silently during cleanup
             else:
                 logger.warning("Cannot send message - ACS WebSocket not available")
     
@@ -152,8 +151,7 @@ class ACSMediaStreamingHandler:
         if not self.cleanup_started:
             logger.info("Closing ACS Media Streaming Handler")
             await self._cleanup()
-        else:
-            logger.debug("Close called but cleanup already in progress")
+        # Skip logging during cleanup to reduce noise
     
     async def _start_receiving_from_acs(self) -> None:
         """
@@ -210,11 +208,9 @@ class ACSMediaStreamingHandler:
                 if "text" in message:
                     # Text message - parse JSON
                     message_content = json.loads(message["text"])
-                    logger.debug(f"Received text message: {json.dumps(message_content, indent=2)}")
                 elif "bytes" in message:
                     # Binary message - handle raw audio data
                     message_content = message["bytes"]
-                    logger.debug(f"Received bytes message: {len(message_content)} bytes")
                 elif "type" in message and "code" in message:
                     # WebSocket disconnect/close message - this is normal termination
                     message_type = message.get("type")
@@ -231,23 +227,18 @@ class ACSMediaStreamingHandler:
                     return
             else:
                 message_content = message
-                logger.debug(f"Received direct message: {type(message_content)}")
             
             # Parse the streaming data
             streaming_data = StreamingDataParser.parse(message_content)
-            logger.debug(f"Parsed streaming data type: {type(streaming_data)}")
             
             if isinstance(streaming_data, AudioData):
                 await self._handle_audio_data(streaming_data)
             elif isinstance(streaming_data, AudioMetadata):
                 logger.info("Processing AudioMetadata - will send immediate audio response")
                 await self._handle_metadata(streaming_data)
-            else:
-                logger.debug(f"Received unknown streaming data type: {type(streaming_data)}")
                 
         except Exception as e:
             logger.error(f"Error processing ACS message: {e}")
-            logger.debug("Full exception details:", exc_info=True)
     
     async def _handle_audio_data(self, audio_data: AudioData) -> None:
         """
@@ -303,8 +294,7 @@ class ACSMediaStreamingHandler:
     async def _cleanup(self) -> None:
         """Cleanup resources and close connections."""
         if self.cleanup_started:
-            logger.debug("Cleanup already in progress, skipping duplicate cleanup")
-            return
+            return  # Skip duplicate cleanup silently
             
         self.cleanup_started = True
         self.running = False
@@ -327,8 +317,8 @@ class ACSMediaStreamingHandler:
             if self.websocket:
                 try:
                     await self.websocket.close()
-                except Exception as close_error:
-                    logger.debug(f"WebSocket already closed or error closing: {close_error}")
+                except Exception:
+                    pass  # Ignore close errors during cleanup
                 
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")
@@ -349,7 +339,6 @@ class ACSMediaStreamingHandler:
                         "timestamp": int(asyncio.get_event_loop().time() * 1000)
                     }
                     await self.websocket.send_text(json.dumps(keep_alive_message))
-                    logger.debug(f"Sent WebSocket keep-alive #{heartbeat_count}")
                     self.last_heartbeat = asyncio.get_event_loop().time()
                 except Exception as e:
                     logger.warning(f"Failed to send keep-alive: {e}")
@@ -359,7 +348,7 @@ class ACSMediaStreamingHandler:
                 await asyncio.sleep(5)
                 
         except asyncio.CancelledError:
-            logger.debug("Heartbeat monitor cancelled")
+            pass  # Normal cancellation during shutdown
         except Exception as e:
             logger.error(f"Error in heartbeat monitor: {e}")
     

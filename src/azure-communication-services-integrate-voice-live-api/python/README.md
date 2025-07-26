@@ -1,13 +1,13 @@
-# Azure Communication Services with Voice Live API - Python Implementation
+# Azure Communication Services with Voice Live API - Python Implementation (Agent Mode)
 
-Real-time conversational AI over phone calls using Azure Communication Services Call Automation and Azure OpenAI Voice Live API. This Python implementation provides a complete voice bot that can answer phone calls and have natural conversations.
-
-Real-time conversational AI over phone calls using Azure Communication Services Call Automation and Azure OpenAI Voice Live API. This Python implementation provides a complete voice bot that can answer phone calls and have natural conversations.
+Real-time conversational AI over phone calls using Azure Communication Services Call Automation and Azure OpenAI Voice Live API in **Agent Mode**. This Python implementation provides a complete voice bot that can answer phone calls and have natural conversations with pre-configured AI agents using Azure Managed Identity for secure authentication.
 
 ## 🎯 What This Does
 
 - **Answers incoming phone calls** via Azure Communication Services
 - **Streams audio in real-time** between caller and Azure OpenAI Voice Live API
+- **Uses Agent Mode** with pre-configured AI assistants in Azure AI Studio
+- **Authenticates with Azure Managed Identity** (no API keys required)
 - **Handles conversational AI** with natural voice interactions
 - **Manages barge-in scenarios** when caller interrupts AI responses
 - **Processes audio format conversion** (24kHz Voice Live ↔ 16kHz ACS)
@@ -32,7 +32,8 @@ graph TB
     end
     
     subgraph "Azure OpenAI"
-        VOICE[🤖 Voice Live API<br/>gpt-4o Realtime]
+        VOICE[🤖 Voice Live API<br/>Agent Mode<br/>gpt-4o Realtime]
+        AGENT[👤 Pre-configured Agent<br/>Azure AI Studio]
     end
     
     subgraph "Dev Infrastructure"
@@ -45,6 +46,8 @@ graph TB
     ACS -->|WebSocket Audio| WS
     WS -->|PCM 16kHz| HANDLER
     HANDLER -->|PCM 24kHz| VOICE
+    VOICE -->|Agent Processing| AGENT
+    AGENT -->|AI Response| VOICE
     VOICE -->|AI Response| HANDLER
     HANDLER -->|PCM 16kHz| WS
     WS -->|Audio Stream| ACS
@@ -65,7 +68,9 @@ graph TB
 - **Azure subscription** with the following resources:
   - Azure Communication Services resource with phone number
   - Azure OpenAI resource with Voice Live API access
-- **Dev Tunnel CLI** for local development ([install here](https://learn.microsoft.com/en-us/azure/developer/dev-tunnels/get-started))
+  - Pre-configured AI agent in Azure AI Studio
+  - Azure Managed Identity configured for the application
+- **Dev Tunnel CLI** for local development
 
 ### 1. Clone and Setup
 
@@ -95,16 +100,27 @@ BASE_URL=https://your-tunnel-url.asse.devtunnels.ms
 # Azure Communication Services Configuration
 ACS_CONNECTION_STRING=endpoint=https://your-acs.communication.azure.com/;accesskey=your-key
 
-# Azure OpenAI Voice Live API Configuration
-AZURE_VOICE_LIVE_API_KEY=your-openai-key
+# Azure OpenAI Voice Live API Configuration (Agent Mode)
 AZURE_VOICE_LIVE_ENDPOINT=https://your-openai.cognitiveservices.azure.com/
-VOICE_LIVE_MODEL=gpt-4o
-SYSTEM_PROMPT=You are a helpful assistant
+VOICE_LIVE_MODEL=gpt-4o-realtime-preview
+
+# Azure Agent Configuration
+AGENT_ID=your_agent_id_here
+AGENT_PROJECT_NAME=your_project_name
+
+# Azure Token Scopes Configuration
+AZURE_COGNITIVE_SERVICES_SCOPE=https://cognitiveservices.azure.com/.default
+AZURE_AI_SCOPE=https://ai.azure.com/.default
 
 # Logging Configuration
 LOG_LEVEL=INFO
 EOF
 ```
+
+**Important Notes:**
+- **No API keys required** - Uses Azure Managed Identity for authentication
+- **Agent Mode** - Instructions are pre-configured in your Azure AI Studio agent
+- **Agent ID** - Get this from your Azure AI Studio agent configuration
 
 ### 4. Create Dev Tunnel
 
@@ -151,10 +167,12 @@ INFO:     Uvicorn running on http://localhost:49412 (Press CTRL+C to quit)
 1. **Incoming Call**: ACS receives PSTN call and sends webhook to your app
 2. **Call Answer**: App answers call and starts media streaming
 3. **WebSocket Setup**: Bidirectional audio stream established with ACS
-4. **Voice Live Connection**: App connects to Azure OpenAI Voice Live API
-5. **Audio Processing**: Real-time audio conversion and forwarding
-6. **Conversation**: Natural voice interaction between caller and AI
-7. **Call End**: Clean disconnection and resource cleanup
+4. **Managed Identity Auth**: App authenticates to Azure services using Managed Identity
+5. **Voice Live Connection**: App connects to Azure OpenAI Voice Live API in Agent Mode
+6. **Agent Processing**: Pre-configured agent in Azure AI Studio processes conversations
+7. **Audio Processing**: Real-time audio conversion and forwarding
+8. **Conversation**: Natural voice interaction between caller and AI agent
+9. **Call End**: Clean disconnection and resource cleanup
 
 ### Key Components
 
@@ -162,17 +180,17 @@ INFO:     Uvicorn running on http://localhost:49412 (Press CTRL+C to quit)
 |-----------|---------|
 | `main.py` | FastAPI app with Event Grid webhooks and WebSocket endpoints |
 | `acs_media_handler.py` | Handles ACS media streaming and audio processing |
-| `azure_voice_live_service.py` | Manages Azure OpenAI Voice Live API connection |
+| `azure_voice_live_service.py` | Manages Azure OpenAI Voice Live API connection in Agent Mode |
 | `audio_resampler.py` | Converts audio between 16kHz (ACS) and 24kHz (Voice Live) |
 | `models.py` | Data models for audio packets and API messages |
-| `config.py` | Environment configuration management |
+| `config.py` | Environment configuration and Azure Managed Identity token management |
 
 ### Audio Processing Pipeline
 
 ```
-Caller Audio (PSTN) → ACS (16kHz PCM) → Python App → Voice Live (24kHz PCM)
-                                                            ↓
-Caller Hears Response ← ACS (16kHz PCM) ← Python App ← AI Response (24kHz PCM)
+Caller Audio (PSTN) → ACS (16kHz PCM) → Python App → Voice Live Agent (24kHz PCM)
+                                                             ↓
+Caller Hears Response ← ACS (16kHz PCM) ← Python App ← AI Agent Response (24kHz PCM)
 ```
 
 ## � Configuration Reference
@@ -182,11 +200,21 @@ Caller Hears Response ← ACS (16kHz PCM) ← Python App ← AI Response (24kHz 
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `ACS_CONNECTION_STRING` | Azure Communication Services connection string | `endpoint=https://...;accesskey=...` |
-| `AZURE_VOICE_LIVE_API_KEY` | Azure OpenAI API key with Voice Live access | `abcd1234...` |
 | `AZURE_VOICE_LIVE_ENDPOINT` | Azure OpenAI service endpoint | `https://your-aoai.cognitiveservices.azure.com/` |
+| `AGENT_ID` | Pre-configured AI agent ID from Azure AI Studio | `asst_abc123...` |
+| `AGENT_PROJECT_NAME` | Project name where agent is configured | `my-voice-project` |
+| `AZURE_COGNITIVE_SERVICES_SCOPE` | Token scope for Azure Cognitive Services | `https://cognitiveservices.azure.com/.default` |
+| `AZURE_AI_SCOPE` | Token scope for Azure AI Services | `https://ai.azure.com/.default` |
 | `BASE_URL` | Public HTTPS URL for webhooks (your dev tunnel) | `https://abc123.asse.devtunnels.ms` |
-| `VOICE_LIVE_MODEL` | OpenAI model to use | `gpt-4o` |
-| `SYSTEM_PROMPT` | AI personality and instructions | `You are a helpful assistant` |
+| `VOICE_LIVE_MODEL` | OpenAI model to use | `gpt-4o-realtime-preview` |
+
+### Authentication
+
+This implementation uses **Azure Managed Identity** for secure authentication:
+- **No API keys in code** - All authentication handled by Azure Managed Identity
+- **Token caching** - Automatic token refresh with 5-minute safety buffer
+- **401 retry logic** - Automatic token refresh on authentication failures
+- **Production ready** - Designed for high-concurrency B2C scenarios
 
 ### Audio Configuration
 
@@ -199,10 +227,18 @@ Caller Hears Response ← ACS (16kHz PCM) ← Python App ← AI Response (24kHz 
 
 ### Common Issues
 
-**Call connects but no audio**
+**Voice Live connection fails**
 ```bash
-# Check if Voice Live connection is established
-# Look for: "Voice Live WebSocket connected successfully!"
+# Check if Managed Identity is configured correctly
+# Look for: "Connecting to Voice Live API using Azure Managed Identity..."
+# Verify agent ID and project name are correct
+```
+
+**401 Authentication errors**
+```bash
+# Check Azure Managed Identity permissions
+# Verify the identity has access to Cognitive Services and AI Services
+# Look for token refresh messages in logs
 ```
 
 **Webhook not receiving events**
