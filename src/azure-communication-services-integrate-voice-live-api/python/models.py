@@ -202,8 +202,8 @@ class SessionUpdate(VoiceLiveMessage):
     session: Dict[str, Any]
     
     @classmethod
-    def create_default(cls, include_instructions: bool = True) -> str:
-        """Create default session update configuration optimized for phone calls."""
+    def create_default(cls) -> str:
+        """Create default session update configuration for agent mode."""
         session_config = {
             "type": "session.update",
             "session": {
@@ -215,7 +215,6 @@ class SessionUpdate(VoiceLiveMessage):
                     "remove_filler_words": False
                 },
                 "input_audio_sampling_rate": 24000,
-                # Removed output_audio_sampling_rate - not supported by Voice Live API
                 "input_audio_noise_reduction": {"type": "azure_deep_noise_suppression"},
                 "input_audio_echo_cancellation": {"type": "server_echo_cancellation"},
                 "voice": {
@@ -228,9 +227,7 @@ class SessionUpdate(VoiceLiveMessage):
             }
         }
         
-        # Only include instructions in API key mode - they're read-only in agent mode
-        if include_instructions:
-            session_config["session"]["instructions"] = "You are a helpful AI assistant. Keep responses concise and conversational since this is a phone call. Be natural and engaging."
+        # Instructions are not included in agent mode - they're pre-configured in the agent
         
         return json.dumps(session_config)
 

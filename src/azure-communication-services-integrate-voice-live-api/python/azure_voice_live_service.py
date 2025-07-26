@@ -1,6 +1,16 @@
 """
 Azure OpenAI Voice Live API service implementation.
-Handles WebSocket connection to Azure OpenAI Voice Live API for real-time audio processing.
+Handles We            logger.info("Voice Live WebSocket connected")
+            
+            # Start message receiving task
+            asyncio.create_task(self._receive_messages())
+            
+            # Agent mode: Send session update but skip system prompt - instructions are pre-configured in the agent
+            await self._update_session()
+            await asyncio.sleep(0.2)
+            self.running = True
+                
+            return Trueto Azure OpenAI Voice Live API for real-time audio processing.
 """
 import asyncio
 import websockets
@@ -41,7 +51,7 @@ class AzureVoiceLiveService:
     
     async def connect(self) -> bool:
         """
-        Establish WebSocket connection to Azure Voice Live API using API key authentication - matching .NET implementation.
+        Establish WebSocket connection to Azure Voice Live API using managed identity authentication.
         
         Returns:
             True if connection successful, False otherwise
@@ -53,49 +63,29 @@ class AzureVoiceLiveService:
                 
             voice_live_url = settings.get_voice_live_websocket_url(self.client_request_id)
             
-            if settings.use_managed_identity:
-                logger.info("Connecting to Voice Live API using Azure Managed Identity...")
-                # Get WebSocket headers with Authorization token
-                headers = settings.get_websocket_headers(self.client_request_id)
-                
-                # Connect to Voice Live WebSocket with authentication headers
-                # Use extra_headers parameter instead of additional_headers
-                self.websocket = await websockets.connect(
-                    voice_live_url,
-                    extra_headers=headers,
-                    ping_interval=30,
-                    ping_timeout=10,
-                    close_timeout=10
-                )
-            else:
-                logger.info("Connecting to Voice Live API using API key...")
-                # Connect to Voice Live WebSocket - API key is in URL, no additional headers needed
-                self.websocket = await websockets.connect(
-                    voice_live_url,
-                    ping_interval=30,
-                    ping_timeout=10,
-                    close_timeout=10
-                )
+            logger.info("Connecting to Voice Live API using Azure Managed Identity...")
+            # Get WebSocket headers with Authorization token
+            headers = settings.get_websocket_headers(self.client_request_id)
+            
+            # Connect to Voice Live WebSocket with authentication headers
+            self.websocket = await websockets.connect(
+                voice_live_url,
+                extra_headers=headers,
+                ping_interval=30,
+                ping_timeout=10,
+                close_timeout=10
+            )
             
             logger.info("Voice Live WebSocket connected")
             
             # Start message receiving task
             asyncio.create_task(self._receive_messages())
             
-            if settings.use_managed_identity:
-                # Agent mode: Send session update but skip system prompt - instructions are pre-configured in the agent
-                await self._update_session()
-                await asyncio.sleep(0.2)
-                self.running = True
-            else:
-                # API key mode: Configure session and system prompt
-                await self._update_session()
-                await asyncio.sleep(0.2)
-                await self._create_conversation()
-                await self._start_response()
-                self.running = True
+            # Agent mode: Send session update but skip system prompt - instructions are pre-configured in the agent
+            await self._update_session()
+            await asyncio.sleep(0.2)
+            self.running = True
                 
-                logger.info("Voice Live WebSocket connected, waiting for session to be ready...")
             return True
             
         except Exception as e:
@@ -135,38 +125,18 @@ class AzureVoiceLiveService:
                 logger.error(f"Error closing Voice Live connection: {e}")
     
     async def _update_session(self) -> None:
-        """Update Voice Live session configuration - required for both API key and agent modes."""
+        """Update Voice Live session configuration - agent mode only."""
         try:
             # In agent mode, exclude instructions (they're read-only and pre-configured)
-            # In API key mode, include instructions
-            include_instructions = not settings.use_managed_identity
-            session_update = SessionUpdate.create_default(include_instructions=include_instructions)
+            session_update = SessionUpdate.create_default()
             await self.websocket.send(session_update)
         except Exception as e:
             logger.error(f"Error updating session: {e}")
     
     async def _create_conversation(self) -> None:
-        """Create initial conversation with system prompt - only for API key mode."""
-        if settings.use_managed_identity:
-            return
-            
-        try:
-            conversation_message = {
-                "type": "conversation.item.create",
-                "item": {
-                    "type": "message",
-                    "role": "system",
-                    "content": [
-                        {
-                            "type": "input_text",
-                            "text": settings.system_prompt
-                        }
-                    ]
-                }
-            }
-            await self.websocket.send(json.dumps(conversation_message))
-        except Exception as e:
-            logger.error(f"Error creating conversation: {e}")
+        """Create initial conversation with system prompt - not needed in agent mode."""
+        # Agent mode: instructions are pre-configured in the agent, skip conversation creation
+        return
     
     async def _start_response(self) -> None:
         """Start AI response generation."""
@@ -209,12 +179,11 @@ class AzureVoiceLiveService:
             message_type = data.get("type", "")
             
             if message_type == "session.created":
-                if settings.use_managed_identity:
-                    # In agent mode, session.created is enough to proceed
-                    await self._start_response()
+                # In agent mode, session.created is enough to proceed
+                await self._start_response()
                 
             elif message_type == "session.updated":
-                # Set connection ready for both API key and agent modes
+                # Set connection ready for agent mode
                 self.connection_ready.set()
                 
             elif message_type == "response.audio.delta":
