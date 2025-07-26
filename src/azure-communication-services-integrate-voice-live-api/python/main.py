@@ -70,10 +70,7 @@ except Exception as e:
 @app.on_event("startup")
 async def startup_event():
     """Application startup event handler."""
-    logger.info("Azure Communication Services Voice Live API service starting up")
-    logger.info(f"Configured base URL: {settings.base_url}")
-    logger.info(f"Voice Live endpoint: {settings.azure_voice_live_endpoint}")
-    logger.info(f"Voice Live model: {settings.voice_live_model}")
+    logger.info("Azure Communication Services Voice Live API service started")
 
 
 @app.on_event("shutdown")
@@ -195,8 +192,6 @@ async def handle_callback_events(
         
         # Process each event
         for event in events:
-            logger.info(f"Event received: {json.dumps(event, indent=2)}")
-            
             # Handle specific event types if needed
             event_type = event.get('type', '')
             if event_type:
@@ -224,8 +219,7 @@ async def websocket_endpoint(websocket: WebSocket):
     media_handler = None
     
     try:
-        logger.info(f"WebSocket connection accepted from: {websocket.client}")
-        logger.info("Starting ACS media streaming processing...")
+        logger.info("ACS WebSocket connection accepted")
         
         # Create media streaming handler
         media_handler = ACSMediaStreamingHandler(websocket)
@@ -277,9 +271,6 @@ async def _process_incoming_call_event(event: Dict[str, Any]) -> None:
         callback_url = URLHelper.create_callback_url(base_url, context_id, caller_id)
         websocket_url = URLHelper.create_websocket_url(base_url)
         
-        logger.info(f"Callback URL: {callback_url}")
-        logger.info(f"WebSocket URL: {websocket_url}")
-        
         # Configure media streaming options
         media_streaming_options = MediaStreamingOptions(
             transport_url=websocket_url,
@@ -291,9 +282,6 @@ async def _process_incoming_call_event(event: Dict[str, Any]) -> None:
             audio_format=AudioFormat.PCM16_K_MONO
         )
         
-        logger.info(f"Media streaming configured - Audio format: PCM 16kHz Mono")
-        
-        # Answer the call
         # Answer the call immediately with a holding message while Voice Live connects
         answer_result = call_automation_client.answer_call(
             incoming_call_context=incoming_call_context,
@@ -301,9 +289,6 @@ async def _process_incoming_call_event(event: Dict[str, Any]) -> None:
             media_streaming=media_streaming_options
         )
         logger.info(f"Call answered successfully - Connection ID: {answer_result.call_connection_id}")
-        
-        # Send immediate audio to keep Teams engaged while Voice Live connects
-        # We'll send a brief silence/tone to prevent Teams timeout, then let Voice Live take over
         logger.info("Call answered - Voice Live will connect shortly and begin AI conversation")
         
     except Exception as e:
