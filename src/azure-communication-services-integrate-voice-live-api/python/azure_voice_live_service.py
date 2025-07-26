@@ -62,11 +62,20 @@ class AzureVoiceLiveService:
             if self.websocket and not self.websocket.closed:
                 await self.websocket.close()
                 
+            # Reset connection state for new call
+            self.connection_ready.clear()
+            self.running = False
+            self.client_request_id = str(uuid.uuid4())  # Generate new request ID for each call
+            
+            # Small delay to prevent rapid reconnection issues
+            await asyncio.sleep(0.1)
+                
             # Try connecting with current tokens
             return await self._connect_with_retry()
             
         except Exception as e:
             logger.error(f"Failed to connect to Voice Live API: {e}")
+            logger.exception("Full connection error details:")
             return False
     
     async def _connect_with_retry(self) -> bool:
@@ -80,17 +89,20 @@ class AzureVoiceLiveService:
             voice_live_url = settings.get_voice_live_websocket_url()
             headers = settings.get_websocket_headers(self.client_request_id)
             
-            logger.info("Connecting to Voice Live API using Azure Managed Identity...")
+            logger.info(f"Connecting to Voice Live API using Azure Managed Identity... (Request ID: {self.client_request_id})")
             
-            self.websocket = await websockets.connect(
-                voice_live_url,
-                extra_headers=headers,
-                ping_interval=30,
-                ping_timeout=10,
-                close_timeout=10
+            self.websocket = await asyncio.wait_for(
+                websockets.connect(
+                    voice_live_url,
+                    extra_headers=headers,
+                    ping_interval=30,
+                    ping_timeout=10,
+                    close_timeout=10
+                ),
+                timeout=15  # 15 second connection timeout
             )
             
-            logger.info("Voice Live WebSocket connected")
+            logger.info(f"Voice Live WebSocket connected successfully (Request ID: {self.client_request_id})")
             
             # Start message receiving task
             asyncio.create_task(self._receive_messages())
@@ -105,21 +117,24 @@ class AzureVoiceLiveService:
         except websockets.InvalidStatusCode as e:
             if e.status_code == 401:
                 # Authentication failed - refresh tokens and retry once
-                logger.warning("Voice Live authentication failed (401), refreshing tokens and retrying...")
+                logger.warning(f"Voice Live authentication failed (401), refreshing tokens and retrying... (Request ID: {self.client_request_id})")
                 
                 settings.force_refresh_tokens()
                 voice_live_url = settings.get_voice_live_websocket_url()
                 headers = settings.get_websocket_headers(self.client_request_id)
                 
-                self.websocket = await websockets.connect(
-                    voice_live_url,
-                    extra_headers=headers,
-                    ping_interval=30,
-                    ping_timeout=10,
-                    close_timeout=10
+                self.websocket = await asyncio.wait_for(
+                    websockets.connect(
+                        voice_live_url,
+                        extra_headers=headers,
+                        ping_interval=30,
+                        ping_timeout=10,
+                        close_timeout=10
+                    ),
+                    timeout=15  # 15 second connection timeout
                 )
                 
-                logger.info("Voice Live WebSocket connected after token refresh")
+                logger.info(f"Voice Live WebSocket connected after token refresh (Request ID: {self.client_request_id})")
                 
                 # Start message handling and session setup
                 asyncio.create_task(self._receive_messages())
@@ -130,7 +145,15 @@ class AzureVoiceLiveService:
                 return True
             else:
                 # Other HTTP errors, don't retry
+                logger.error(f"Voice Live connection failed with status {e.status_code}: {e}")
                 raise
+        except asyncio.TimeoutError:
+            logger.error(f"Voice Live connection timed out after 15 seconds (Request ID: {self.client_request_id})")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error during Voice Live connection: {e}")
+            logger.exception("Full Voice Live connection error:")
+            raise
     
     async def wait_for_connection(self) -> None:
         """Wait for Voice Live connection to be established."""
@@ -169,8 +192,9 @@ class AzureVoiceLiveService:
         try:
             session_update = SessionUpdate.create_default()
             await self.websocket.send(session_update)
+            logger.info(f"Session update sent (Request ID: {self.client_request_id})")
         except Exception as e:
-            logger.error(f"Error updating session: {e}")
+            logger.error(f"Error updating session (Request ID: {self.client_request_id}): {e}")
     
     async def _create_conversation(self) -> None:
         """Not needed in agent mode - instructions are pre-configured."""
@@ -218,10 +242,12 @@ class AzureVoiceLiveService:
             
             if message_type == "session.created":
                 # In agent mode, session.created is enough to proceed
+                logger.info(f"Session created - starting AI response (Request ID: {self.client_request_id})")
                 await self._start_response()
                 
             elif message_type == "session.updated":
                 # Set connection ready for agent mode
+                logger.info(f"Session updated - connection ready (Request ID: {self.client_request_id})")
                 self.connection_ready.set()
                 
             elif message_type == "response.audio.delta":
