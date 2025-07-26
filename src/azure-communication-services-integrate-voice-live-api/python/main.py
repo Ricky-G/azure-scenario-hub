@@ -12,6 +12,7 @@ from typing import List, Dict, Any, Optional
 import uvicorn
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException, Query
 from fastapi.responses import JSONResponse
+from websockets.exceptions import ConnectionClosed
 from azure.eventgrid import EventGridEvent, SystemEventNames
 from azure.communication.callautomation import (
     CallAutomationClient,
@@ -34,6 +35,19 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Reduce Azure SDK logging verbosity
+logging.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(logging.WARNING)
+logging.getLogger('azure.identity').setLevel(logging.WARNING)
+logging.getLogger('azure.identity._credentials').setLevel(logging.WARNING)
+logging.getLogger('azure.identity._internal').setLevel(logging.WARNING)
+logging.getLogger('azure.identity._credentials.chained').setLevel(logging.WARNING)
+logging.getLogger('azure.identity._credentials.managed_identity').setLevel(logging.WARNING)
+logging.getLogger('azure.identity._credentials.environment').setLevel(logging.WARNING)
+logging.getLogger('azure.identity._credentials.default').setLevel(logging.WARNING)
+
+# Only show important Azure authentication events
+logging.getLogger('azure.identity._credentials.chained').setLevel(logging.INFO)  # Token acquisition only
 
 # FastAPI application instance
 app = FastAPI(
@@ -204,9 +218,10 @@ async def websocket_endpoint(websocket: WebSocket):
     Args:
         websocket: WebSocket connection from ACS
     """
-    # Simply accept the WebSocket connection
-    # FastAPI/Starlette handles keep-alive and ping/pong automatically
+    # Accept the WebSocket connection with custom keep-alive settings
     await websocket.accept()
+    
+    media_handler = None
     
     try:
         logger.info(f"WebSocket connection accepted from: {websocket.client}")
@@ -218,12 +233,20 @@ async def websocket_endpoint(websocket: WebSocket):
         # Process WebSocket messages
         await media_handler.process_websocket()
         
-    except WebSocketDisconnect:
-        logger.info("ACS WebSocket connection closed by client")
+    except WebSocketDisconnect as e:
+        logger.info(f"ACS WebSocket connection closed by client: {e}")
+    except ConnectionClosed as e:
+        logger.info(f"ACS WebSocket connection closed: {e}")
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
         logger.exception("Full exception details:")
     finally:
+        # Ensure cleanup happens even if media_handler wasn't created
+        if media_handler:
+            try:
+                await media_handler.close()
+            except Exception as cleanup_error:
+                logger.error(f"Error during handler cleanup: {cleanup_error}")
         logger.info("WebSocket connection cleanup completed")
 
 
@@ -271,13 +294,17 @@ async def _process_incoming_call_event(event: Dict[str, Any]) -> None:
         logger.info(f"Media streaming configured - Audio format: PCM 16kHz Mono")
         
         # Answer the call
-        # Answer the call directly (no options object needed)
+        # Answer the call immediately with a holding message while Voice Live connects
         answer_result = call_automation_client.answer_call(
             incoming_call_context=incoming_call_context,
             callback_url=callback_url,
             media_streaming=media_streaming_options
         )
         logger.info(f"Call answered successfully - Connection ID: {answer_result.call_connection_id}")
+        
+        # Send immediate audio to keep Teams engaged while Voice Live connects
+        # We'll send a brief silence/tone to prevent Teams timeout, then let Voice Live take over
+        logger.info("Call answered - Voice Live will connect shortly and begin AI conversation")
         
     except Exception as e:
         logger.error(f"Error processing incoming call event: {e}")

@@ -5,6 +5,10 @@ Uses Pydantic Settings for type-safe configuration management
 from pydantic_settings import BaseSettings
 from typing import Optional
 import os
+import logging
+from azure.identity import DefaultAzureCredential
+
+logger = logging.getLogger(__name__)
 
 
 class AppSettings(BaseSettings):
@@ -24,10 +28,15 @@ class AppSettings(BaseSettings):
     voice_live_model: str = "gpt-4o-realtime-preview"
     system_prompt: str = "You are a helpful assistant"
     
-    # TODO: Azure Managed Identity / Token Credential authentication (future enhancement)
-    # use_managed_identity: bool = False  # Flag to switch between API key and managed identity
-    # agent_id: Optional[str] = None  # For agent-based authentication
-    # agent_project_name: Optional[str] = None  # For agent project authentication
+    # Azure Managed Identity / Token Credential authentication
+    use_managed_identity: bool = True  # Flag to switch between API key and managed identity
+    agent_id: Optional[str] = "asst_aePwwNRn467YVWnxtU5t9MO0"
+    agent_project_name: Optional[str] = "amp-test-project"
+    
+    # Token storage (populated at runtime)
+    _cognitive_services_token: Optional[str] = None
+    _azure_ai_token: Optional[str] = None
+    _azure_credential: Optional[DefaultAzureCredential] = None
     
     # Logging configuration
     log_level: str = "INFO"
@@ -44,65 +53,80 @@ class AppSettings(BaseSettings):
         else:
             return f"ws://{self.host}:{self.port}/ws"
     
+    def get_azure_tokens(self) -> tuple[str, str]:
+        """Fetch Azure Cognitive Services and AI tokens using DefaultAzureCredential."""
+        if not self._azure_credential:
+            self._azure_credential = DefaultAzureCredential()
+        
+        # Get both tokens as per the sample pattern
+        cognitive_services_token = self._azure_credential.get_token("https://cognitiveservices.azure.com/.default")
+        azure_ai_token = self._azure_credential.get_token("https://ai.azure.com/.default")
+        
+        # Store tokens for reuse
+        self._cognitive_services_token = cognitive_services_token.token
+        self._azure_ai_token = azure_ai_token.token
+        
+        logger.debug(f"Retrieved tokens - Cognitive Services: {self._cognitive_services_token[:20]}...")
+        logger.debug(f"Retrieved tokens - Azure AI: {self._azure_ai_token[:20]}...")
+        
+        return self._cognitive_services_token, self._azure_ai_token
+    
     def get_voice_live_websocket_url(self, client_request_id: str) -> str:
-        """Generate Azure Voice Live WebSocket URL using API key authentication - matching .NET implementation."""
+        """Generate Azure Voice Live WebSocket URL with token-based authentication."""
         
         base_url = self.azure_voice_live_endpoint.replace("https://", "wss://").rstrip("/")
         
-        # TODO: Add Azure Managed Identity token-based authentication support (future enhancement)
-        # This is the centralized place to implement Azure token credential flow
-        # When implementing managed identity authentication:
-        # 1. Check self.use_managed_identity flag
-        # 2. If managed identity: 
-        #    - Initialize: self.azure_async_token_credential = DefaultAzureCredential()
-        #    - Get tokens: cognitive_services_token = self.azure_async_token_credential.get_token("https://cognitiveservices.azure.com/.default")
-        #    - Get AI token: azure_ai_token = self.azure_async_token_credential.get_token("https://ai.azure.com/.default")
-        # 3. Build URL with tokens instead of api-key:
-        #    - For agent-based: add agent_id and agent_access_token parameters
-        #    - For standard: use Authorization header with bearer token
-        # 4. Handle token refresh logic and caching
-        
-        # Current implementation: API key authentication
-        # Use voice-agent endpoint matching .NET implementation exactly
-        return (f"{base_url}/voice-agent/realtime"
-                f"?api-version=2025-05-01-preview"
-                f"&x-ms-client-request-id={client_request_id}"
-                f"&model={self.voice_live_model}"
-                f"&api-key={self.azure_voice_live_api_key}")
+        if self.use_managed_identity:
+            # Use Azure Managed Identity token-based authentication
+            cognitive_token, ai_token = self.get_azure_tokens()
+            
+            # Build URL with agent-based authentication using AI token
+            return (f"{base_url}/voice-agent/realtime"
+                    f"?api-version=2025-05-01-preview"
+                    f"&agent_id={self.agent_id}"
+                    f"&agent-project-name={self.agent_project_name}"
+                    f"&agent_access_token={ai_token}")
+        else:
+            # Fallback to API key authentication
+            return (f"{base_url}/voice-agent/realtime"
+                    f"?api-version=2025-05-01-preview"
+                    f"&x-ms-client-request-id={client_request_id}"
+                    f"&model={self.voice_live_model}"
+                    f"&api-key={self.azure_voice_live_api_key}")
+    
+    def get_websocket_headers(self, client_request_id: str) -> dict:
+        """Get WebSocket connection headers with authentication."""
+        if self.use_managed_identity:
+            # Use cognitive services token for Authorization header
+            cognitive_token, _ = self.get_azure_tokens()
+            return {
+                "Authorization": f"Bearer {cognitive_token}",
+                "x-ms-client-request-id": client_request_id
+            }
+        else:
+            # API key authentication doesn't need special headers
+            return {
+                "x-ms-client-request-id": client_request_id
+            }
     
     # TODO: Add Azure Managed Identity token management methods (future enhancement)
-    # async def get_azure_tokens(self) -> tuple[str, str]:
-    #     """Fetch Azure Cognitive Services and AI tokens using DefaultAzureCredential."""
-    #     # from azure.identity.aio import DefaultAzureCredential
-    #     # self.azure_async_token_credential = DefaultAzureCredential()
-    #     # cognitive_services_token = await self.azure_async_token_credential.get_token("https://cognitiveservices.azure.com/.default")
-    #     # azure_ai_token = await self.azure_async_token_credential.get_token("https://ai.azure.com/.default")
-    #     # return cognitive_services_token.token, azure_ai_token.token
-    #     pass
-    #
-    # async def refresh_tokens_if_needed(self) -> tuple[str, str]:
-    #     """Check token expiry and refresh if needed."""
-    #     # Implement token refresh logic for both cognitive services and AI tokens
-    #     pass
+    # These methods are now implemented above
     
     def get_auth_headers(self) -> dict:
         """Get authentication headers for HTTP requests to Azure services."""
-        # TODO: Extend for Azure Managed Identity token-based authentication (future enhancement)
-        # When implementing managed identity, check self.use_managed_identity flag and return appropriate headers:
-        # if self.use_managed_identity:
-        #     cognitive_token, ai_token = await self.get_azure_tokens()
-        #     return {
-        #         "Authorization": f"Bearer {cognitive_token}",
-        #         "Content-Type": "application/json"
-        #     }
-        # else:
-        #     return current API key headers
-        
-        # Current implementation: API key authentication
-        return {
-            "api-key": self.azure_voice_live_api_key,
-            "Content-Type": "application/json"
-        }
+        if self.use_managed_identity:
+            # Use cognitive services token for HTTP requests
+            cognitive_token, _ = self.get_azure_tokens()
+            return {
+                "Authorization": f"Bearer {cognitive_token}",
+                "Content-Type": "application/json"
+            }
+        else:
+            # Current implementation: API key authentication
+            return {
+                "api-key": self.azure_voice_live_api_key,
+                "Content-Type": "application/json"
+            }
 
 
 # Global settings instance

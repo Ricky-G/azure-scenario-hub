@@ -56,13 +56,14 @@ class AudioData(StreamingDataBase):
             return b""
 
 
-class MediaStreamingMetadata(StreamingDataBase):
-    """Metadata from Azure Communication Services media streaming."""
-    kind: str = "MediaStreamingMetadata"
-    media_streaming_media_type: str = ""
-    media_streaming_audio_channel_type: str = ""
-    media_streaming_audio_sample_rate: str = ""
-    media_streaming_audio_format: str = ""
+class AudioMetadata(StreamingDataBase):
+    """Audio metadata from Azure Communication Services media streaming."""
+    kind: str = "AudioMetadata"
+    subscription_id: str = ""
+    encoding: str = ""
+    sample_rate: int = 0
+    channels: int = 0
+    length: int = 0
 
 
 class UnknownStreamingData(StreamingDataBase):
@@ -116,7 +117,7 @@ class StreamingDataParser:
     """Parser for incoming streaming data from ACS."""
     
     @staticmethod
-    def parse(json_data: Union[str, dict]) -> Union[AudioData, MediaStreamingMetadata, UnknownStreamingData]:
+    def parse(json_data: Union[str, dict]) -> Union[AudioData, AudioMetadata, UnknownStreamingData]:
         """Parse JSON string or dict into appropriate streaming data object."""
         try:
             # Handle both string and dict input
@@ -148,12 +149,16 @@ class StreamingDataParser:
                     participant_raw_id=audio_data.get("participantRawID", ""),
                     is_silent=audio_data.get("silent", False)  # Note: "silent" not "isSilent"
                 )
-            elif kind == "MediaStreamingMetadata":
-                return MediaStreamingMetadata(
-                    media_streaming_media_type=data.get("mediaStreamingMediaType", ""),
-                    media_streaming_audio_channel_type=data.get("mediaStreamingAudioChannelType", ""),
-                    media_streaming_audio_sample_rate=data.get("mediaStreamingAudioSampleRate", ""),
-                    media_streaming_audio_format=data.get("mediaStreamingAudioFormat", "")
+            elif kind == "AudioMetadata":
+                # Handle the ACS AudioMetadata format: {"kind":"AudioMetadata","audioMetadata":{...}}
+                audio_metadata = data.get("audioMetadata", data)  # Fallback to direct structure
+                
+                return AudioMetadata(
+                    subscription_id=audio_metadata.get("subscriptionId", ""),
+                    encoding=audio_metadata.get("encoding", ""),
+                    sample_rate=int(audio_metadata.get("sampleRate", 0)),
+                    channels=int(audio_metadata.get("channels", 0)),
+                    length=int(audio_metadata.get("length", 0))
                 )
             else:
                 return UnknownStreamingData(properties=data)
@@ -197,7 +202,7 @@ class SessionUpdate(VoiceLiveMessage):
     session: Dict[str, Any]
     
     @classmethod
-    def create_default(cls) -> str:
+    def create_default(cls, include_instructions: bool = True) -> str:
         """Create default session update configuration optimized for phone calls."""
         session_config = {
             "type": "session.update",
@@ -219,10 +224,14 @@ class SessionUpdate(VoiceLiveMessage):
                     "temperature": 0.7  # Slightly lower for more consistent responses
                 },
                 "max_response_output_tokens": 200,  # Shorter responses for phone calls
-                "modalities": ["text", "audio"],
-                "instructions": "You are a helpful AI assistant. Keep responses concise and conversational since this is a phone call. Be natural and engaging."
+                "modalities": ["text", "audio"]
             }
         }
+        
+        # Only include instructions in API key mode - they're read-only in agent mode
+        if include_instructions:
+            session_config["session"]["instructions"] = "You are a helpful AI assistant. Keep responses concise and conversational since this is a phone call. Be natural and engaging."
+        
         return json.dumps(session_config)
 
 
