@@ -1,6 +1,8 @@
 # Azure Function - Unzip Large Files Scenario
 
-This scenario demonstrates how to build an Azure Function that automatically processes large password-protected ZIP files (up to several GBs) using advanced streaming techniques to work within the 1.5GB memory constraints of consumption-based Function Apps. Unlike traditional approaches that load entire files into memory, this solution streams data in chunks, making it possible to handle files much larger than available RAM.
+> **⚠️ Important Note**: This Python solution loads entire ZIP files into memory and is suitable for files under ~1GB on consumption plans. For larger files or true streaming capabilities, see the [.NET streaming solution blog post](https://clouddev.blog/Azure/Function-Apps/unzipping-and-shuffling-gbs-of-data-using-azure-functions/) which can handle multi-GB files with constant ~50MB memory usage.
+
+This scenario demonstrates how to build an Azure Function that automatically processes password-protected ZIP files using Python. While not truly streaming like the .NET approach, it provides a simple solution for small to medium-sized ZIP files within consumption plan memory constraints.
 
 ## Architecture
 
@@ -107,43 +109,110 @@ ZIP_PASSWORD=password
 ## How It Works
 
 ### The Large File Challenge
-Traditional file processing loads entire files into memory, which fails for large files in serverless environments where memory is limited to 1.5GB in consumption plans. A 2GB ZIP file would crash the function before processing even begins.
+Traditional file processing loads entire files into memory, which fails for large files in serverless environments where memory is limited to 1.5GB in consumption plans. Understanding the limitations of different approaches is crucial for choosing the right solution.
 
-### Our Streaming Solution
+### Python Solution: Memory-Based Processing with Streaming Extraction
+
+**⚠️ Important Limitation**: Unlike true streaming solutions, this Python implementation loads the entire ZIP file into memory before processing.
 
 1. **Blob Trigger**: The function automatically triggers when a new file is uploaded to the "zipped" container
 
-2. **Streaming Download**: Instead of loading the entire ZIP into memory, we stream it in 4MB chunks to a temporary file:
+2. **ZIP File Loading**: The entire ZIP file is loaded into memory using BytesIO:
    ```python
-   chunk_size = 4 * 1024 * 1024  # 4MB chunks
-   with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-       for chunk in iter(lambda: myblob.read(chunk_size), b''):
-           temp_file.write(chunk)
+   # Loads ENTIRE ZIP into memory - NOT streaming
+   zip_data = myblob.read()  # Downloads full ZIP file
+   zip_stream = BytesIO(zip_data)  # Wraps in memory stream
    ```
-   This approach uses only 4MB of memory regardless of file size.
+   **Memory Impact**: Uses ZIP file size + processing overhead
 
-3. **Password Extraction**: Uses pyzipper library to handle AES-encrypted password-protected ZIP files, opening them from the temporary file rather than memory
+3. **Password Extraction**: Uses pyzipper library to handle AES-encrypted password-protected ZIP files from the in-memory stream
 
-4. **Staged Block Upload**: The key to handling large extracted files - Azure Blob Storage's staged block upload API:
+4. **Staged Block Upload**: Individual files are extracted and uploaded in 4MB chunks:
    ```python
-   # Upload in blocks without loading entire file
-   block_list = []
+   # Only the extraction/upload phase streams
    with zf.open(file_info) as source_file:
-       while chunk := source_file.read(chunk_size):
-           block_id = str(uuid.uuid4())
-           dest_blob_client.stage_block(block_id, chunk, len(chunk))
-           block_list.append(BlobBlock(block_id=block_id))
-   dest_blob_client.commit_block_list(block_list)
+       while True:
+           chunk = source_file.read(chunk_size)  # 4MB chunks
+           if not chunk:
+               break
+           dest_blob_client.stage_block(block_id, chunk)
    ```
-   Each 4MB chunk is uploaded independently, then Azure assembles them into the final blob.
+   **Memory for extraction**: Only 4MB chunks, but ZIP stays in memory throughout
 
-5. **Folder Preservation**: Maintains the complete directory structure from the ZIP file by prefixing extracted files with their original paths
+5. **Folder Preservation**: Maintains the complete directory structure from the ZIP file
 
-### Why This Approach Works
-- **Memory Usage**: Constant 4MB regardless of file size (vs. loading entire file)
-- **Scalability**: Can handle files up to Azure Blob Storage limits (190.7 TiB)
-- **Reliability**: Temporary file provides stability for large operations
-- **Cost Effective**: Runs on cheap consumption plan instead of requiring premium plans
+### Memory Usage Reality
+
+| ZIP File Size | Memory Usage | Feasible on Consumption Plan? |
+|---------------|--------------|-------------------------------|
+| 100 MB | ~150 MB | ✅ Yes |
+| 500 MB | ~550 MB | ✅ Yes |
+| 1 GB | ~1.1 GB | ⚠️ Borderline (close to 1.5GB limit) |
+| 2 GB | ~2.1 GB | ❌ No - exceeds consumption plan limit |
+
+### Why Not True Streaming in Python?
+
+Python ZIP libraries (including `pyzipper`) require **seekable streams** to read ZIP file headers and central directories. Azure Function's `InputStream` is **forward-only** and not seekable, forcing us to either:
+
+1. **Load into memory** (current approach) - simple but memory-limited
+2. **Download to temp file** - more complex, still limited by consumption plan
+
+### Comparison with .NET Solution
+
+For a comprehensive comparison, see the detailed analysis in [this blog post](https://clouddev.blog/Azure/Function-Apps/unzipping-and-shuffling-gbs-of-data-using-azure-functions/) which demonstrates true streaming in .NET.
+
+**✅ .NET Advantages** (from the blog post):
+```csharp
+// .NET - True streaming, no memory limitations
+using (ZipArchive archive = new ZipArchive(inputBlob))  // Direct stream
+{
+    foreach (ZipArchiveEntry entry in archive.Entries)
+    {
+        using (var stream = entry.Open())
+        {
+            await blob.UploadFromStreamAsync(stream);  // Stream directly
+        }
+    }
+}
+```
+
+- **Memory usage**: ~50-100MB regardless of ZIP size
+- **File size limit**: Can handle multi-GB files on consumption plan
+- **True streaming**: Never loads full ZIP into memory
+
+**❌ Python Limitations**:
+- **Memory usage**: ZIP size + extraction buffers
+- **File size limit**: ~1GB on consumption plan due to memory constraints
+- **Pseudo-streaming**: Only extraction phase streams, ZIP loading does not
+
+### When to Use This Python Solution
+
+**✅ Good for**:
+- ZIP files under 1GB
+- Development/prototyping scenarios  
+- Teams with Python expertise
+- Simple deployment requirements
+
+**❌ Consider .NET instead for**:
+- ZIP files over 1GB
+- Production workloads with large files
+- Memory-constrained environments
+- Maximum performance requirements
+
+### Alternative Approaches for Large Files
+
+1. **Premium Function Plan**: 3.5GB-14GB memory allows larger ZIP files
+   - **Scale up**: Manually scale to higher SKU (EP2/EP3) when processing large files
+   - **Scale down**: Return to lower SKU (EP1) or consumption plan when idle
+   - **Cost optimization**: Only pay for higher memory when actually needed
+   
+2. **Azure Container Instances**: Custom memory allocation for very large files
+
+3. **Migrate to .NET**: Use the proven streaming approach from the blog post
+   - **Best option for large files**: Handles multi-GB files on consumption plan
+   - **Constant memory usage**: ~50MB regardless of ZIP size
+   
+4. **Azure Data Factory**: Purpose-built for large-scale data processing
 
 ## Testing
 
@@ -253,28 +322,38 @@ This scenario includes sample passwords for demonstration purposes only. Before 
 
 ## Performance Notes
 
-### Benchmarks
-| File Size | Processing Time | Memory Usage | Cost (Consumption Plan) |
-|-----------|----------------|--------------|------------------------|
-| 100 MB | ~30 seconds | ~50 MB | < $0.01 |
-| 1 GB | ~5 minutes | ~50 MB | < $0.01 |
-| 5 GB | ~20 minutes | ~50 MB | < $0.05 |
-| 10 GB | ~30 minutes* | ~50 MB | < $0.10 |
+### Benchmarks (Python Solution)
 
-*Limited by 30-minute function timeout - can be extended in Premium plans
+| File Size | Processing Time | Memory Usage | Consumption Plan | Status |
+|-----------|----------------|--------------|------------------|---------|
+| 100 MB | ~30 seconds | ~150 MB | ✅ Works well | Recommended |
+| 500 MB | ~2 minutes | ~550 MB | ✅ Works | Good |
+| 1 GB | ~5 minutes | ~1.1 GB | ⚠️ Borderline | Risky |
+| 2 GB | N/A | ~2.1 GB | ❌ Fails | Exceeds memory limit |
 
-### Key Optimizations
-- **Streaming Architecture**: Constant memory usage regardless of file size
-- **4MB Chunk Size**: Optimal balance between memory usage and I/O efficiency
+**Note**: Unlike the .NET solution which maintains constant ~50MB memory usage regardless of ZIP size, Python memory usage scales with ZIP file size.
+
+### Key Differences from .NET Approach
+- **Memory Scaling**: Python uses ZIP size + buffers, .NET uses constant ~50MB
+- **File Size Limits**: Python limited to ~1GB, .NET can handle multi-GB files
+- **True Streaming**: Only .NET achieves true streaming from blob to extraction
+- **Consumption Plan**: .NET approach much more suitable for large files
+
+### Key Characteristics of Python Solution
+- **Memory Usage**: Scales with ZIP file size (ZIP size + extraction buffers)
+- **4MB Chunk Size**: Optimal for extraction and upload phases
 - **Staged Block Upload**: Leverages Azure's native blob assembly for large files
-- **Temporary File Usage**: Prevents memory overflow while maintaining performance
-- **Sequential Processing**: Ensures consistent performance within memory constraints
+- **BytesIO Approach**: Simple in-memory processing, no temp files
+- **Sequential Processing**: Processes one file at a time to minimize memory peaks
+- **Consumption Plan Suitable**: For ZIP files under ~1GB only
 
 ### Scaling Considerations
-- **Consumption Plan**: Handles files up to ~10GB (30-minute timeout limit)
-- **Premium Plan**: Can handle larger files with extended timeout (up to 60 minutes)
-- **Multiple Instances**: Function scales automatically for concurrent ZIP files
-- **Network Bandwidth**: Processing speed primarily limited by Azure's internal network (typically 1-10 Gbps)
+- **Consumption Plan**: Handles ZIP files up to ~1GB (due to 1.5GB memory limit)
+- **Premium Plan**: Can handle larger ZIP files with more memory (3.5GB-14GB)
+  - **Dynamic scaling**: Scale up to EP2/EP3 for large file processing, scale down to EP1 or consumption when idle
+  - **Cost efficiency**: Only pay for higher memory tiers when actually processing large files
+- **For Multi-GB Files**: Consider the .NET solution (handles large files on consumption plan) or Azure Data Factory
+- **Multiple Instances**: Function scales automatically for concurrent small-medium ZIP files
 
 ## Monitoring
 

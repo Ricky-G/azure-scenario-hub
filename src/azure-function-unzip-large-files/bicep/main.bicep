@@ -22,6 +22,9 @@ param appServicePlanName string = 'asp-unzip-${uniqueString(resourceGroup().id)}
 @description('Application Insights name')
 param applicationInsightsName string = 'appi-unzip-${uniqueString(resourceGroup().id)}'
 
+@description('Log Analytics workspace name')
+param logAnalyticsWorkspaceName string = 'law-unzip-${uniqueString(resourceGroup().id)}'
+
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
   location: location
@@ -58,12 +61,24 @@ resource destinationContainer 'Microsoft.Storage/storageAccounts/blobServices/co
   }
 }
 
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+  name: logAnalyticsWorkspaceName
+  location: location
+  properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
+    retentionInDays: 30
+  }
+}
+
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: applicationInsightsName
   location: location
   kind: 'web'
   properties: {
     Application_Type: 'web'
+    WorkspaceResourceId: logAnalyticsWorkspace.id
   }
 }
 
@@ -127,8 +142,10 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
 }
 
 output storageAccountName string = storageAccount.name
+@description('Storage account connection string - contains sensitive information')
 output storageAccountConnectionString string = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
 output sourceContainerName string = sourceContainer.name
 output destinationContainerName string = destinationContainer.name
 output functionAppName string = functionApp.name
 output applicationInsightsName string = applicationInsights.name
+output logAnalyticsWorkspaceName string = logAnalyticsWorkspace.name

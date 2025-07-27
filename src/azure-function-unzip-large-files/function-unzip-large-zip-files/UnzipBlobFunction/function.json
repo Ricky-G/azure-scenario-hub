@@ -5,7 +5,7 @@
       "name": "myblob",
       "type": "blobTrigger",
       "direction": "in",
-      "path": "%SOURCE_CONTAINER_NAME%/{name}",
+      "path": "zipped/{name}",
       "connection": "AzureWebJobsStorage"
     }
   ]

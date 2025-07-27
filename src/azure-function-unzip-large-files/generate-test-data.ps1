@@ -4,7 +4,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 
 # Configuration
 $NumFiles = 10
-$FileSizeMB = 100
+$FileSizeMB = 1
 $ZipPassword = "password"
 $OutputDir = "test-data"
 $ZipFile = "test-data-1gb.zip"
@@ -84,7 +84,7 @@ Write-Host "ZIP Size: ${ZipSizeMB}MB" -ForegroundColor White
 Write-Host ""
 Write-Host "To upload to Azure Storage:" -ForegroundColor Cyan
 Write-Host "az storage blob upload \`" -ForegroundColor White
-Write-Host "  --account-name <storage-account-name> \`" -ForegroundColor White
+Write-Host "  --account-name YOUR_STORAGE_ACCOUNT_NAME \`" -ForegroundColor White
 Write-Host "  --container-name zipped \`" -ForegroundColor White
 Write-Host "  --name $ZipFile \`" -ForegroundColor White
 Write-Host "  --file $ZipFile" -ForegroundColor White
