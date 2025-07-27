@@ -41,7 +41,6 @@ class AudioResampler:
             resampled_int16 = np.round(resampled_array).astype(np.int16)
             resampled_bytes = resampled_int16.tobytes()
             
-            logger.debug(f"Resampled audio: {len(audio_bytes)} -> {len(resampled_bytes)} bytes")
             return resampled_bytes
             
         except Exception as e:
@@ -79,7 +78,6 @@ class AudioResampler:
             resampled_int16 = np.round(resampled_array).astype(np.int16)
             resampled_bytes = resampled_int16.tobytes()
             
-            logger.debug(f"Resampled audio 16k→24k: {len(audio_bytes)} -> {len(resampled_bytes)} bytes")
             return resampled_bytes
             
         except Exception as e:

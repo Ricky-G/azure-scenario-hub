@@ -23,7 +23,12 @@ class AudioData(StreamingDataBase):
     is_silent: bool = False
     
     def get_timestamp_ms(self) -> int:
-        """Get timestamp as milliseconds since epoch."""
+        """
+        Get timestamp as milliseconds since epoch.
+        
+        Handles both integer timestamps and ISO 8601 string formats 
+        from different ACS message sources.
+        """
         if isinstance(self.timestamp, int):
             return self.timestamp
         elif isinstance(self.timestamp, str):
@@ -56,13 +61,14 @@ class AudioData(StreamingDataBase):
             return b""
 
 
-class MediaStreamingMetadata(StreamingDataBase):
-    """Metadata from Azure Communication Services media streaming."""
-    kind: str = "MediaStreamingMetadata"
-    media_streaming_media_type: str = ""
-    media_streaming_audio_channel_type: str = ""
-    media_streaming_audio_sample_rate: str = ""
-    media_streaming_audio_format: str = ""
+class AudioMetadata(StreamingDataBase):
+    """Audio metadata from Azure Communication Services media streaming."""
+    kind: str = "AudioMetadata"
+    subscription_id: str = ""
+    encoding: str = ""
+    sample_rate: int = 0
+    channels: int = 0
+    length: int = 0
 
 
 class UnknownStreamingData(StreamingDataBase):
@@ -79,7 +85,6 @@ class OutboundAudioData(BaseModel):
     @classmethod
     def create(cls, audio_bytes: bytes, participant_id: str = "VoiceLiveAI") -> str:
         """Create JSON string for outbound audio data in the exact format ACS expects."""
-        # Use ISO format with milliseconds like .NET implementation
         timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
         
         data = {
@@ -100,7 +105,6 @@ class StopAudioData(BaseModel):
     @classmethod
     def create(cls) -> str:
         """Create JSON string to stop audio playback."""
-        # Use ISO format with milliseconds like .NET implementation
         timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
         
         data = {
@@ -116,7 +120,7 @@ class StreamingDataParser:
     """Parser for incoming streaming data from ACS."""
     
     @staticmethod
-    def parse(json_data: Union[str, dict]) -> Union[AudioData, MediaStreamingMetadata, UnknownStreamingData]:
+    def parse(json_data: Union[str, dict]) -> Union[AudioData, AudioMetadata, UnknownStreamingData]:
         """Parse JSON string or dict into appropriate streaming data object."""
         try:
             # Handle both string and dict input
@@ -148,40 +152,40 @@ class StreamingDataParser:
                     participant_raw_id=audio_data.get("participantRawID", ""),
                     is_silent=audio_data.get("silent", False)  # Note: "silent" not "isSilent"
                 )
-            elif kind == "MediaStreamingMetadata":
-                return MediaStreamingMetadata(
-                    media_streaming_media_type=data.get("mediaStreamingMediaType", ""),
-                    media_streaming_audio_channel_type=data.get("mediaStreamingAudioChannelType", ""),
-                    media_streaming_audio_sample_rate=data.get("mediaStreamingAudioSampleRate", ""),
-                    media_streaming_audio_format=data.get("mediaStreamingAudioFormat", "")
+            elif kind == "AudioMetadata":
+                # Handle the ACS AudioMetadata format: {"kind":"AudioMetadata","audioMetadata":{...}}
+                audio_metadata = data.get("audioMetadata", data)  # Fallback to direct structure
+                
+                return AudioMetadata(
+                    subscription_id=audio_metadata.get("subscriptionId", ""),
+                    encoding=audio_metadata.get("encoding", ""),
+                    sample_rate=int(audio_metadata.get("sampleRate", 0)),
+                    channels=int(audio_metadata.get("channels", 0)),
+                    length=int(audio_metadata.get("length", 0))
                 )
             else:
                 return UnknownStreamingData(properties=data)
                 
         except Exception as e:
-            # Add debug logging to see what data we're receiving
             import logging
             logger = logging.getLogger(__name__)
             
-            # Special handling for timestamp parsing errors
+            # Handle timestamp parsing errors gracefully
             if "invalid literal for int()" in str(e) and "timestamp" in str(json_data):
-                logger.warning(f"Timestamp parsing error - trying to handle ISO format: {e}")
-                # Try to re-parse with string timestamp handling
+                logger.warning(f"Timestamp parsing error, using string format: {e}")
                 try:
                     if isinstance(json_data, dict):
                         audio_data = json_data.get("audioData", json_data)
                         return AudioData(
                             data=audio_data.get("data", ""),
-                            timestamp=str(audio_data.get("timestamp", "0")),  # Keep as string
+                            timestamp=str(audio_data.get("timestamp", "0")),
                             participant_raw_id=audio_data.get("participantRawID", ""),
                             is_silent=audio_data.get("silent", False)
                         )
-                except Exception as e2:
-                    logger.error(f"Secondary parsing attempt failed: {e2}")
+                except Exception:
+                    pass  # Fall through to generic error handling
             
             logger.error(f"Error parsing streaming data: {e}")
-            logger.debug(f"Received data type: {type(json_data)}")
-            logger.debug(f"Received data sample: {str(json_data)[:200]}...")
             return UnknownStreamingData(properties={"error": str(e), "received_data_type": str(type(json_data))})
 
 
@@ -198,7 +202,7 @@ class SessionUpdate(VoiceLiveMessage):
     
     @classmethod
     def create_default(cls) -> str:
-        """Create default session update configuration optimized for phone calls."""
+        """Create default session update configuration for agent mode."""
         session_config = {
             "type": "session.update",
             "session": {
@@ -210,19 +214,18 @@ class SessionUpdate(VoiceLiveMessage):
                     "remove_filler_words": False
                 },
                 "input_audio_sampling_rate": 24000,
-                # Removed output_audio_sampling_rate - not supported by Voice Live API
                 "input_audio_noise_reduction": {"type": "azure_deep_noise_suppression"},
                 "input_audio_echo_cancellation": {"type": "server_echo_cancellation"},
                 "voice": {
                     "name": "en-US-Aria:DragonHDLatestNeural",
                     "type": "azure-standard",
-                    "temperature": 0.7  # Slightly lower for more consistent responses
+                    "temperature": 0.7
                 },
-                "max_response_output_tokens": 200,  # Shorter responses for phone calls
-                "modalities": ["text", "audio"],
-                "instructions": "You are a helpful AI assistant. Keep responses concise and conversational since this is a phone call. Be natural and engaging."
+                "max_response_output_tokens": 200,
+                "modalities": ["text", "audio"]
             }
         }
+        
         return json.dumps(session_config)
 
 

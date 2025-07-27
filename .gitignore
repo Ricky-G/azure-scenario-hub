@@ -446,3 +446,4 @@ temp/
 #####################
 
 appsettings.json
+.venv

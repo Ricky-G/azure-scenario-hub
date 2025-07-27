@@ -1,0 +1,22 @@
+# Environment files
+.env
+!.env.sample
+
+# Test data
+*.zip
+test-data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.python_packages/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

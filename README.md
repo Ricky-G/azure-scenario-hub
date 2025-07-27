@@ -31,6 +31,12 @@ A collection of Azure infrastructure templates for experimentation and learning.
 |----------|-------------|--------|--------------|
 | [Azure Integration Services Load Test](./src/azure-integration-services-load-test/) | Load testing scenario for microservices architecture with Function Apps and Service Bus Premium | ✅ Ready | 5 independent functions, Service Bus topics, private endpoints, comprehensive load testing tools |
 
+### Data Processing
+
+| Scenario | Description | Status | Key Features |
+|----------|-------------|--------|--------------|
+| [Azure Function - Unzip Large Files](./src/azure-function-unzip-large-files/) | Stream-process large password-protected ZIP files (up to 10GB+) in serverless Functions | ✅ Ready | Streaming architecture, constant memory usage, handles files larger than available RAM, staged blob uploads |
+
 ### AI
 
 | Scenario | Description | Status | Key Features |
