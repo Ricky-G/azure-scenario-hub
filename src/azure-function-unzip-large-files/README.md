@@ -6,7 +6,7 @@ This scenario demonstrates how to build an Azure Function that automatically pro
 
 ```mermaid
 graph LR
-    A[Blob Storage<br/>Zipped Container] -->|Blob Trigger| B[Azure Function<br/>Python 3.9]
+    A[Blob Storage<br/>Zipped Container] -->|Blob Trigger| B[Azure Function<br/>Python]
     B -->|Stream Extract| C[Blob Storage<br/>Unzipped Container]
     B --> D[Application Insights]
     

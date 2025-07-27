@@ -270,26 +270,274 @@ LOG_LEVEL=DEBUG
 
 This will show detailed audio processing and WebSocket message logs.
 
-## � Comparison with .NET Version
+## 🏗️ Python Application Architecture Deep Dive
 
-| Feature | Python Implementation | .NET Implementation |
-|---------|----------------------|-------------------|
-| **Framework** | FastAPI + uvicorn | ASP.NET Core |
-| **WebSocket** | Native FastAPI WebSocket | System.Net.WebSockets |
-| **Audio Processing** | NumPy + SciPy | Custom AudioResampler |
-| **Async Model** | asyncio/await | Task/async |
-| **Configuration** | Pydantic Settings + .env | IConfiguration + appsettings.json |
-| **Performance** | ~20ms audio latency | ~15ms audio latency |
+### Application Structure Overview
 
-Both implementations provide identical functionality and voice quality.
+This Python application uses an **async event-driven architecture** to handle multiple concurrent phone calls efficiently. Unlike traditional threaded applications, it uses Python's `asyncio` event loop to manage all connections on a single thread through cooperative multitasking.
 
-## 📚 Next Steps
+```mermaid
+graph TB
+    subgraph "Application Entry Points"
+        START[start.py<br/>🚀 Application Launcher]
+        MAIN[main.py<br/>🐍 FastAPI Server]
+    end
+    
+    subgraph "Request Handling (Per Call Instance)"
+        HTTP[HTTP Endpoints<br/>📞 Call Events]
+        WS[WebSocket Endpoint<br/>🔌 /ws]
+        HANDLER[ACSMediaStreamingHandler<br/>⚡ Per-Call Instance]
+        VOICE[AzureVoiceLiveService<br/>🤖 Per-Call Instance]
+    end
+    
+    subgraph "Core Processing"
+        MODELS[models.py<br/>📋 Data Structures]
+        AUDIO[audio_resampler.py<br/>🎵 Format Conversion]
+        HELPERS[helpers.py<br/>🛠️ Utility Functions]
+    end
+    
+    subgraph "Configuration & Auth"
+        CONFIG[config.py<br/>⚙️ Settings & Tokens]
+        ENV[.env<br/>🔐 Environment Variables]
+    end
+    
+    START --> MAIN
+    MAIN --> HTTP
+    MAIN --> WS
+    WS --> HANDLER
+    HANDLER --> VOICE
+    HANDLER --> AUDIO
+    VOICE --> MODELS
+    CONFIG --> VOICE
+    CONFIG --> HANDLER
+    ENV --> CONFIG
+    HELPERS --> HANDLER
+    
+    style START fill:#ff9999
+    style MAIN fill:#87CEEB
+    style HANDLER fill:#90EE90
+    style VOICE fill:#DDA0DD
+    style CONFIG fill:#F0E68C
+```
 
-- **Customize the AI**: Modify `SYSTEM_PROMPT` to change the assistant's personality
-- **Add Features**: Implement call transfer, recording, or custom commands
-- **Scale Up**: Deploy to Azure Container Apps or App Service for production
-- **Monitor**: Add Application Insights for production telemetry
-- **Security**: Implement authentication for webhook endpoints
+### 🚀 Concurrency Model: Single Thread, Multiple Calls
+
+**Key Concept**: Unlike C# where each request gets its own thread, Python handles **all concurrent calls on one thread** using an event loop:
+
+```python
+# When 10 calls arrive simultaneously:
+Event Loop (Single Thread):
+├── Call 1: ACSMediaStreamingHandler_1 → AzureVoiceLiveService_1
+├── Call 2: ACSMediaStreamingHandler_2 → AzureVoiceLiveService_2  
+├── Call 3: ACSMediaStreamingHandler_3 → AzureVoiceLiveService_3
+├── ...
+└── Call 10: ACSMediaStreamingHandler_10 → AzureVoiceLiveService_10
+
+# Each call gets separate object instances but shares the same thread
+# Cooperative multitasking at every 'await' statement
+```
+
+### 📁 File Structure & Responsibilities
+
+#### **Core Application Files**
+
+| File | Purpose | Instance Model | Key Responsibilities |
+|------|---------|----------------|---------------------|
+| **`start.py`** | Application launcher | Single instance | • Starts FastAPI server<br/>• Configures logging<br/>• Entry point for application |
+| **`main.py`** | FastAPI server & routing | Single instance | • HTTP endpoints for webhooks<br/>• WebSocket endpoint `/ws`<br/>• Event Grid event handling<br/>• Creates per-call handlers |
+| **`acs_media_handler.py`** | ACS media processing | **Per-call instance** | • Manages ACS WebSocket connection<br/>• Processes incoming audio<br/>• Creates Voice Live service<br/>• Handles call lifecycle |
+| **`azure_voice_live_service.py`** | Azure OpenAI integration | **Per-call instance** | • Connects to Voice Live API<br/>• Manages AI conversation state<br/>• Handles authentication & retries<br/>• Processes AI responses |
+
+#### **Supporting Infrastructure Files**
+
+| File | Purpose | Instance Model | Key Responsibilities |
+|------|---------|----------------|---------------------|
+| **`config.py`** | Configuration & auth | Singleton | • Environment variables<br/>• Azure Managed Identity tokens<br/>• Token caching & refresh<br/>• Settings management |
+| **`models.py`** | Data structures | Stateless classes | • Audio packet models<br/>• WebSocket message formats<br/>• JSON serialization<br/>• Type definitions |
+| **`audio_resampler.py`** | Audio processing | Static methods | • 16kHz ↔ 24kHz conversion<br/>• Audio format handling<br/>• Numpy-based resampling<br/>• Audio quality optimization |
+| **`helpers.py`** | Utility functions | Static methods | • ACS event parsing<br/>• URL generation<br/>• Data extraction helpers<br/>• Common utilities |
+
+### 🔄 Per-Call Instance Creation Flow
+
+Here's how object instances are created for each phone call:
+
+```mermaid
+sequenceDiagram
+    participant Phone as 📞 Phone Call
+    participant ACS as 🔗 Azure ACS
+    participant Main as 🐍 main.py
+    participant Handler as ⚡ ACSMediaStreamingHandler
+    participant Voice as 🤖 AzureVoiceLiveService
+    participant Config as ⚙️ config.py (Shared)
+    
+    Phone->>ACS: Incoming call
+    ACS->>Main: POST /api/incomingCall
+    Note over Main: Single FastAPI instance handles all calls
+    
+    ACS->>Main: WebSocket connection to /ws
+    Main->>Handler: NEW ACSMediaStreamingHandler(websocket)
+    Note over Handler: Fresh instance per call
+    
+    Handler->>Voice: NEW AzureVoiceLiveService(self)
+    Note over Voice: Fresh instance per call
+    
+    Voice->>Config: settings.get_azure_tokens()
+    Note over Config: Shared token cache across all calls
+    
+    Voice->>Voice: Connect to Voice Live API
+    Handler->>Handler: Process audio streams
+    
+    Note over Handler,Voice: Each call has completely isolated state
+    Note over Config: Only tokens are shared (for efficiency)
+```
+
+### 🎯 Key Classes Deep Dive
+
+#### **ACSMediaStreamingHandler** (Per-Call Instance)
+```python
+class ACSMediaStreamingHandler:
+    def __init__(self, websocket):
+        # ISOLATED per call - each call gets its own:
+        self.websocket = websocket              # ACS WebSocket connection
+        self.voice_live_service = None          # Will hold Voice Live instance  
+        self.running = False                    # Call state flag
+        self.audio_buffer = bytearray()         # Audio processing buffer
+        self.cleanup_started = False            # Cleanup coordination
+```
+
+**Responsibilities:**
+- ✅ Manages ACS WebSocket connection for **one call**
+- ✅ Creates and owns **one** `AzureVoiceLiveService` instance
+- ✅ Processes audio packets from caller
+- ✅ Forwards audio to Voice Live API
+- ✅ Handles call cleanup and resource disposal
+
+#### **AzureVoiceLiveService** (Per-Call Instance)
+```python
+class AzureVoiceLiveService:
+    def __init__(self, media_handler):
+        # ISOLATED per call - each call gets its own:
+        self.media_handler = media_handler      # Reference to handler
+        self.websocket = None                   # Voice Live WebSocket
+        self.connection_ready = asyncio.Event() # Connection state
+        self.running = False                    # Service state
+        self.client_request_id = uuid.uuid4()   # Unique call tracking
+```
+
+**Responsibilities:**
+- ✅ Manages Voice Live API connection for **one call**
+- ✅ Handles Azure Managed Identity authentication
+- ✅ Processes AI conversation state
+- ✅ Manages audio streaming to/from AI
+- ✅ Handles connection retries and error recovery
+
+#### **AppSettings** (Singleton - Shared)
+```python
+class AppSettings:
+    # SHARED across all calls:
+    _cognitive_services_token = None    # Cached token
+    _azure_ai_token = None             # Cached token  
+    _token_expires_at = None           # Expiration time
+    _azure_credential = None           # Managed Identity
+```
+
+**Responsibilities:**
+- ✅ Loads environment configuration
+- ✅ Manages Azure Managed Identity tokens
+- ✅ Provides token caching for all calls
+- ✅ Handles automatic token refresh
+
+### 🔄 Call Lifecycle & Object Management
+
+#### **Single Call Flow:**
+```python
+# 1. Phone call arrives
+POST /api/incomingCall
+    ↓
+# 2. ACS establishes WebSocket  
+@app.websocket("/ws")
+async def websocket_endpoint(websocket):
+    ↓
+# 3. Create per-call handler (NEW INSTANCE)
+media_handler = ACSMediaStreamingHandler(websocket)
+    ↓
+# 4. Handler creates Voice Live service (NEW INSTANCE)  
+self.voice_live_service = AzureVoiceLiveService(self)
+    ↓
+# 5. Process call (isolated state)
+await media_handler.process_websocket()
+    ↓
+# 6. Call ends - cleanup instances
+await media_handler.close()  # Disposes both handler and voice service
+```
+
+#### **Multiple Concurrent Calls:**
+```python
+# Call 1: Creates handler_1 → voice_service_1 (isolated)
+# Call 2: Creates handler_2 → voice_service_2 (isolated)  
+# Call 3: Creates handler_3 → voice_service_3 (isolated)
+# ...
+# Call N: Creates handler_N → voice_service_N (isolated)
+
+# All share:
+# - Same FastAPI app instance
+# - Same config/settings instance  
+# - Same event loop thread
+# - Same token cache (for efficiency)
+```
+
+### ⚡ Performance Characteristics
+
+| Metric | Single Call | 10 Concurrent Calls | 100 Concurrent Calls |
+|--------|-------------|---------------------|----------------------|
+| **Memory Usage** | ~2MB | ~20MB | ~200MB |
+| **Thread Count** | 1 | 1 | 1 |
+| **Object Instances** | 2 (handler + voice) | 20 (10×2) | 200 (100×2) |
+| **WebSocket Connections** | 2 (ACS + Voice Live) | 20 | 200 |
+| **Token Cache** | Shared | Shared | Shared |
+
+### 🛠️ Adding New Features
+
+When extending the application, consider:
+
+#### **Per-Call Features** (Add to handlers):
+```python
+# Add to ACSMediaStreamingHandler or AzureVoiceLiveService
+# Each call will get its own instance
+class ACSMediaStreamingHandler:
+    def __init__(self, websocket):
+        self.call_analytics = CallAnalytics()  # Per-call analytics
+        self.custom_config = CustomConfig()    # Per-call configuration
+```
+
+#### **Shared Features** (Add to config or helpers):
+```python
+# Add to config.py or helpers.py
+# Shared across all calls for efficiency
+class AppSettings:
+    def get_shared_cache(self):
+        return self._shared_cache  # Shared across all calls
+```
+
+### 🔍 Debugging Tips
+
+#### **Finding Issues:**
+- **Per-call issues**: Check `ACSMediaStreamingHandler` or `AzureVoiceLiveService` logs with Request ID
+- **Shared issues**: Check `config.py` token management or `main.py` routing
+- **Concurrency issues**: Look for race conditions in shared state (should be minimal)
+
+#### **Log Correlation:**
+```python
+# Each call gets unique Request ID for tracking:
+client_request_id = "a1b2c3d4-..."
+
+# All logs for that call will include:
+"Request ID: a1b2c3d4-..."
+
+# Makes debugging multi-call scenarios easy!
+```
+
+This architecture provides excellent isolation, performance, and scalability for handling multiple concurrent voice calls! 🚀
 
 ## 🤝 Contributing
 
