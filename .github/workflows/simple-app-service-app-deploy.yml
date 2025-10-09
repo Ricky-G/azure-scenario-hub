@@ -1,0 +1,174 @@
+name: Deploy Simple App Service - Application
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/simple-app-service-with-sample-app/sample-app/**'
+      - '.github/workflows/simple-app-service-app-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - uat
+          - prod
+        default: 'dev'
+      appServiceName:
+        description: 'App Service Name (leave empty to auto-detect)'
+        required: false
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_RESOURCE_GROUP: rg-sample-webapp
+  APP_PATH: src/simple-app-service-with-sample-app/sample-app
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  deploy-application:
+    name: Deploy Python Flask App
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine environment
+        id: determine-env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          cd ${{ env.APP_PATH }}
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed successfully"
+
+      - name: Azure Login via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Determine App Service Name
+        id: app-service
+        run: |
+          if [ -n "${{ inputs.appServiceName }}" ]; then
+            APP_NAME="${{ inputs.appServiceName }}"
+            echo "Using provided App Service name: $APP_NAME"
+          else
+            ENVIRONMENT="${{ steps.determine-env.outputs.environment }}"
+            echo "🔍 Looking for App Service in environment: $ENVIRONMENT"
+            
+            # Find the App Service with matching environment tag
+            APP_NAME=$(az webapp list \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --query "[?tags.Environment=='$ENVIRONMENT' && tags.Scenario=='SimpleAppServicePythonApp'].name | [0]" \
+              --output tsv)
+            
+            if [ -z "$APP_NAME" ]; then
+              echo "❌ No App Service found for environment: $ENVIRONMENT"
+              echo "Please run the infrastructure workflow first or provide appServiceName manually"
+              exit 1
+            fi
+            
+            echo "✅ Found App Service: $APP_NAME"
+          fi
+          
+          echo "appServiceName=$APP_NAME" >> $GITHUB_OUTPUT
+
+      - name: Deploy to Azure App Service
+        id: deploy
+        run: |
+          cd ${{ env.APP_PATH }}
+          APP_NAME="${{ steps.app-service.outputs.appServiceName }}"
+          
+          echo "🚀 Deploying application to: $APP_NAME"
+          
+          # Create a zip file of the application
+          zip -r app-package.zip . -x "*.git*" -x "*__pycache__*" -x "*.pyc" -x "venv/*"
+          
+          # Deploy using zip deploy
+          az webapp deployment source config-zip \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name "$APP_NAME" \
+            --src app-package.zip
+          
+          echo "✅ Application deployed successfully"
+          
+          # Get the App Service URL
+          APP_URL=$(az webapp show \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name "$APP_NAME" \
+            --query "defaultHostName" \
+            --output tsv)
+          
+          echo "appUrl=https://$APP_URL" >> $GITHUB_OUTPUT
+
+      - name: Verify Deployment
+        run: |
+          APP_URL="${{ steps.deploy.outputs.appUrl }}"
+          echo "🔍 Verifying deployment at: $APP_URL/health"
+          
+          # Wait for app to warm up
+          sleep 30
+          
+          # Check health endpoint
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/health" || echo "000")
+          
+          if [ "$HTTP_STATUS" == "200" ]; then
+            echo "✅ Health check passed! Application is running."
+          else
+            echo "⚠️ Health check returned status: $HTTP_STATUS"
+            echo "Application may still be starting up. Please verify manually."
+          fi
+
+      - name: Deployment Summary
+        run: |
+          APP_NAME="${{ steps.app-service.outputs.appServiceName }}"
+          APP_URL="${{ steps.deploy.outputs.appUrl }}"
+          ENVIRONMENT="${{ steps.determine-env.outputs.environment }}"
+          
+          echo "### 🎉 Application Deployed Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | $ENVIRONMENT |" >> $GITHUB_STEP_SUMMARY
+          echo "| App Service | \`$APP_NAME\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Python Version | ${{ env.PYTHON_VERSION }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Application URL | [$APP_URL]($APP_URL) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Health Check | [$APP_URL/health]($APP_URL/health) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Your Flask application is now live!" >> $GITHUB_STEP_SUMMARY
+
+      - name: Azure Logout
+        if: always()
+        run: |
+          az logout
+          az cache purge
+          az account clear
+
+    outputs:
+      appServiceName: ${{ steps.app-service.outputs.appServiceName }}
+      appUrl: ${{ steps.deploy.outputs.appUrl }}
+      environment: ${{ steps.determine-env.outputs.environment }}
