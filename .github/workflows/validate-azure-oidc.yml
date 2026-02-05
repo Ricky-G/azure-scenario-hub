@@ -1,0 +1,81 @@
+name: Validate Azure OIDC Connection
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  validate-oidc:
+    name: Validate Azure OIDC Authentication
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Azure Login via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify Azure Connection
+        run: |
+          echo "🔍 Verifying Azure login..."
+          
+          # Get current account info
+          ACCOUNT_INFO=$(az account show --output json)
+          
+          # Extract details
+          SUBSCRIPTION_NAME=$(echo $ACCOUNT_INFO | jq -r '.name')
+          SUBSCRIPTION_ID=$(echo $ACCOUNT_INFO | jq -r '.id')
+          TENANT_ID=$(echo $ACCOUNT_INFO | jq -r '.tenantId')
+          USER=$(echo $ACCOUNT_INFO | jq -r '.user.name')
+          
+          echo ""
+          echo "✅ Successfully authenticated to Azure!"
+          echo ""
+          echo "📋 Connection Details:"
+          echo "  Subscription: $SUBSCRIPTION_NAME"
+          echo "  Subscription ID: $SUBSCRIPTION_ID"
+          echo "  Tenant ID: $TENANT_ID"
+          echo "  Authenticated as: $USER"
+          echo ""
+
+      - name: Test Azure CLI Commands
+        run: |
+          echo "🧪 Testing basic Azure CLI commands..."
+          
+          # Test resource group access
+          echo ""
+          echo "📦 Testing resource group access..."
+          if az group show --name rg-sample-webapp &>/dev/null; then
+            echo "✅ Can access resource group: rg-sample-webapp"
+            
+            # List resources in the group
+            echo ""
+            echo "📋 Resources in rg-sample-webapp:"
+            az resource list --resource-group rg-sample-webapp --output table
+          else
+            echo "⚠️ Resource group 'rg-sample-webapp' not found or no access"
+            echo "   This is OK if you haven't created it yet"
+          fi
+
+      - name: Validation Summary
+        run: |
+          echo "### ✅ Azure OIDC Validation Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Your GitHub Actions workflow can successfully authenticate to Azure using OIDC." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Next Steps:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Create GitHub Environments (dev, test, uat, prod)" >> $GITHUB_STEP_SUMMARY
+          echo "- Run the infrastructure deployment workflow" >> $GITHUB_STEP_SUMMARY
+          echo "- Run the application deployment workflow" >> $GITHUB_STEP_SUMMARY
+
+      - name: Azure Logout
+        if: always()
+        run: |
+          az logout
+          az cache purge
+          az account clear

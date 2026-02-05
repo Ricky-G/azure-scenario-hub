@@ -1,0 +1,94 @@
+# Azure DevOps Assistant Infrastructure Deployment Pipeline
+# Deploys App Service infrastructure using existing App Service Plan to PPD and PRD environments
+
+name: ADO Assistant - Infrastructure Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/simple-app-service-with-sample-app/bicep/main-existing-asp.bicep'
+      - 'src/simple-app-service-with-sample-app/bicep/ppd.bicepparam'
+      - 'src/simple-app-service-with-sample-app/bicep/prd.bicepparam'
+      - 'src/simple-app-service-with-sample-app/bicep/modules/**'
+      - '.github/workflows/ado-assistant-infra-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_RESOURCE_GROUP: rg-sample-webapp
+  DEPLOYMENT_NAME_PREFIX: ado-assistant-infra
+  BICEP_FILE: src/simple-app-service-with-sample-app/bicep/main-existing-asp.bicep
+
+jobs:
+  deploy-ppd:
+    name: Deploy to PPD
+    runs-on: ubuntu-latest
+    environment: ppd
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Infrastructure to PPD
+        uses: azure/arm-deploy@v2
+        with:
+          subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+          template: ${{ env.BICEP_FILE }}
+          parameters: src/simple-app-service-with-sample-app/bicep/ppd.bicepparam
+          deploymentName: ${{ env.DEPLOYMENT_NAME_PREFIX }}-ppd-${{ github.run_number }}
+          failOnStdErr: false
+
+      - name: Display Deployment Outputs
+        run: |
+          echo "### PPD Deployment Complete :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** PPD" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Name:** ${{ env.DEPLOYMENT_NAME_PREFIX }}-ppd-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+
+  deploy-prd:
+    name: Deploy to PRD
+    runs-on: ubuntu-latest
+    environment: prd
+    needs: deploy-ppd
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Infrastructure to PRD
+        uses: azure/arm-deploy@v2
+        with:
+          subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+          template: ${{ env.BICEP_FILE }}
+          parameters: src/simple-app-service-with-sample-app/bicep/prd.bicepparam
+          deploymentName: ${{ env.DEPLOYMENT_NAME_PREFIX }}-prd-${{ github.run_number }}
+          failOnStdErr: false
+
+      - name: Display Deployment Outputs
+        run: |
+          echo "### PRD Deployment Complete :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** PRD" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Name:** ${{ env.DEPLOYMENT_NAME_PREFIX }}-prd-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY

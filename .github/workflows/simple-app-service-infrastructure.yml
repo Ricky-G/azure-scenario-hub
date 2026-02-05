@@ -28,24 +28,17 @@ env:
   AZURE_RESOURCE_GROUP: rg-sample-webapp
   AZURE_REGION: eastus
   BICEP_PATH: src/simple-app-service-with-sample-app/bicep
+  DEPLOYMENT_NAME_PREFIX: simpleapp-infra
 
 jobs:
-  deploy-infrastructure:
-    name: Deploy App Service Infrastructure
+  deploy-dev:
+    name: Deploy to Dev
     runs-on: ubuntu-latest
+    environment: dev
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Determine environment
-        id: determine-env
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
-          else
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          fi
 
       - name: Azure Login via OIDC
         uses: azure/login@v2
@@ -54,25 +47,19 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Verify Azure Login
-        run: |
-          az account show
-          echo "✅ Successfully logged in to Azure"
-
       - name: Deploy Bicep Template
         id: deploy
         run: |
-          ENVIRONMENT="${{ steps.determine-env.outputs.environment }}"
-          DEPLOYMENT_NAME="simpleapp-infra-$ENVIRONMENT-$(date +%Y%m%d%H%M%S)"
+          DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME_PREFIX }}-dev-$(date +%Y%m%d%H%M%S)"
           
-          echo "🚀 Deploying infrastructure for environment: $ENVIRONMENT"
+          echo "🚀 Deploying infrastructure to DEV environment"
           echo "📦 Deployment name: $DEPLOYMENT_NAME"
           
           az deployment group create \
             --name "$DEPLOYMENT_NAME" \
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
             --template-file ${{ env.BICEP_PATH }}/main.bicep \
-            --parameters ${{ env.BICEP_PATH }}/main.parameters.$ENVIRONMENT.json \
+            --parameters ${{ env.BICEP_PATH }}/dev.bicepparam \
             --output json > deployment-output.json
           
           echo "✅ Deployment completed successfully"
@@ -88,16 +75,14 @@ jobs:
           echo "appServiceUrl=$APP_SERVICE_URL" >> $GITHUB_OUTPUT
           echo "appServicePlan=$APP_SERVICE_PLAN" >> $GITHUB_OUTPUT
           
-          echo "### 🎉 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎉 Dev Deployment Successful!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Resource | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment | ${{ steps.determine-env.outputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | dev |" >> $GITHUB_STEP_SUMMARY
           echo "| App Service Plan | \`$APP_SERVICE_PLAN\` |" >> $GITHUB_STEP_SUMMARY
           echo "| App Service Name | \`$APP_SERVICE_NAME\` |" >> $GITHUB_STEP_SUMMARY
           echo "| App Service URL | [$APP_SERVICE_URL]($APP_SERVICE_URL) |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Infrastructure is ready for app deployment!" >> $GITHUB_STEP_SUMMARY
 
       - name: Azure Logout
         if: always()
@@ -109,4 +94,198 @@ jobs:
     outputs:
       appServiceName: ${{ steps.outputs.outputs.appServiceName }}
       appServiceUrl: ${{ steps.outputs.outputs.appServiceUrl }}
-      environment: ${{ steps.determine-env.outputs.environment }}
+
+  deploy-test:
+    name: Deploy to Test
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    environment: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Bicep Template
+        id: deploy
+        run: |
+          DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME_PREFIX }}-test-$(date +%Y%m%d%H%M%S)"
+          
+          echo "🚀 Deploying infrastructure to TEST environment"
+          echo "📦 Deployment name: $DEPLOYMENT_NAME"
+          
+          az deployment group create \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --template-file ${{ env.BICEP_PATH }}/main.bicep \
+            --parameters ${{ env.BICEP_PATH }}/test.bicepparam \
+            --output json > deployment-output.json
+          
+          echo "✅ Deployment completed successfully"
+
+      - name: Get Deployment Outputs
+        id: outputs
+        run: |
+          APP_SERVICE_NAME=$(jq -r '.properties.outputs.appServiceName.value' deployment-output.json)
+          APP_SERVICE_URL=$(jq -r '.properties.outputs.appServiceUrl.value' deployment-output.json)
+          APP_SERVICE_PLAN=$(jq -r '.properties.outputs.appServicePlanName.value' deployment-output.json)
+          
+          echo "appServiceName=$APP_SERVICE_NAME" >> $GITHUB_OUTPUT
+          echo "appServiceUrl=$APP_SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "appServicePlan=$APP_SERVICE_PLAN" >> $GITHUB_OUTPUT
+          
+          echo "### 🎉 Test Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | test |" >> $GITHUB_STEP_SUMMARY
+          echo "| App Service Plan | \`$APP_SERVICE_PLAN\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| App Service Name | \`$APP_SERVICE_NAME\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| App Service URL | [$APP_SERVICE_URL]($APP_SERVICE_URL) |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Azure Logout
+        if: always()
+        run: |
+          az logout
+          az cache purge
+          az account clear
+
+    outputs:
+      appServiceName: ${{ steps.outputs.outputs.appServiceName }}
+      appServiceUrl: ${{ steps.outputs.outputs.appServiceUrl }}
+
+  deploy-uat:
+    name: Deploy to UAT
+    runs-on: ubuntu-latest
+    needs: deploy-test
+    environment: uat
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Bicep Template
+        id: deploy
+        run: |
+          DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME_PREFIX }}-uat-$(date +%Y%m%d%H%M%S)"
+          
+          echo "🚀 Deploying infrastructure to UAT environment"
+          echo "📦 Deployment name: $DEPLOYMENT_NAME"
+          
+          az deployment group create \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --template-file ${{ env.BICEP_PATH }}/main.bicep \
+            --parameters ${{ env.BICEP_PATH }}/uat.bicepparam \
+            --output json > deployment-output.json
+          
+          echo "✅ Deployment completed successfully"
+
+      - name: Get Deployment Outputs
+        id: outputs
+        run: |
+          APP_SERVICE_NAME=$(jq -r '.properties.outputs.appServiceName.value' deployment-output.json)
+          APP_SERVICE_URL=$(jq -r '.properties.outputs.appServiceUrl.value' deployment-output.json)
+          APP_SERVICE_PLAN=$(jq -r '.properties.outputs.appServicePlanName.value' deployment-output.json)
+          
+          echo "appServiceName=$APP_SERVICE_NAME" >> $GITHUB_OUTPUT
+          echo "appServiceUrl=$APP_SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "appServicePlan=$APP_SERVICE_PLAN" >> $GITHUB_OUTPUT
+          
+          echo "### 🎉 UAT Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | uat |" >> $GITHUB_STEP_SUMMARY
+          echo "| App Service Plan | \`$APP_SERVICE_PLAN\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| App Service Name | \`$APP_SERVICE_NAME\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| App Service URL | [$APP_SERVICE_URL]($APP_SERVICE_URL) |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Azure Logout
+        if: always()
+        run: |
+          az logout
+          az cache purge
+          az account clear
+
+    outputs:
+      appServiceName: ${{ steps.outputs.outputs.appServiceName }}
+      appServiceUrl: ${{ steps.outputs.outputs.appServiceUrl }}
+
+  deploy-prod:
+    name: Deploy to Prod
+    runs-on: ubuntu-latest
+    needs: deploy-uat
+    environment: prod
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Bicep Template
+        id: deploy
+        run: |
+          DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME_PREFIX }}-prod-$(date +%Y%m%d%H%M%S)"
+          
+          echo "🚀 Deploying infrastructure to PROD environment"
+          echo "📦 Deployment name: $DEPLOYMENT_NAME"
+          
+          az deployment group create \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --template-file ${{ env.BICEP_PATH }}/main.bicep \
+            --parameters ${{ env.BICEP_PATH }}/prod.bicepparam \
+            --output json > deployment-output.json
+          
+          echo "✅ Deployment completed successfully"
+
+      - name: Get Deployment Outputs
+        id: outputs
+        run: |
+          APP_SERVICE_NAME=$(jq -r '.properties.outputs.appServiceName.value' deployment-output.json)
+          APP_SERVICE_URL=$(jq -r '.properties.outputs.appServiceUrl.value' deployment-output.json)
+          APP_SERVICE_PLAN=$(jq -r '.properties.outputs.appServicePlanName.value' deployment-output.json)
+          
+          echo "appServiceName=$APP_SERVICE_NAME" >> $GITHUB_OUTPUT
+          echo "appServiceUrl=$APP_SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "appServicePlan=$APP_SERVICE_PLAN" >> $GITHUB_OUTPUT
+          
+          echo "### 🎉 Production Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | prod |" >> $GITHUB_STEP_SUMMARY
+          echo "| App Service Plan | \`$APP_SERVICE_PLAN\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| App Service Name | \`$APP_SERVICE_NAME\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| App Service URL | [$APP_SERVICE_URL]($APP_SERVICE_URL) |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Azure Logout
+        if: always()
+        run: |
+          az logout
+          az cache purge
+          az account clear
+
+    outputs:
+      appServiceName: ${{ steps.outputs.outputs.appServiceName }}
+      appServiceUrl: ${{ steps.outputs.outputs.appServiceUrl }}
