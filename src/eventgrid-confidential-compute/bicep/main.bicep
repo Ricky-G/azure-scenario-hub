@@ -1,9 +1,9 @@
 targetScope = 'subscription'
 
-@description('The location of the resources')
+@description('The location of the resources. Note: Confidential Compute is only available in Korea Central and UAE North.')
 param location string = 'westus'
 
-@description('Enable Confidential Compute for the Event Grid System Topic. Note: This is a preview feature with limited regional availability.')
+@description('Enable Confidential Compute for the Event Grid System Topic. Only supported in Korea Central and UAE North regions.')
 param enableConfidentialCompute bool = false
 
 @description('The name of the resource group')

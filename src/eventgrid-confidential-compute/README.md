@@ -12,7 +12,7 @@ Azure Confidential Compute for Event Grid System Topics is a platform capability
 
 > **Important**: 
 > - The `confidentialCompute.mode` property is **immutable** - it can only be set at resource creation time and cannot be modified later.
-> - **This is a preview feature** with limited regional availability. As of February 2026, the feature may not be available in all Azure regions. Check the Azure documentation for current availability.
+> - **This is a preview feature** with limited regional availability. As of February 2026, Confidential Compute for Event Grid is **only available in Korea Central and UAE North regions**.
 
 ## Architecture
 
@@ -37,6 +37,14 @@ Azure Confidential Compute for Event Grid System Topics is a platform capability
 - Azure subscription with appropriate permissions
 - Bicep CLI installed (comes with Azure CLI)
 
+## Supported Regions
+
+**Confidential Compute for Event Grid System Topics is currently only available in:**
+- **Korea Central** (`koreacentral`)
+- **UAE North** (`uaenorth`)
+
+For deployments to other regions, set `enableConfidentialCompute=false` to deploy a standard Event Grid System Topic.
+
 ## Deployment
 
 ### Option 1: Using Azure CLI
@@ -45,11 +53,12 @@ Azure Confidential Compute for Event Grid System Topics is a platform capability
 # Login to Azure
 az login
 
-# Deploy the infrastructure
+# Deploy with Confidential Compute enabled (Korea Central or UAE North only)
 az deployment sub create `
     --name "eventgrid-confidential-compute-deployment" `
-    --location "australiaeast" `
-    --template-file ./bicep/main.bicep
+    --location "koreacentral" `
+    --template-file ./bicep/main.bicep `
+    --parameters location=koreacentral enableConfidentialCompute=true
 ```
 
 ### Option 2: Using the deploy script
@@ -66,21 +75,29 @@ az deployment sub create `
 | `location` | `westus` | Azure region for deployment |
 | `resourceGroupName` | `rg-event-grid-confidential-compute` | Name of the resource group |
 | `namePrefix` | `egcc` | Prefix for resource names |
-| `enableConfidentialCompute` | `false` | Enable Confidential Compute (preview, limited regional availability) |
+| `enableConfidentialCompute` | `false` | Enable Confidential Compute (only supported in Korea Central and UAE North) |
 
 ## Enabling Confidential Compute
 
-To deploy with Confidential Compute enabled (when available in your region):
+To deploy with Confidential Compute enabled in a supported region:
 
 ```powershell
+# Deploy to Korea Central with Confidential Compute
 az deployment sub create `
     --name "eventgrid-confidential-compute-deployment" `
-    --location "your-supported-region" `
+    --location "koreacentral" `
     --template-file ./bicep/main.bicep `
-    --parameters enableConfidentialCompute=true
+    --parameters location=koreacentral enableConfidentialCompute=true
+
+# Or deploy to UAE North with Confidential Compute
+az deployment sub create `
+    --name "eventgrid-confidential-compute-deployment" `
+    --location "uaenorth" `
+    --template-file ./bicep/main.bicep `
+    --parameters location=uaenorth enableConfidentialCompute=true
 ```
 
-> **Note**: If you receive an error stating "Azure Confidential Compute feature is not enabled yet in [region]", the feature is not yet available in that region. Deploy with `enableConfidentialCompute=false` or try a different region.
+> **Note**: If deploying to other regions, set `enableConfidentialCompute=false` or omit the parameter to deploy a standard Event Grid System Topic.
 
 ## Confidential Compute Configuration
 

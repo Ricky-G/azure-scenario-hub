@@ -1,8 +1,9 @@
 # Deploy Event Grid System Topic with Confidential Compute
 # This script deploys the infrastructure to Azure
+# Note: Confidential Compute is only available in Korea Central and UAE North regions
 
 param(
-    [string]$Location = "australiaeast",
+    [string]$Location = "koreacentral",
     [string]$ResourceGroupName = "rg-event-grid-confidential-compute",
     [string]$DeploymentName = "eventgrid-confidential-compute-$(Get-Date -Format 'yyyyMMddHHmmss')"
 )
