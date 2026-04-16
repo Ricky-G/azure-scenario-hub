@@ -1,12 +1,6 @@
 name: Deploy Simple App Service - Application
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'src/simple-app-service-with-sample-app/sample-app/**'
-      - '.github/workflows/simple-app-service-app-deploy.yml'
   workflow_dispatch:
     inputs:
       environment:

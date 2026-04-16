@@ -1,12 +1,6 @@
 name: Deploy Simple App Service - Infrastructure
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'src/simple-app-service-with-sample-app/bicep/**'
-      - '.github/workflows/simple-app-service-infrastructure.yml'
   workflow_dispatch:
     inputs:
       environment:

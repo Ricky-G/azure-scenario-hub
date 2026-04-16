@@ -4,15 +4,6 @@
 name: ADO Assistant - Infrastructure Deploy
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'src/simple-app-service-with-sample-app/bicep/main-existing-asp.bicep'
-      - 'src/simple-app-service-with-sample-app/bicep/ppd.bicepparam'
-      - 'src/simple-app-service-with-sample-app/bicep/prd.bicepparam'
-      - 'src/simple-app-service-with-sample-app/bicep/modules/**'
-      - '.github/workflows/ado-assistant-infra-deploy.yml'
   workflow_dispatch:
 
 permissions:
