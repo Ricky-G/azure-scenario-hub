@@ -131,6 +131,6 @@ MIT License - feel free to use these scenarios however you like!
 ---
 
 <p align="center">
-  Made with ❤️ by the Azure community<br/>
+  Made with ❤️ for the Azure community<br/>
   <strong>Star ⭐ this repo if you find it helpful!</strong>
 </p>
