@@ -19,13 +19,36 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get version tag
+      - name: Calculate next version
         id: version
         run: |
-          # Generate a date-based version tag
-          VERSION="v$(date +'%Y.%m.%d')-${{ github.run_number }}"
-          echo "tag=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Release version: $VERSION"
+          # Get the latest tag matching our vX.Y pattern
+          LATEST_TAG=$(git tag -l 'v*' --sort=-version:refname | head -1)
+
+          if [ -z "$LATEST_TAG" ]; then
+            # No tags exist yet — start at v0.1
+            NEXT_VERSION="v0.1"
+          else
+            echo "Latest tag: $LATEST_TAG"
+            # Strip the 'v' prefix and split into major.minor
+            VERSION="${LATEST_TAG#v}"
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f2)
+
+            # Increment minor by 1
+            NEXT_MINOR=$((MINOR + 1))
+
+            # Roll over at .25 → next major .0
+            if [ "$NEXT_MINOR" -gt 25 ]; then
+              MAJOR=$((MAJOR + 1))
+              NEXT_MINOR=0
+            fi
+
+            NEXT_VERSION="v${MAJOR}.${NEXT_MINOR}"
+          fi
+
+          echo "tag=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Next release version: $NEXT_VERSION"
 
       - name: Generate release notes
         id: notes
