@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AKS Static Egress Gateway Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    h1 { font-size: 1.8rem; text-align: center; margin-bottom: 0.5rem; color: #38bdf8; }
+    .subtitle { text-align: center; color: #94a3b8; margin-bottom: 1.5rem; font-size: 1rem; }
+    h2 { font-size: 1.1rem; color: #38bdf8; margin: 1.5rem 0 0.75rem 0; }
+    table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
+    th { background: #334155; padding: 10px 14px; text-align: left; font-weight: 600; color: #cbd5e1; font-size: 0.85rem; }
+    td { padding: 10px 14px; border-top: 1px solid #334155; font-size: 0.9rem; }
+    .ip { font-family: 'Cascadia Code', 'Fira Code', monospace; font-weight: 600; color: #34d399; font-size: 1rem; }
+    .cidr { font-family: 'Cascadia Code', 'Fira Code', monospace; color: #fbbf24; font-size: 0.9rem; }
+    .cidr-internal { font-family: 'Cascadia Code', 'Fira Code', monospace; color: #818cf8; font-size: 0.9rem; }
+    .status-ok { color: #34d399; }
+    .status-pending { color: #fbbf24; }
+    .status-error { color: #f87171; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+    .dot-ok { background: #34d399; }
+    .dot-pending { background: #fbbf24; }
+    .dot-error { background: #f87171; }
+    .footer { text-align: center; margin-top: 1.5rem; color: #64748b; font-size: 0.85rem; line-height: 1.6; }
+    .refresh-info { text-align: center; color: #64748b; font-size: 0.8rem; margin-top: 0.75rem; }
+    .badge { display: inline-block; background: #1e293b; border: 1px solid #334155; border-radius: 4px; padding: 2px 8px; font-size: 0.8rem; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .info-card { background: #1e293b; border-radius: 8px; padding: 1rem; }
+    .info-card .label { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    .info-card .value { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 1rem; }
+    .section-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 0.5rem; }
+    .arrow { color: #64748b; text-align: center; font-size: 0.8rem; margin: 0.25rem 0; }
+    @media (max-width: 700px) { .info-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>&#128274; AKS Static Egress Gateway Demo</h1>
+    <p class="subtitle">Each namespace egresses from its own unique static IP prefix</p>
+
+    <!-- Cluster Network Context -->
+    <p class="section-label">Cluster Network Ranges (internal / private)</p>
+    <div class="info-grid" id="clusterInfo">
+      <div class="info-card"><div class="label">Node Subnet (VNet)</div><div class="value cidr-internal" id="ciNodeSubnet">loading...</div></div>
+      <div class="info-card"><div class="label">Pod CIDR (Overlay)</div><div class="value cidr-internal" id="ciPodCidr">loading...</div></div>
+      <div class="info-card"><div class="label">Service CIDR</div><div class="value cidr-internal" id="ciServiceCidr">loading...</div></div>
+      <div class="info-card"><div class="label">Network Plugin</div><div class="value" id="ciPlugin">loading...</div></div>
+    </div>
+
+    <p class="arrow">&#9660; Pods egress outbound through the Gateway Node Pool &#9660;</p>
+    <p class="arrow" style="margin-bottom:0.5rem">Each <code>StaticGatewayConfiguration</code> assigns a <strong class="cidr">/28 Public IP Prefix</strong> per namespace</p>
+
+    <!-- Per-Namespace Egress Table -->
+    <p class="section-label" style="margin-top:1rem">Namespace Egress (public IP prefixes)</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Namespace</th>
+          <th>Assigned Egress Prefix</th>
+          <th>Observed Egress IP</th>
+          <th>Last Checked</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="results">
+        <tr><td colspan="5" style="text-align:center; color:#94a3b8;">Loading...</td></tr>
+      </tbody>
+    </table>
+
+    <p class="refresh-info" id="refreshInfo">Auto-refreshing every 5 seconds</p>
+
+    <div class="footer">
+      <p><strong>How this works:</strong></p>
+      <p>1. Each namespace has a <code>StaticGatewayConfiguration</code> that binds it to the gateway node pool.</p>
+      <p>2. AKS auto-provisions a <strong>Public IP Prefix</strong> (e.g. /28 = 16 IPs) for each namespace config.</p>
+      <p>3. Pods annotated with the gateway config egress through that prefix &mdash; the observed IP is within the prefix.</p>
+      <p>4. The prefix is <strong>not carved from the cluster VNet</strong> &mdash; it is a separate Azure Public IP Prefix resource.</p>
+      <p style="margin-top:0.5rem; color:#94a3b8">This replicates OpenShift's EgressIP capability natively in AKS.</p>
+    </div>
+  </div>
+
+  <script>
+    function formatTime(ts) {
+      if (!ts) return '\u2014';
+      const d = new Date(ts);
+      return d.toLocaleTimeString();
+    }
+
+    function statusDot(s) {
+      if (s === 'ok') return '<span class="dot dot-ok"></span><span class="status-ok">Connected</span>';
+      if (s === 'error') return '<span class="dot dot-error"></span><span class="status-error">Error</span>';
+      return '<span class="dot dot-pending"></span><span class="status-pending">Pending</span>';
+    }
+
+    async function refresh() {
+      try {
+        const resp = await fetch('/api/status');
+        const data = await resp.json();
+
+        // Update cluster info cards
+        if (data.clusterInfo) {
+          document.getElementById('ciNodeSubnet').textContent = data.clusterInfo.nodeSubnet || 'N/A';
+          document.getElementById('ciPodCidr').textContent = data.clusterInfo.podCidr || 'N/A';
+          document.getElementById('ciServiceCidr').textContent = data.clusterInfo.serviceCidr || 'N/A';
+          document.getElementById('ciPlugin').textContent = data.clusterInfo.networkPlugin || 'N/A';
+        }
+
+        // Update results table
+        const tbody = document.getElementById('results');
+        tbody.innerHTML = '';
+        for (const r of data.results) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><span class="badge">${r.namespace}</span></td>
+            <td class="cidr">${r.egress_prefix || '\u2014'}</td>
+            <td class="ip">${r.egress_ip || '\u2014'}</td>
+            <td>${formatTime(r.timestamp)}</td>
+            <td>${statusDot(r.status)}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+      } catch (e) {
+        console.error('Failed to fetch status', e);
+      }
+    }
+
+    refresh();
+    setInterval(refresh, 5000);
+  </script>
+</body>
+</html>
