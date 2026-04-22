@@ -9,7 +9,7 @@ from flask import Flask, jsonify
 app = Flask(__name__)
 
 NAMESPACE = os.environ.get("POD_NAMESPACE", "unknown")
-IP_CHECK_URL = "https://api.ipify.org?format=json"
+IP_CHECK_URL = "https://api.ipsimple.org/ipv4?format=json"
 CHECK_INTERVAL = 10
 
 _state = {"egress_ip": "pending", "timestamp": None, "error": None}
