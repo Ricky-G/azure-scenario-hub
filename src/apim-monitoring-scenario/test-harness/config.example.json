@@ -1,0 +1,91 @@
+{
+  "_comment": "This is an example configuration file. Copy this to config.json and update with your APIM details.",
+  "apimBaseUrl": "https://your-apim-instance.azure-api.net",
+  "subscriptionKey": "your-subscription-key-here",
+  "testDuration": {
+    "quick": 2,
+    "standard": 5,
+    "extended": 15
+  },
+  "concurrency": {
+    "light": 5,
+    "moderate": 15,
+    "heavy": 30
+  },
+  "apis": {
+    "weather": {
+      "path": "/weather/{city}",
+      "method": "GET",
+      "cities": ["Seattle", "NewYork", "London", "Tokyo", "Sydney", "Paris", "Berlin", "Toronto", "Mumbai", "Singapore"],
+      "weight": 25,
+      "description": "Weather data with caching - Tests cache hit/miss patterns"
+    },
+    "productSearch": {
+      "path": "/products/search",
+      "method": "GET",
+      "queries": [
+        { "q": "laptop", "category": "electronics" },
+        { "q": "phone", "category": "electronics" },
+        { "q": "desk", "category": "furniture" },
+        { "q": "headphones", "category": "accessories" },
+        { "q": "monitor", "category": "electronics" },
+        { "q": "keyboard", "category": "accessories" },
+        { "q": "mouse", "category": "accessories" },
+        { "q": "chair", "category": "furniture" }
+      ],
+      "weight": 20,
+      "description": "Product search with rate limiting (10 calls/60s)"
+    },
+    "userValidation": {
+      "path": "/users/validate",
+      "method": "POST",
+      "testData": [
+        { "email": "john.doe@example.com", "username": "johndoe", "age": 25 },
+        { "email": "jane.smith@test.com", "username": "janesmith", "age": 30 },
+        { "email": "invalid-email", "username": "short", "age": 15 },
+        { "email": "bob@company.org", "username": "bobbuilder", "age": 45 },
+        { "email": "alice@domain.com", "username": "alicewonder", "age": 28 },
+        { "email": "test@example.com", "username": "testuser123", "age": 35 },
+        { "email": "bad_email_format", "username": "x", "age": 10 }
+      ],
+      "weight": 15,
+      "description": "User validation with transformations - Tests validation errors"
+    },
+    "currencyConvert": {
+      "path": "/currency/convert",
+      "method": "GET",
+      "conversions": [
+        { "from": "USD", "to": "EUR", "amount": 100 },
+        { "from": "EUR", "to": "GBP", "amount": 50 },
+        { "from": "GBP", "to": "JPY", "amount": 200 },
+        { "from": "USD", "to": "GBP", "amount": 150 },
+        { "from": "JPY", "to": "USD", "amount": 10000 },
+        { "from": "EUR", "to": "USD", "amount": 75 },
+        { "from": "GBP", "to": "EUR", "amount": 120 }
+      ],
+      "weight": 15,
+      "description": "Currency conversion with caching - Tests policy expressions"
+    },
+    "health": {
+      "path": "/health/status",
+      "method": "GET",
+      "weight": 15,
+      "description": "Health check endpoint - Provides baseline metrics"
+    },
+    "delaySimulator": {
+      "path": "/simulate/delay",
+      "method": "GET",
+      "scenarios": [
+        { "delay": 100, "status": 200 },
+        { "delay": 500, "status": 200 },
+        { "delay": 1000, "status": 200 },
+        { "delay": 2000, "status": 200 },
+        { "delay": 3000, "status": 200 },
+        { "delay": 200, "status": 500 },
+        { "delay": 1500, "status": 503 }
+      ],
+      "weight": 10,
+      "description": "Delay simulator - Tests performance monitoring and alerts"
+    }
+  }
+}

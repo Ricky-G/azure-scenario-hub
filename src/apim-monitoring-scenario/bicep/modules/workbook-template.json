@@ -1,0 +1,636 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "## API Management Monitoring Dashboard\n\nComprehensive monitoring for your APIM instance including request metrics, response codes, API performance, and detailed analytics.\n\n---"
+      },
+      "name": "header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "1f74ed9a-e3ed-498d-8e9b-3b8c8d8e7c8e",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "label": "Time Range",
+            "type": 4,
+            "isRequired": true,
+            "value": {
+              "durationMs": 3600000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 300000
+                },
+                {
+                  "durationMs": 900000
+                },
+                {
+                  "durationMs": 1800000
+                },
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 259200000
+                },
+                {
+                  "durationMs": 604800000
+                }
+              ]
+            }
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.apimanagement/service"
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "workbookdb19a8d8-ea37-4b8c-91e0-6f8c7d8e9c8e",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 0,
+        "resourceType": "microsoft.apimanagement/service",
+        "metricScope": 0,
+        "resourceParameter": "apimResource",
+        "resourceIds": [
+          "{apimResource}"
+        ],
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "metrics": [
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--Requests",
+            "aggregation": 1,
+            "splitBy": null
+          },
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--FailedRequests",
+            "aggregation": 1
+          }
+        ],
+        "title": "Overview: Total Requests vs Failed Requests",
+        "gridSettings": {
+          "rowLimit": 10000
+        }
+      },
+      "customWidth": "50",
+      "name": "overview-requests"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "workbook2a3b4c5d-6e7f-8g9h-0i1j-2k3l4m5n6o7p",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 2,
+        "resourceType": "microsoft.apimanagement/service",
+        "metricScope": 0,
+        "resourceIds": [
+          "{apimResource}"
+        ],
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "metrics": [
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--Duration",
+            "aggregation": 4
+          }
+        ],
+        "title": "Average Response Time (ms)",
+        "gridSettings": {
+          "rowLimit": 10000
+        }
+      },
+      "customWidth": "50",
+      "name": "overview-latency"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n### Key Metrics"
+      },
+      "name": "section-metrics"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "workbook3b4c5d6e-7f8g-9h0i-1j2k-3l4m5n6o7p8q",
+        "version": "MetricsItem/2.0",
+        "size": 3,
+        "chartType": -1,
+        "resourceType": "microsoft.apimanagement/service",
+        "metricScope": 0,
+        "resourceIds": [
+          "{apimResource}"
+        ],
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "metrics": [
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--Requests",
+            "aggregation": 1
+          },
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--SuccessfulRequests",
+            "aggregation": 1
+          },
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--FailedRequests",
+            "aggregation": 1
+          },
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--Duration",
+            "aggregation": 4
+          }
+        ],
+        "title": "Summary Statistics",
+        "gridSettings": {
+          "rowLimit": 10000
+        }
+      },
+      "name": "summary-stats"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n### Response Code Distribution"
+      },
+      "name": "section-response-codes"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "workbook4c5d6e7f-8g9h-0i1j-2k3l-4m5n6o7p8q9r",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 3,
+        "resourceType": "microsoft.apimanagement/service",
+        "metricScope": 0,
+        "resourceIds": [
+          "{apimResource}"
+        ],
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "metrics": [
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--OtherRequests",
+            "aggregation": 1,
+            "splitBy": "BackendResponseCode",
+            "splitBySortOrder": 3,
+            "splitByLimit": 10
+          }
+        ],
+        "title": "Response Codes (Pie Chart)",
+        "showAnnotations": false,
+        "gridSettings": {
+          "rowLimit": 10000
+        }
+      },
+      "customWidth": "50",
+      "name": "response-codes-pie"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "workbook5d6e7f8g-9h0i-1j2k-3l4m-5n6o7p8q9r0s",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 2,
+        "resourceType": "microsoft.apimanagement/service",
+        "metricScope": 0,
+        "resourceIds": [
+          "{apimResource}"
+        ],
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "metrics": [
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--SuccessfulRequests",
+            "aggregation": 1
+          },
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--UnauthorizedRequests",
+            "aggregation": 1
+          },
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--ClientErrors",
+            "aggregation": 1
+          },
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--ServerErrors",
+            "aggregation": 1
+          }
+        ],
+        "title": "Response Categories Over Time",
+        "gridSettings": {
+          "rowLimit": 10000
+        }
+      },
+      "customWidth": "50",
+      "name": "response-categories"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n### API Performance by Operation"
+      },
+      "name": "section-api-performance"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "workbook6e7f8g9h-0i1j-2k3l-4m5n-6o7p8q9r0s1t",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 2,
+        "resourceType": "microsoft.apimanagement/service",
+        "metricScope": 0,
+        "resourceIds": [
+          "{apimResource}"
+        ],
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "metrics": [
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--Requests",
+            "aggregation": 1,
+            "splitBy": "ApiId",
+            "splitBySortOrder": 3,
+            "splitByLimit": 10
+          }
+        ],
+        "title": "Top APIs by Request Count",
+        "gridSettings": {
+          "rowLimit": 10000
+        }
+      },
+      "name": "api-requests"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "workbook7f8g9h0i-1j2k-3l4m-5n6o-7p8q9r0s1t2u",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 2,
+        "resourceType": "microsoft.apimanagement/service",
+        "metricScope": 0,
+        "resourceIds": [
+          "{apimResource}"
+        ],
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "metrics": [
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--Duration",
+            "aggregation": 4,
+            "splitBy": "ApiId",
+            "splitBySortOrder": 3,
+            "splitByLimit": 10
+          }
+        ],
+        "title": "Average Response Time by API",
+        "gridSettings": {
+          "rowLimit": 10000
+        }
+      },
+      "name": "api-latency"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n### Errors and Failed Requests"
+      },
+      "name": "section-errors"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "workbook8g9h0i1j-2k3l-4m5n-6o7p-8q9r0s1t2u3v",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 2,
+        "color": "red",
+        "resourceType": "microsoft.apimanagement/service",
+        "metricScope": 0,
+        "resourceIds": [
+          "{apimResource}"
+        ],
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "metrics": [
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--FailedRequests",
+            "aggregation": 1,
+            "splitBy": "ApiId",
+            "splitBySortOrder": 3,
+            "splitByLimit": 10
+          }
+        ],
+        "title": "Failed Requests by API",
+        "gridSettings": {
+          "rowLimit": 10000
+        }
+      },
+      "customWidth": "50",
+      "name": "failed-requests-api"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "workbook9h0i1j2k-3l4m-5n6o-7p8q-9r0s1t2u3v4w",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 3,
+        "color": "orange",
+        "resourceType": "microsoft.apimanagement/service",
+        "metricScope": 0,
+        "resourceIds": [
+          "{apimResource}"
+        ],
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "metrics": [
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--ClientErrors",
+            "aggregation": 1
+          },
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--ServerErrors",
+            "aggregation": 1
+          },
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--UnauthorizedRequests",
+            "aggregation": 1
+          }
+        ],
+        "title": "Error Type Distribution",
+        "gridSettings": {
+          "rowLimit": 10000
+        }
+      },
+      "customWidth": "50",
+      "name": "error-distribution"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n### Capacity and Performance"
+      },
+      "name": "section-capacity"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "workbook0i1j2k3l-4m5n-6o7p-8q9r-0s1t2u3v4w5x",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 2,
+        "resourceType": "microsoft.apimanagement/service",
+        "metricScope": 0,
+        "resourceIds": [
+          "{apimResource}"
+        ],
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "metrics": [
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--Capacity",
+            "aggregation": 4
+          }
+        ],
+        "title": "APIM Capacity Utilization",
+        "gridSettings": {
+          "rowLimit": 10000
+        }
+      },
+      "customWidth": "50",
+      "name": "capacity"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "workbook1j2k3l4m-5n6o-7p8q-9r0s-1t2u3v4w5x6y",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 2,
+        "resourceType": "microsoft.apimanagement/service",
+        "metricScope": 0,
+        "resourceIds": [
+          "{apimResource}"
+        ],
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "metrics": [
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--TotalRequests",
+            "aggregation": 1
+          }
+        ],
+        "title": "Request Rate Over Time",
+        "gridSettings": {
+          "rowLimit": 10000
+        }
+      },
+      "customWidth": "50",
+      "name": "request-rate"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n### Geographic Distribution"
+      },
+      "name": "section-geography"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "workbook2k3l4m5n-6o7p-8q9r-0s1t-2u3v4w5x6y7z",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 3,
+        "resourceType": "microsoft.apimanagement/service",
+        "metricScope": 0,
+        "resourceIds": [
+          "{apimResource}"
+        ],
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "metrics": [
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--Requests",
+            "aggregation": 1,
+            "splitBy": "Location",
+            "splitBySortOrder": 3,
+            "splitByLimit": 10
+          }
+        ],
+        "title": "Requests by Location",
+        "gridSettings": {
+          "rowLimit": 10000
+        }
+      },
+      "name": "geography"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n### Detailed Metrics Table"
+      },
+      "name": "section-table"
+    },
+    {
+      "type": 10,
+      "content": {
+        "chartId": "workbook3l4m5n6o-7p8q-9r0s-1t2u-3v4w5x6y7z8a",
+        "version": "MetricsItem/2.0",
+        "size": 0,
+        "chartType": 0,
+        "resourceType": "microsoft.apimanagement/service",
+        "metricScope": 0,
+        "resourceIds": [
+          "{apimResource}"
+        ],
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "metrics": [
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--Requests",
+            "aggregation": 1,
+            "splitBy": "ApiId"
+          },
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--SuccessfulRequests",
+            "aggregation": 1,
+            "splitBy": "ApiId"
+          },
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--FailedRequests",
+            "aggregation": 1,
+            "splitBy": "ApiId"
+          },
+          {
+            "namespace": "microsoft.apimanagement/service",
+            "metric": "microsoft.apimanagement/service--Duration",
+            "aggregation": 4,
+            "splitBy": "ApiId"
+          }
+        ],
+        "title": "Detailed API Metrics",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Subscription",
+              "formatter": 5
+            },
+            {
+              "columnMatch": "Metric",
+              "formatter": 1
+            },
+            {
+              "columnMatch": "Aggregation",
+              "formatter": 5
+            },
+            {
+              "columnMatch": "Value",
+              "formatter": 8,
+              "formatOptions": {
+                "palette": "blue"
+              }
+            },
+            {
+              "columnMatch": "Timeline",
+              "formatter": 9
+            }
+          ],
+          "rowLimit": 10000,
+          "filter": true
+        }
+      },
+      "name": "detailed-table"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n\n**Tips:**\n- Use the time range selector to adjust the monitoring window\n- Click on chart elements to drill into specific metrics\n- Export data using the export button in each chart\n- Set up alerts based on these metrics in Azure Monitor\n\n**API Endpoints Monitored:**\n- Weather API (Caching)\n- Product Search API (Rate Limiting)\n- User Validation API (Transformation)\n- Currency Conversion API (Calculations)\n- Health Monitor API (Baseline)\n- Delay Simulator API (Performance Testing)"
+      },
+      "name": "footer"
+    }
+  ],
+  "styleSettings": {},
+  "fromTemplateId": "sentinel-UserWorkbook",
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

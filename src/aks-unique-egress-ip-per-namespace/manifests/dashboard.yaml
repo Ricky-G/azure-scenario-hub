@@ -1,0 +1,81 @@
+# Dashboard web app — NOT annotated with egress gateway
+# NOTE: Replace __ACR_LOGIN_SERVER__ with actual ACR login server during deployment
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dashboard
+  labels:
+    scenario: aks-static-egress-gateway
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard
+  namespace: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+    spec:
+      containers:
+        - name: dashboard
+          image: __ACR_LOGIN_SERVER__/dashboard:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: NAMESPACES
+              value: "egress-team-alpha,egress-team-bravo,egress-team-charlie,egress-team-delta,egress-team-echo"
+            - name: SERVICE_NAME
+              value: "egress-checker"
+            - name: SERVICE_PORT
+              value: "8080"
+            - name: NODE_SUBNET
+              value: "__NODE_SUBNET__"
+            - name: POD_CIDR
+              value: "__POD_CIDR__"
+            - name: SERVICE_CIDR
+              value: "__SERVICE_CIDR__"
+            - name: NETWORK_PLUGIN
+              value: "Azure CNI Overlay"
+            - name: GATEWAY_PREFIX_SIZE
+              value: "/28"
+            - name: EGRESS_PREFIXES
+              value: "__EGRESS_PREFIXES__"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard
+  namespace: dashboard
+spec:
+  selector:
+    app: dashboard
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP

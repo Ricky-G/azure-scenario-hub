@@ -1,0 +1,12 @@
+# Test Harness - Protect sensitive configuration
+*.local.json
+config.local.json
+config.json
+
+# Test results and logs
+test-results/
+*.log
+*.csv
+
+# PowerShell testing artifacts
+*.ps1xml

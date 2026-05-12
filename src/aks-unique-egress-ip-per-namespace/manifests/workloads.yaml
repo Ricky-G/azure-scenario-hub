@@ -1,0 +1,307 @@
+# Egress Checker workloads — one per namespace
+# NOTE: Replace __ACR_LOGIN_SERVER__ with actual ACR login server during deployment
+---
+# egress-team-alpha
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: egress-checker
+  namespace: egress-team-alpha
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: egress-checker
+  template:
+    metadata:
+      labels:
+        app: egress-checker
+      annotations:
+        kubernetes.azure.com/static-gateway-configuration: egress-config
+    spec:
+      containers:
+        - name: egress-checker
+          image: __ACR_LOGIN_SERVER__/egress-checker:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              cpu: 50m
+              memory: 48Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: egress-checker
+  namespace: egress-team-alpha
+spec:
+  selector:
+    app: egress-checker
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+# egress-team-bravo
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: egress-checker
+  namespace: egress-team-bravo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: egress-checker
+  template:
+    metadata:
+      labels:
+        app: egress-checker
+      annotations:
+        kubernetes.azure.com/static-gateway-configuration: egress-config
+    spec:
+      containers:
+        - name: egress-checker
+          image: __ACR_LOGIN_SERVER__/egress-checker:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              cpu: 50m
+              memory: 48Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: egress-checker
+  namespace: egress-team-bravo
+spec:
+  selector:
+    app: egress-checker
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+# egress-team-charlie
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: egress-checker
+  namespace: egress-team-charlie
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: egress-checker
+  template:
+    metadata:
+      labels:
+        app: egress-checker
+      annotations:
+        kubernetes.azure.com/static-gateway-configuration: egress-config
+    spec:
+      containers:
+        - name: egress-checker
+          image: __ACR_LOGIN_SERVER__/egress-checker:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              cpu: 50m
+              memory: 48Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: egress-checker
+  namespace: egress-team-charlie
+spec:
+  selector:
+    app: egress-checker
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+# egress-team-delta
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: egress-checker
+  namespace: egress-team-delta
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: egress-checker
+  template:
+    metadata:
+      labels:
+        app: egress-checker
+      annotations:
+        kubernetes.azure.com/static-gateway-configuration: egress-config
+    spec:
+      containers:
+        - name: egress-checker
+          image: __ACR_LOGIN_SERVER__/egress-checker:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              cpu: 50m
+              memory: 48Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: egress-checker
+  namespace: egress-team-delta
+spec:
+  selector:
+    app: egress-checker
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+# egress-team-echo
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: egress-checker
+  namespace: egress-team-echo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: egress-checker
+  template:
+    metadata:
+      labels:
+        app: egress-checker
+      annotations:
+        kubernetes.azure.com/static-gateway-configuration: egress-config
+    spec:
+      containers:
+        - name: egress-checker
+          image: __ACR_LOGIN_SERVER__/egress-checker:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              cpu: 50m
+              memory: 48Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: egress-checker
+  namespace: egress-team-echo
+spec:
+  selector:
+    app: egress-checker
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP

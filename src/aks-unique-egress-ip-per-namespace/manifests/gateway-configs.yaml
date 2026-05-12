@@ -1,0 +1,97 @@
+# Namespaces
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: egress-team-alpha
+  labels:
+    scenario: aks-static-egress-gateway
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: egress-team-bravo
+  labels:
+    scenario: aks-static-egress-gateway
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: egress-team-charlie
+  labels:
+    scenario: aks-static-egress-gateway
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: egress-team-delta
+  labels:
+    scenario: aks-static-egress-gateway
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: egress-team-echo
+  labels:
+    scenario: aks-static-egress-gateway
+---
+# StaticGatewayConfiguration — one per namespace
+apiVersion: egressgateway.kubernetes.azure.com/v1alpha1
+kind: StaticGatewayConfiguration
+metadata:
+  name: egress-config
+  namespace: egress-team-alpha
+spec:
+  gatewayNodepoolName: gateway
+  excludeCidrs:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 169.254.169.254/32
+---
+apiVersion: egressgateway.kubernetes.azure.com/v1alpha1
+kind: StaticGatewayConfiguration
+metadata:
+  name: egress-config
+  namespace: egress-team-bravo
+spec:
+  gatewayNodepoolName: gateway
+  excludeCidrs:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 169.254.169.254/32
+---
+apiVersion: egressgateway.kubernetes.azure.com/v1alpha1
+kind: StaticGatewayConfiguration
+metadata:
+  name: egress-config
+  namespace: egress-team-charlie
+spec:
+  gatewayNodepoolName: gateway
+  excludeCidrs:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 169.254.169.254/32
+---
+apiVersion: egressgateway.kubernetes.azure.com/v1alpha1
+kind: StaticGatewayConfiguration
+metadata:
+  name: egress-config
+  namespace: egress-team-delta
+spec:
+  gatewayNodepoolName: gateway
+  excludeCidrs:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 169.254.169.254/32
+---
+apiVersion: egressgateway.kubernetes.azure.com/v1alpha1
+kind: StaticGatewayConfiguration
+metadata:
+  name: egress-config
+  namespace: egress-team-echo
+spec:
+  gatewayNodepoolName: gateway
+  excludeCidrs:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 169.254.169.254/32

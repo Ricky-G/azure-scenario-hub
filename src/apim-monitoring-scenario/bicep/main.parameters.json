@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastus"
+    },
+    "resourceGroupName": {
+      "value": "rg-apim-monitoring"
+    },
+    "apimServiceName": {
+      "value": "apim-demo-unique123"
+    },
+    "publisherEmail": {
+      "value": "admin@example.com"
+    },
+    "publisherName": {
+      "value": "Contoso"
+    },
+    "apimSku": {
+      "value": "Developer"
+    },
+    "enableApplicationInsights": {
+      "value": false
+    },
+    "tags": {
+      "value": {
+        "Environment": "Development",
+        "Project": "AzureScenarioHub",
+        "Scenario": "APIM-Monitoring",
+        "Purpose": "Demo"
+      }
+    }
+  }
+}
