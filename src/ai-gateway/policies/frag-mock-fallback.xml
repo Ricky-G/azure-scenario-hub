@@ -1,0 +1,39 @@
+<!--
+    Fragment: mock-fallback
+    Purpose:  When the upstream model backend fails (5xx or circuit breaker
+              open), instead of bubbling the raw error up to the caller we
+              return a structured, branded fallback response so client apps
+              degrade gracefully and customers see APIM's resilience.
+
+              Triggers only on 5xx (not 429 - those are real throttling and
+              the caller should retry; we still log them via frag-throttling
+              -events).
+-->
+<fragment>
+    <choose>
+        <when condition="@(context.Response != null &amp;&amp; context.Response.StatusCode >= 500)">
+            <return-response>
+                <set-status code="503" reason="Service Unavailable" />
+                <set-header name="content-type" exists-action="override">
+                    <value>application/json</value>
+                </set-header>
+                <set-header name="x-ai-gateway-fallback" exists-action="override">
+                    <value>mock</value>
+                </set-header>
+                <set-body>@{
+                    var payload = new Newtonsoft.Json.Linq.JObject(
+                        new Newtonsoft.Json.Linq.JProperty("error", new Newtonsoft.Json.Linq.JObject(
+                            new Newtonsoft.Json.Linq.JProperty("code", "ai_gateway_backend_unavailable"),
+                            new Newtonsoft.Json.Linq.JProperty("message", "The AI Gateway could not reach a healthy model backend. Please retry shortly."),
+                            new Newtonsoft.Json.Linq.JProperty("appId", (string)context.Variables.GetValueOrDefault<string>("appId","unknown")),
+                            new Newtonsoft.Json.Linq.JProperty("useCase", (string)context.Variables.GetValueOrDefault<string>("useCase","unknown")),
+                            new Newtonsoft.Json.Linq.JProperty("route", (string)context.Variables.GetValueOrDefault<string>("apiRoute","unknown")),
+                            new Newtonsoft.Json.Linq.JProperty("requestId", context.RequestId)
+                        ))
+                    );
+                    return payload.ToString();
+                }</set-body>
+            </return-response>
+        </when>
+    </choose>
+</fragment>

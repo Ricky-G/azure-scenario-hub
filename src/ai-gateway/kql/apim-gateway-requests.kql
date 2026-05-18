@@ -1,0 +1,33 @@
+// ============================================================================
+// End-to-end request analysis from APIM gateway logs (Log Analytics)
+// ----------------------------------------------------------------------------
+// Run these against the Log Analytics workspace deployed by the scenario.
+// They use the APIM diagnostic table `ApiManagementGatewayLogs`.
+// ============================================================================
+
+
+// 1. Top callers by request volume
+ApiManagementGatewayLogs
+| where TimeGenerated > ago(1h)
+| where ApiId has 'azure-openai'
+| summarize Calls = count(), AvgLatencyMs = avg(TotalTime) by ApimSubscriptionId, ProductId, OperationId
+| order by Calls desc
+
+
+// 2. Latency percentiles per operation
+ApiManagementGatewayLogs
+| where TimeGenerated > ago(1h)
+| where ApiId has 'azure-openai'
+| summarize p50 = percentile(TotalTime, 50),
+            p90 = percentile(TotalTime, 90),
+            p99 = percentile(TotalTime, 99)
+            by OperationId
+| order by p99 desc
+
+
+// 3. Failed requests with response code distribution
+ApiManagementGatewayLogs
+| where TimeGenerated > ago(2h)
+| where ApiId has 'azure-openai' and ResponseCode >= 400
+| summarize Count = count() by ResponseCode, ProductId, OperationId
+| order by Count desc

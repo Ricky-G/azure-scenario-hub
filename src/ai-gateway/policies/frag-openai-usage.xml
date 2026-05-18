@@ -1,0 +1,49 @@
+<!--
+    Fragment: openai-usage
+    Purpose:  Capture token usage for non-streaming Azure OpenAI responses and
+              emit it as a structured trace into Application Insights so it can
+              be queried with KQL for per-app / per-route / per-region
+              charge-back.
+
+    Pre-conditions (set by the API-level policy):
+        - `isStream` (true|false)
+        - `apiRoute` (e.g. "global" | "aue")
+        - `apiRegion` (e.g. "australiaeast" | "global")
+        - `appId`, `useCase`, `backendId`, `deployment-id`, `routeLocation`
+-->
+<fragment>
+    <choose>
+        <when condition="@(context.Variables.GetValueOrDefault<string>("isStream","false").Equals("false", StringComparison.OrdinalIgnoreCase))">
+            <set-variable name="responseBody" value="@(context.Response.Body.As<JObject>(preserveContent: true))" />
+
+            <choose>
+                <when condition="@(context.Response.StatusCode == 200)">
+                    <trace source="ai-gateway" severity="information">
+                        <message>@("ai-gateway-token-usage")</message>
+                        <metadata name="appId" value="@((string)context.Variables.GetValueOrDefault<string>("appId", "unknown"))" />
+                        <metadata name="useCase" value="@((string)context.Variables.GetValueOrDefault<string>("useCase", "unknown"))" />
+                        <metadata name="apiRoute" value="@((string)context.Variables.GetValueOrDefault<string>("apiRoute", "unknown"))" />
+                        <metadata name="apiRegion" value="@((string)context.Variables.GetValueOrDefault<string>("apiRegion", "unknown"))" />
+                        <metadata name="subscriptionId" value="@(context.Subscription?.Id ?? "anonymous")" />
+                        <metadata name="subscriptionName" value="@(context.Subscription?.Name ?? "anonymous")" />
+                        <metadata name="productId" value="@(context.Product?.Id ?? "none")" />
+                        <metadata name="productName" value="@(context.Product?.Name ?? "none")" />
+                        <metadata name="apiId" value="@(context.Api?.Id ?? "none")" />
+                        <metadata name="operationName" value="@(context.Operation?.Name ?? "none")" />
+                        <metadata name="deploymentName" value="@((string)context.Variables.GetValueOrDefault<string>("deployment-id", "none"))" />
+                        <metadata name="backendId" value="@((string)context.Variables.GetValueOrDefault<string>("backendId", "default"))" />
+                        <metadata name="routeLocation" value="@((string)context.Variables.GetValueOrDefault<string>("routeLocation", "none"))" />
+                        <metadata name="model" value="@(((JObject)context.Variables["responseBody"])["model"]?.ToString() ?? "unknown")" />
+                        <metadata name="promptTokens" value="@(((JObject)context.Variables["responseBody"])?["usage"]?["prompt_tokens"]?.Value<int>().ToString() ?? "0")" />
+                        <metadata name="completionTokens" value="@(((JObject)context.Variables["responseBody"])?["usage"]?["completion_tokens"]?.Value<int>().ToString() ?? "0")" />
+                        <metadata name="totalTokens" value="@(((JObject)context.Variables["responseBody"])?["usage"]?["total_tokens"]?.Value<int>().ToString() ?? "0")" />
+                        <metadata name="clientIp" value="@(context.Request.IpAddress ?? "0.0.0.0")" />
+                        <metadata name="sessionId" value="@(context.Request.Headers.GetValueOrDefault("x-session-id", "none"))" />
+                        <metadata name="endUserId" value="@(context.Request.Headers.GetValueOrDefault("x-user-id", "none"))" />
+                        <metadata name="gatewayRegion" value="@(context.Deployment?.Region ?? "none")" />
+                    </trace>
+                </when>
+            </choose>
+        </when>
+    </choose>
+</fragment>

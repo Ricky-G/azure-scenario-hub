@@ -1,0 +1,54 @@
+<!--
+    Fragment: cache-lookup
+    Purpose:  Lightweight response cache for non-streaming chat completions.
+              Computes a SHA-256 over (deployment-id + product + body) so identical
+              requests from the same product return immediately without hitting
+              the model. Demonstrates APIM's built-in cache without external
+              infra (no Redis required for the Developer SKU internal cache).
+
+    NOTE: This is a body-hash cache, not a semantic cache. Semantic cache needs
+          `azure-openai-semantic-cache-lookup` + Redis Enterprise + an embeddings
+          deployment; out of scope for this single-Foundry demo.
+-->
+<fragment>
+    <choose>
+        <when condition="@((string)context.Variables.GetValueOrDefault<string>("isStream","false") == "false")">
+            <set-variable name="cacheKey" value="@{
+                var bodyText = context.Request.Body.As<string>(preserveContent: true);
+                // Cache key isolation: include the calling APIM subscription
+                // id so two different subscriptions never see each other's
+                // cached responses, even within the same product.
+                var raw = (string)context.Variables.GetValueOrDefault<string>("deployment-id","unknown")
+                        + "|" + (context.Product?.Id ?? "none")
+                        + "|" + (context.Subscription?.Id ?? "anonymous")
+                        + "|" + bodyText;
+                using (var sha = System.Security.Cryptography.SHA256.Create())
+                {
+                    var bytes = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(raw));
+                    return "ai-gw:" + Convert.ToBase64String(bytes);
+                }
+            }" />
+            <cache-lookup-value key="@((string)context.Variables["cacheKey"])" variable-name="cachedBody" />
+            <choose>
+                <when condition="@(context.Variables.ContainsKey("cachedBody"))">
+                    <return-response>
+                        <set-status code="200" reason="OK (cached)" />
+                        <set-header name="content-type" exists-action="override">
+                            <value>application/json</value>
+                        </set-header>
+                        <set-header name="x-ai-gateway-cache" exists-action="override">
+                            <value>HIT</value>
+                        </set-header>
+                        <set-header name="x-ai-gateway-route" exists-action="override">
+                            <value>@((string)context.Variables.GetValueOrDefault<string>("apiRoute","unknown"))</value>
+                        </set-header>
+                        <set-header name="x-ai-gateway-region" exists-action="override">
+                            <value>@((string)context.Variables.GetValueOrDefault<string>("apiRegion","unknown"))</value>
+                        </set-header>
+                        <set-body>@((string)context.Variables["cachedBody"])</set-body>
+                    </return-response>
+                </when>
+            </choose>
+        </when>
+    </choose>
+</fragment>

@@ -1,0 +1,34 @@
+<!--
+    Product-level policy template.
+
+    Each APIM Product (one per business app / use-case in this demo) sets two
+    variables that the API-level policy then logs and emits as custom metric
+    dimensions. The Bicep `apim-products.bicep` module substitutes the
+    `__APP_ID__`, `__USE_CASE__`, `__TPM_LIMIT__` placeholders before applying.
+
+    The product policy ALSO sets a tighter per-product token-per-minute limit
+    so the demo can show different SKUs / tiers throttling independently.
+-->
+<policies>
+    <inbound>
+        <base />
+        <set-variable name="appId" value="__APP_ID__" />
+        <set-variable name="useCase" value="__USE_CASE__" />
+
+        <!-- Per-product TPM ceiling. Counter is keyed by subscription so each
+             onboarded subscription gets its own bucket within the product. -->
+        <azure-openai-token-limit
+            counter-key="@(context.Subscription?.Id ?? "anonymous")"
+            tokens-per-minute="__TPM_LIMIT__"
+            estimate-prompt-tokens="false" />
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>

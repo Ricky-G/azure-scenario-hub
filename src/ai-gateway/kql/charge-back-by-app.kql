@@ -1,0 +1,128 @@
+// ============================================================================
+// AI Gateway charge-back queries
+// ----------------------------------------------------------------------------
+// Run against the Application Insights component (`*-appi-*`) created by the
+// scenario. Token usage telemetry is emitted from the APIM policies in two
+// complementary ways:
+//
+//   1. Native APIM `azure-openai-emit-token-metric` -> Application Insights
+//      `customMetrics` table, with custom dimensions including `App ID`,
+//      `Use Case`, `Product Name`, `Deployment`, `Route` and `Region Label`.
+//   2. Structured `<trace>` events from the policy fragments
+//      `frag-openai-usage.xml` / `frag-throttling-events.xml` ->
+//      `traces` table (also accessible from Log Analytics as `AppTraces`).
+//
+// Note: cache HITs short-circuit before the model is called, so they don't
+// consume tokens and don't appear in customMetrics. They DO appear in
+// `requests` / `AppRequests` (with `x-ai-gateway-cache: HIT` response header)
+// and you can quantify cache savings from there - see query #5.
+// ============================================================================
+
+
+// ---------------------------------------------------------------------------
+// 1. Per-app token consumption (last 1h) - the headline charge-back view.
+// ---------------------------------------------------------------------------
+customMetrics
+| where timestamp > ago(1h)
+| where name in ('Prompt Tokens', 'Completion Tokens', 'Total Tokens')
+| extend appId      = tostring(customDimensions['App ID'])
+| extend useCase    = tostring(customDimensions['Use Case'])
+| extend product    = tostring(customDimensions['Product Name'])
+| extend route      = tostring(customDimensions['Route'])
+| extend region     = tostring(customDimensions['Region Label'])
+| extend deployment = tostring(customDimensions['Deployment'])
+| summarize Calls = count(), Tokens = sum(value) by appId, useCase, product, route, region, deployment, name
+| evaluate pivot(name, sum(Tokens), appId, useCase, product, route, region, deployment, Calls)
+| project appId, useCase, product, route, region, deployment, Calls,
+          PromptTokens     = coalesce(toint(['Prompt Tokens']),     0),
+          CompletionTokens = coalesce(toint(['Completion Tokens']), 0),
+          TotalTokens      = coalesce(toint(['Total Tokens']),      0)
+| order by TotalTokens desc
+
+
+// ---------------------------------------------------------------------------
+// 2. Per-route comparison (Australia East vs Global) - shows customer the
+//    distribution of traffic per regional API.
+// ---------------------------------------------------------------------------
+customMetrics
+| where timestamp > ago(1h)
+| where name == 'Total Tokens'
+| extend route  = tostring(customDimensions['Route'])
+| extend region = tostring(customDimensions['Region Label'])
+| summarize Calls = count(), TotalTokens = sum(value) by route, region
+| order by TotalTokens desc
+
+
+// ---------------------------------------------------------------------------
+// 3. Per-app cost estimate (last 24h) using sample $ rates per 1K tokens.
+//    Adjust the pricePer* columns to match your enterprise pricing.
+// ---------------------------------------------------------------------------
+let pricing = datatable(model:string, pricePerKPrompt:real, pricePerKCompletion:real)
+[
+    'gpt-4.1',      0.0030, 0.0120,
+    'gpt-4.1-mini', 0.0004, 0.0016,
+    'gpt-4o-mini',  0.00015, 0.0006,
+    'unknown',      0.0010, 0.0040
+];
+customMetrics
+| where timestamp > ago(24h)
+| where name in ('Prompt Tokens', 'Completion Tokens')
+| extend appId      = tostring(customDimensions['App ID'])
+| extend useCase    = tostring(customDimensions['Use Case'])
+| extend route      = tostring(customDimensions['Route'])
+| extend deployment = tostring(customDimensions['Deployment'])
+| summarize tokens = sum(value) by appId, useCase, route, deployment, name
+| evaluate pivot(name, sum(tokens), appId, useCase, route, deployment)
+| extend PromptTokens     = coalesce(toint(['Prompt Tokens']),     0)
+| extend CompletionTokens = coalesce(toint(['Completion Tokens']), 0)
+| join kind=leftouter pricing on $left.deployment == $right.model
+| extend EstCost = round(
+        (PromptTokens     / 1000.0) * coalesce(pricePerKPrompt,     0.001)
+      + (CompletionTokens / 1000.0) * coalesce(pricePerKCompletion, 0.004), 4)
+| project appId, useCase, route, deployment, PromptTokens, CompletionTokens, EstCostUSD = EstCost
+| order by EstCostUSD desc
+
+
+// ---------------------------------------------------------------------------
+// 4. Token consumption time-series per app (5 min buckets).
+// ---------------------------------------------------------------------------
+customMetrics
+| where timestamp > ago(2h)
+| where name == 'Total Tokens'
+| extend appId = tostring(customDimensions['App ID'])
+| summarize Tokens = sum(value) by bin(timestamp, 5m), appId
+| render timechart
+
+
+// ---------------------------------------------------------------------------
+// 5. Cache hit rate + savings. Cached responses are short-circuited at the
+//    gateway with a `x-ai-gateway-cache: HIT` response header, so we can
+//    count them straight from `requests`.
+// ---------------------------------------------------------------------------
+requests
+| where timestamp > ago(1h)
+| extend cacheStatus = tostring(customDimensions['Response-x-ai-gateway-cache'])
+| extend route       = tostring(customDimensions['Response-x-ai-gateway-route'])
+| where isnotempty(route)
+| summarize Calls = count() by route, cacheStatus
+| order by route, cacheStatus
+
+
+// ---------------------------------------------------------------------------
+// 6. Detailed per-call structured trace (from frag-openai-usage.xml).
+// ---------------------------------------------------------------------------
+traces
+| where timestamp > ago(1h)
+| where message == 'ai-gateway-token-usage'
+| extend appId       = tostring(customDimensions.appId)
+| extend useCase     = tostring(customDimensions.useCase)
+| extend product     = tostring(customDimensions.productName)
+| extend route       = tostring(customDimensions.apiRoute)
+| extend region      = tostring(customDimensions.apiRegion)
+| extend model       = tostring(customDimensions.model)
+| extend deployment  = tostring(customDimensions.deploymentName)
+| extend totalTokens = toint(customDimensions.totalTokens)
+| extend sessionId   = tostring(customDimensions.sessionId)
+| extend endUserId   = tostring(customDimensions.endUserId)
+| project timestamp, appId, useCase, product, route, region, deployment, model, totalTokens, sessionId, endUserId
+| order by timestamp desc

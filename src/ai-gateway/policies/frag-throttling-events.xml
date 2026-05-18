@@ -1,0 +1,25 @@
+<!--
+    Fragment: throttling-events
+    Purpose:  When the upstream Azure OpenAI service returns 429 (rate limit)
+              the on-error block calls this fragment to write a structured trace
+              into Application Insights so an alert / KQL query can spot
+              service degradation per app / product / deployment.
+-->
+<fragment>
+    <choose>
+        <when condition="@(context.Response != null &amp;&amp; context.Response.StatusCode == 429)">
+            <trace source="ai-gateway" severity="error">
+                <message>@("ai-gateway-throttling-event")</message>
+                <metadata name="appId" value="@((string)context.Variables.GetValueOrDefault<string>("appId", "unknown"))" />
+                <metadata name="useCase" value="@((string)context.Variables.GetValueOrDefault<string>("useCase", "unknown"))" />
+                <metadata name="subscriptionName" value="@(context.Subscription?.Name ?? "anonymous")" />
+                <metadata name="productName" value="@(context.Product?.Name ?? "none")" />
+                <metadata name="deploymentName" value="@((string)context.Variables.GetValueOrDefault<string>("deployment-id", "none"))" />
+                <metadata name="backendId" value="@((string)context.Variables.GetValueOrDefault<string>("backendId", "default"))" />
+                <metadata name="retryAfter" value="@(context.Response.Headers.GetValueOrDefault("Retry-After", "n/a"))" />
+                <metadata name="statusCode" value="@(context.Response.StatusCode.ToString())" />
+                <metadata name="reason" value="@(context.Response.StatusReason ?? "throttled")" />
+            </trace>
+        </when>
+    </choose>
+</fragment>

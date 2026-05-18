@@ -1,0 +1,38 @@
+<!--
+    Service-level policy applied to every API on this APIM instance.
+    Adds CORS so browser-based demos / web SPAs can call the gateway.
+    Tightening for production: scope `allowed-origins` to your real domains.
+-->
+<policies>
+    <inbound>
+        <!-- DEMO-ONLY CORS: allow-origin="*" lets any web page call the
+             gateway. Tighten the <allowed-origins> list to your real domains
+             before promoting this configuration past a sandbox. -->
+        <cors allow-credentials="false">
+            <allowed-origins>
+                <origin>*</origin>
+            </allowed-origins>
+            <allowed-methods preflight-result-max-age="3600">
+                <method>GET</method>
+                <method>POST</method>
+                <method>OPTIONS</method>
+            </allowed-methods>
+            <allowed-headers>
+                <header>*</header>
+            </allowed-headers>
+            <expose-headers>
+                <header>x-ai-gateway-cache</header>
+                <header>x-ai-gateway-fallback</header>
+                <header>x-ai-gateway-route</header>
+                <header>x-request-id</header>
+            </expose-headers>
+        </cors>
+    </inbound>
+    <backend>
+        <forward-request />
+    </backend>
+    <outbound>
+    </outbound>
+    <on-error>
+    </on-error>
+</policies>

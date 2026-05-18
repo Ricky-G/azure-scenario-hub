@@ -1,0 +1,37 @@
+// ============================================================================
+// Throttling / 429 monitoring
+// ----------------------------------------------------------------------------
+// Emitted by frag-throttling-events.xml whenever the upstream Azure OpenAI
+// service or the per-product `azure-openai-token-limit` policy returns 429.
+// ============================================================================
+
+
+// 1. Recent throttling events
+traces
+| where timestamp > ago(1h)
+| where message == 'ai-gateway-throttling-event'
+| extend appId      = tostring(customDimensions.appId)
+| extend product    = tostring(customDimensions.productName)
+| extend deployment = tostring(customDimensions.deploymentName)
+| extend retryAfter = tostring(customDimensions.retryAfter)
+| extend statusCode = tostring(customDimensions.statusCode)
+| project timestamp, appId, product, deployment, statusCode, retryAfter
+| order by timestamp desc
+
+
+// 2. 429 rate per product / minute
+traces
+| where timestamp > ago(2h)
+| where message == 'ai-gateway-throttling-event'
+| extend product = tostring(customDimensions.productName)
+| summarize Throttled = count() by bin(timestamp, 1m), product
+| render timechart
+
+
+// 3. APIM gateway level view (raw 4xx/5xx) - uses the diagnostic stream into
+//    Log Analytics. Run this against the Log Analytics workspace.
+ApiManagementGatewayLogs
+| where TimeGenerated > ago(1h)
+| where ApiId has 'azure-openai'
+| summarize Calls = count() by ResponseCode, bin(TimeGenerated, 1m)
+| render timechart

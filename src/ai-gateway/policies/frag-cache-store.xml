@@ -1,0 +1,22 @@
+<!--
+    Fragment: cache-store
+    Purpose:  Persist successful non-streaming chat-completion responses into
+              the APIM internal cache for 5 minutes, keyed by the same SHA-256
+              hash computed in `frag-cache-lookup`.
+-->
+<fragment>
+    <choose>
+        <when condition="@((string)context.Variables.GetValueOrDefault<string>("isStream","false") == "false"
+                            &amp;&amp; context.Response.StatusCode == 200
+                            &amp;&amp; context.Variables.ContainsKey("cacheKey")
+                            &amp;&amp; context.Variables.ContainsKey("responseBody"))">
+            <cache-store-value
+                key="@((string)context.Variables["cacheKey"])"
+                value="@(((Newtonsoft.Json.Linq.JObject)context.Variables["responseBody"]).ToString())"
+                duration="300" />
+            <set-header name="x-ai-gateway-cache" exists-action="override">
+                <value>MISS</value>
+            </set-header>
+        </when>
+    </choose>
+</fragment>

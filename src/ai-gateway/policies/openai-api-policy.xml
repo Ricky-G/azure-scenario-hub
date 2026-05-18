@@ -1,0 +1,200 @@
+<!--
+    API-level policy for both "Azure OpenAI - Australia East" and
+    "Azure OpenAI - Global" APIs. The same policy is applied to both APIs;
+    the per-API differences (route name, region label) come from variables
+    substituted by Bicep before the policy is uploaded.
+
+    Demonstrated capabilities:
+      1. Subscription-key auth at the gateway (`api-key` header).
+      2. JSON request validation - chat completions must contain a
+         non-empty `messages` array.
+      3. Body-hash response cache (frag-cache-lookup) -> short-circuit.
+      4. Streaming detection.
+      5. Drop the caller key, use APIM MI to auth to Foundry.
+      6. Per-subscription TPM ceiling via `azure-openai-token-limit`.
+      7. Native token metric emission with `azure-openai-emit-token-metric`
+         (App ID / Use Case / Product / Deployment / Route / Region).
+      8. Backend POOL routing (priority + circuit breaker, set in Bicep)
+         with automatic failover.
+      9. Streaming-aware response forwarding.
+     10. Outbound: structured trace per call (frag-openai-usage).
+     11. Outbound: cache-store for repeat-request acceleration.
+     12. on-error: graceful mock fallback for 5xx, throttling-event trace
+         for 429.
+-->
+<policies>
+    <inbound>
+        <base />
+
+        <!-- ============================================================
+             Per-API metadata. The Bicep substitutes the values below per
+             API instance via `replace()` before pushing the policy.
+             ============================================================ -->
+        <set-variable name="apiRoute" value="__API_ROUTE__" />
+        <set-variable name="apiRegion" value="__API_REGION__" />
+        <set-header name="x-ai-gateway-route" exists-action="override">
+            <value>@((string)context.Variables["apiRoute"])</value>
+        </set-header>
+
+        <!-- ============================================================
+             1. Capture deployment id from URL template.
+             ============================================================ -->
+        <set-variable name="deployment-id" value="@(context.Request.MatchedParameters.GetValueOrDefault("deployment-id", "unknown"))" />
+
+        <!-- ============================================================
+             1a. Reject query-string subscription keys. APIM's default API
+                 config still honours `?subscription-key=...` even when we
+                 leave it out of `subscriptionKeyParameterNames` in Bicep.
+                 Query-string keys are easier to leak via referrers / logs,
+                 so we enforce header-only at the policy layer.
+             ============================================================ -->
+        <choose>
+            <when condition="@(!string.IsNullOrEmpty(context.Request.Url.Query.GetValueOrDefault("subscription-key","")))">
+                <return-response>
+                    <set-status code="400" reason="Bad Request" />
+                    <set-header name="content-type" exists-action="override">
+                        <value>application/json</value>
+                    </set-header>
+                    <set-body>{"error":{"code":"ai_gateway_query_key_disabled","message":"Subscription keys must be passed in the 'api-key' header. Query-string keys are disabled to avoid leaking credentials via referrers and access logs."}}</set-body>
+                </return-response>
+            </when>
+        </choose>
+
+        <!-- ============================================================
+             2. Lightweight request validation - reject malformed chat
+                completion requests at the gateway so we don't waste
+                backend capacity / TPM budget.
+             ============================================================ -->
+        <choose>
+            <when condition="@{
+                try {
+                    var body = context.Request.Body?.As<JObject>(preserveContent: true);
+                    if (body == null) { return true; }
+                    var messages = body["messages"] as JArray;
+                    return messages == null || messages.Count == 0;
+                } catch { return true; }
+            }">
+                <return-response>
+                    <set-status code="400" reason="Bad Request" />
+                    <set-header name="content-type" exists-action="override">
+                        <value>application/json</value>
+                    </set-header>
+                    <set-body>{"error":{"code":"ai_gateway_invalid_request","message":"Request body must include a non-empty 'messages' array."}}</set-body>
+                </return-response>
+            </when>
+        </choose>
+
+        <!-- ============================================================
+             3. Detect streaming early - cache + buffering decisions
+                depend on it.
+             ============================================================ -->
+        <choose>
+            <when condition="@{
+                try {
+                    var body = context.Request.Body?.As<JObject>(preserveContent: true);
+                    return body != null
+                        && body["stream"] != null
+                        && body["stream"].Type != JTokenType.Null
+                        && body["stream"].Value<bool>();
+                } catch { return false; }
+            }">
+                <set-variable name="isStream" value="true" />
+            </when>
+            <otherwise>
+                <set-variable name="isStream" value="false" />
+            </otherwise>
+        </choose>
+
+        <!-- ============================================================
+             4. Response cache lookup (non-streaming only). On HIT the
+                fragment short-circuits with a `return-response`.
+             ============================================================ -->
+        <include-fragment fragment-id="ai-gateway-cache-lookup" />
+
+        <!-- ============================================================
+             5. Strip the caller's gateway keys so they never reach Foundry.
+             ============================================================ -->
+        <set-header name="api-key" exists-action="delete" />
+        <set-header name="Ocp-Apim-Subscription-Key" exists-action="delete" />
+
+        <!-- ============================================================
+             6. Authenticate to Azure OpenAI / Foundry using APIM's MI.
+             ============================================================ -->
+        <authentication-managed-identity
+            resource="https://cognitiveservices.azure.com"
+            output-token-variable-name="msi-access-token"
+            ignore-error="false" />
+        <set-header name="Authorization" exists-action="override">
+            <value>@("Bearer " + (string)context.Variables["msi-access-token"])</value>
+        </set-header>
+
+        <!-- ============================================================
+             7. Per-subscription TPM safety net (the per-product policy
+                layers a tighter limit on top of this).
+             ============================================================ -->
+        <azure-openai-token-limit
+            counter-key="@(context.Subscription?.Id ?? "anonymous")"
+            tokens-per-minute="50000"
+            estimate-prompt-tokens="false"
+            tokens-consumed-variable-name="consumedTokens"
+            remaining-tokens-variable-name="remainingTokens" />
+
+        <!-- ============================================================
+             8. Native Application Insights token metrics with rich
+                charge-back dimensions (incl. Route + Region).
+             ============================================================ -->
+        <azure-openai-emit-token-metric namespace="ai-gateway">
+            <dimension name="Subscription ID" value="@(context.Subscription?.Id ?? "anonymous")" />
+            <dimension name="Subscription Name" value="@(context.Subscription?.Name ?? "anonymous")" />
+            <dimension name="Product Name" value="@(context.Product?.Name ?? "none")" />
+            <dimension name="App ID" value="@((string)context.Variables.GetValueOrDefault<string>("appId", "unknown"))" />
+            <dimension name="Use Case" value="@((string)context.Variables.GetValueOrDefault<string>("useCase", "unknown"))" />
+            <dimension name="Deployment" value="@((string)context.Variables.GetValueOrDefault<string>("deployment-id", "none"))" />
+            <dimension name="API ID" value="@(context.Api?.Id ?? "none")" />
+            <dimension name="Route" value="@((string)context.Variables.GetValueOrDefault<string>("apiRoute", "unknown"))" />
+            <dimension name="Region Label" value="@((string)context.Variables.GetValueOrDefault<string>("apiRegion", "unknown"))" />
+            <dimension name="Client IP" value="@(context.Request.IpAddress ?? "0.0.0.0")" />
+        </azure-openai-emit-token-metric>
+
+        <!-- ============================================================
+             9. Route to the backend POOL. The pool (created in Bicep) has
+                two members with different priorities + circuit breakers,
+                so APIM transparently fails over when a member is unhealthy.
+             ============================================================ -->
+        <set-backend-service backend-id="openai-backend-pool" />
+        <set-variable name="backendId" value="openai-backend-pool" />
+        <set-variable name="routeLocation" value="@(context.Deployment?.Region ?? "none")" />
+    </inbound>
+
+    <backend>
+        <choose>
+            <when condition="@((string)context.Variables.GetValueOrDefault<string>("isStream", "false") == "true")">
+                <forward-request buffer-response="false" />
+            </when>
+            <otherwise>
+                <forward-request buffer-response="true" />
+            </otherwise>
+        </choose>
+    </backend>
+
+    <outbound>
+        <base />
+        <!-- Add route + region headers so SDK callers see APIM provenance -->
+        <set-header name="x-ai-gateway-route" exists-action="override">
+            <value>@((string)context.Variables.GetValueOrDefault<string>("apiRoute","unknown"))</value>
+        </set-header>
+        <set-header name="x-ai-gateway-region" exists-action="override">
+            <value>@((string)context.Variables.GetValueOrDefault<string>("apiRegion","unknown"))</value>
+        </set-header>
+        <!-- Per-request usage trace + cache-store for non-streaming responses -->
+        <include-fragment fragment-id="ai-gateway-openai-usage" />
+        <include-fragment fragment-id="ai-gateway-cache-store" />
+    </outbound>
+
+    <on-error>
+        <base />
+        <!-- Capture 429s as warnings before optionally short-circuiting on 5xx -->
+        <include-fragment fragment-id="ai-gateway-throttling-events" />
+        <include-fragment fragment-id="ai-gateway-mock-fallback" />
+    </on-error>
+</policies>

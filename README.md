@@ -26,6 +26,7 @@ A collection of Azure infrastructure templates for experimentation and learning.
 | [Private Container Apps Environment](./src/private-container-apps-environment-scenario/) | Microservices platform with complete network isolation | 🚧 Coming Soon | Internal load balancing, private ingress |
 | [Public Container Apps Environment](./src/public-container-apps-environment-scenario/) | Container hosting with public accessibility | 🚧 Coming Soon | Auto-scaling, public endpoints |
 | [AKS Static Egress Gateway](./src/aks-unique-egress-ip-per-namespace/) | Unique static egress IP per Kubernetes namespace, replicating OpenShift's EgressIP | ✅ Ready | Static Egress Gateway, per-namespace public/private IPs, gateway node pool, live dashboard |
+| [AKS Namespace Create](./src/aks-namespace-create/) | Automated AKS namespace provisioning with Terraform and test manifests | 🚧 Coming Soon | Namespace bootstrap, RBAC scaffolding, test workloads |
 
 ### Integration & Messaging
 
@@ -44,13 +45,19 @@ A collection of Azure infrastructure templates for experimentation and learning.
 | Scenario | Description | Status | Key Features |
 |----------|-------------|--------|--------------|
 | [Azure Communication Services with Voice Live API](./src/azure-communication-services-integrate-voice-live-api/) | Real-time conversational AI over phone calls with ACS Call Automation and Azure OpenAI Voice Live API | ✅ Ready | Phone call automation, real-time audio streaming, voice AI interactions, dual implementation ([.NET](./src/azure-communication-services-integrate-voice-live-api/dotnet/README.md) & [Python](./src/azure-communication-services-integrate-voice-live-api/python/README.md)) |
+| [AI Gateway (APIM in front of Foundry)](./src/ai-gateway/) | API Management as an AI Gateway fronting an existing Azure AI Foundry account. Two customer-facing regional APIs (`/aue`, `/global`) over a shared backend pool, per-app token chargeback, per-product TPM throttling, response cache, and a runnable Polyglot Notebook walkthrough | ✅ Ready | Two regional APIs over one backend pool with circuit breakers, managed-identity backend auth, per-product TPM throttling, response cache, edge request validation, mock fallback, structured tracing, `azure-openai-emit-token-metric` chargeback, KQL queries, demo notebook |
 
 ### App Hosting
 
 | Scenario | Description | Status | Key Features |
 |----------|-------------|--------|--------------|
-| [App Service — Python with Private Networking](./src/azure-app-service-python-app-deploy/) | P1v3 Linux App Service in Australia East with private inbound (Private Endpoint) and private outbound (VNet Integration) | ✅ Ready | Private Endpoint, VNet Integration, `vnetRouteAllEnabled`, System-assigned MI, Python 3.11 Flask app |
 | [Simple App Service with Sample App](./src/simple-app-service-with-sample-app/) | Lightweight App Service hosting a Python sample application | ✅ Ready | Zero-to-deployed in minutes, configurable SKU, VNet integration option |
+
+### Operations
+
+| Scenario | Description | Status | Key Features |
+|----------|-------------|--------|--------------|
+| [APIM Monitoring](./src/apim-monitoring-scenario/) | APIM Developer SKU with 6 mock APIs, Application Insights, Log Analytics, and an Azure Workbook dashboard — no backend services required | ✅ Ready | Full request/response capture, 6 mock APIs (caching, rate limiting, JWT, etc.), KQL queries, Azure Workbook |
 
 ### More scenarios coming soon! 
 Have a specific scenario request? [Open an issue](https://github.com/Ricky-G/azure-scenario-hub/issues) to suggest it.

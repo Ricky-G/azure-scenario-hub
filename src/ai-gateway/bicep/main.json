@@ -1,0 +1,1876 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.33.13.18514",
+      "templateHash": "6335236731393229079"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "swedencentral",
+      "metadata": {
+        "description": "Azure region for AI Gateway resources."
+      }
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "defaultValue": "rg-ai-gateway-demo",
+      "metadata": {
+        "description": "Name of the resource group to create for the AI Gateway resources."
+      }
+    },
+    "namePrefix": {
+      "type": "string",
+      "defaultValue": "aigw",
+      "minLength": 3,
+      "maxLength": 8,
+      "metadata": {
+        "description": "Short prefix used to derive globally-unique resource names."
+      }
+    },
+    "publisherEmail": {
+      "type": "string",
+      "defaultValue": "admin@contoso.com",
+      "metadata": {
+        "description": "Email shown on the APIM developer portal."
+      }
+    },
+    "publisherName": {
+      "type": "string",
+      "defaultValue": "Contoso",
+      "metadata": {
+        "description": "Publisher organisation name shown on the APIM developer portal."
+      }
+    },
+    "apimSku": {
+      "type": "string",
+      "defaultValue": "Developer",
+      "allowedValues": [
+        "Developer",
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "APIM SKU. Developer is recommended for demos."
+      }
+    },
+    "foundryResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource group that contains the existing Foundry account."
+      }
+    },
+    "foundryAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing Foundry / Azure OpenAI account."
+      }
+    },
+    "openAiEndpoint": {
+      "type": "string",
+      "metadata": {
+        "description": "Public endpoint of the Foundry / Azure OpenAI account."
+      }
+    },
+    "openAiApiVersion": {
+      "type": "string",
+      "defaultValue": "2024-10-21",
+      "metadata": {
+        "description": "Default Azure OpenAI REST API version exposed to clients."
+      }
+    },
+    "products": {
+      "type": "array",
+      "defaultValue": [
+        {
+          "id": "retail-smart-shopping",
+          "displayName": "Retail Smart Shopping App",
+          "description": "Frontline shopping assistant powered by GPT-4.1-mini.",
+          "appId": "retail-app-001",
+          "useCase": "retail-shopping",
+          "tpmLimit": 20000
+        },
+        {
+          "id": "customer-care-chat",
+          "displayName": "Customer Care Chat",
+          "description": "Customer service chat bot powered by GPT-4.1-mini.",
+          "appId": "care-chat-001",
+          "useCase": "customer-care",
+          "tpmLimit": 10000
+        },
+        {
+          "id": "finance-smart-analysis",
+          "displayName": "Finance Smart Analysis",
+          "description": "Internal finance analytics agent powered by GPT-4.1.",
+          "appId": "finance-agent-001",
+          "useCase": "finance-analysis",
+          "tpmLimit": 5000
+        }
+      ],
+      "metadata": {
+        "description": "Demo apps / use-cases to onboard. Each becomes an APIM Product with its own subscription and TPM ceiling."
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {
+        "Environment": "Development",
+        "Project": "AzureScenarioHub",
+        "Scenario": "ai-gateway",
+        "ManagedBy": "Bicep"
+      },
+      "metadata": {
+        "description": "Tags applied to all resources."
+      }
+    }
+  },
+  "variables": {
+    "uniq": "[uniqueString(subscription().subscriptionId, parameters('resourceGroupName'))]",
+    "apimServiceName": "[format('{0}-apim-{1}', parameters('namePrefix'), variables('uniq'))]",
+    "workspaceName": "[format('{0}-law-{1}', parameters('namePrefix'), variables('uniq'))]",
+    "appInsightsName": "[format('{0}-appi-{1}', parameters('namePrefix'), variables('uniq'))]",
+    "apiAueName": "azure-openai-aue",
+    "apiGlobalName": "azure-openai-global"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('resourceGroupName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "observability",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "workspaceName": {
+            "value": "[variables('workspaceName')]"
+          },
+          "appInsightsName": {
+            "value": "[variables('appInsightsName')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "15954785290956985297"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for both resources."
+              }
+            },
+            "workspaceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the Log Analytics Workspace."
+              }
+            },
+            "appInsightsName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the Application Insights component."
+              }
+            },
+            "retentionInDays": {
+              "type": "int",
+              "defaultValue": 30,
+              "minValue": 30,
+              "maxValue": 730,
+              "metadata": {
+                "description": "Workspace data retention in days."
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags applied to both resources."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2023-09-01",
+              "name": "[parameters('workspaceName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                },
+                "retentionInDays": "[parameters('retentionInDays')]",
+                "features": {
+                  "enableLogAccessUsingOnlyResourcePermissions": true
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "[parameters('appInsightsName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]",
+                "IngestionMode": "LogAnalytics",
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "workspaceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+            },
+            "workspaceName": {
+              "type": "string",
+              "value": "[parameters('workspaceName')]"
+            },
+            "workspaceCustomerId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName')), '2023-09-01').customerId]"
+            },
+            "appInsightsId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]"
+            },
+            "appInsightsName": {
+              "type": "string",
+              "value": "[parameters('appInsightsName')]"
+            },
+            "appInsightsInstrumentationKey": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName')), '2020-02-02').InstrumentationKey]"
+            },
+            "appInsightsConnectionString": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName')), '2020-02-02').ConnectionString]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "apim",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "apimServiceName": {
+            "value": "[variables('apimServiceName')]"
+          },
+          "publisherEmail": {
+            "value": "[parameters('publisherEmail')]"
+          },
+          "publisherName": {
+            "value": "[parameters('publisherName')]"
+          },
+          "sku": {
+            "value": "[parameters('apimSku')]"
+          },
+          "appInsightsId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'observability'), '2022-09-01').outputs.appInsightsId.value]"
+          },
+          "appInsightsInstrumentationKey": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'observability'), '2022-09-01').outputs.appInsightsInstrumentationKey.value]"
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'observability'), '2022-09-01').outputs.workspaceId.value]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "6664107924859577686"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for the APIM service."
+              }
+            },
+            "apimServiceName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "metadata": {
+                "description": "Globally unique APIM service name."
+              }
+            },
+            "publisherEmail": {
+              "type": "string",
+              "metadata": {
+                "description": "Publisher email shown on the developer portal and notifications."
+              }
+            },
+            "publisherName": {
+              "type": "string",
+              "metadata": {
+                "description": "Publisher organisation name."
+              }
+            },
+            "sku": {
+              "type": "string",
+              "defaultValue": "Developer",
+              "allowedValues": [
+                "Developer",
+                "Basic",
+                "Standard",
+                "Premium"
+              ],
+              "metadata": {
+                "description": "APIM SKU. Developer is recommended for demos."
+              }
+            },
+            "skuCount": {
+              "type": "int",
+              "defaultValue": 1,
+              "metadata": {
+                "description": "Number of scale units."
+              }
+            },
+            "appInsightsId": {
+              "type": "string",
+              "metadata": {
+                "description": "Application Insights resource id (for the APIM logger)."
+              }
+            },
+            "appInsightsInstrumentationKey": {
+              "type": "string",
+              "metadata": {
+                "description": "Application Insights instrumentation key (for the APIM logger)."
+              }
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Log Analytics workspace resource id for diagnostic settings."
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags applied to the APIM service."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[parameters('apimServiceName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "[parameters('sku')]",
+                "capacity": "[parameters('skuCount')]"
+              },
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "publisherEmail": "[parameters('publisherEmail')]",
+                "publisherName": "[parameters('publisherName')]",
+                "notificationSenderEmail": "apimgmt-noreply@mail.windowsazure.com",
+                "virtualNetworkType": "None",
+                "publicNetworkAccess": "Enabled",
+                "customProperties": {
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11": "false",
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10": "false",
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11": "false",
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10": "false",
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2": "true"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/loggers",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'ai-gateway-appinsights')]",
+              "properties": {
+                "loggerType": "applicationInsights",
+                "description": "Application Insights logger used by the AI Gateway API.",
+                "credentials": {
+                  "instrumentationKey": "[parameters('appInsightsInstrumentationKey')]"
+                },
+                "isBuffered": true,
+                "resourceId": "[parameters('appInsightsId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.ApiManagement/service/{0}', parameters('apimServiceName'))]",
+              "name": "send-to-law",
+              "properties": {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
+                "logAnalyticsDestinationType": "Dedicated",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "apimName": {
+              "type": "string",
+              "value": "[parameters('apimServiceName')]"
+            },
+            "apimResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+            },
+            "apimGatewayUrl": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName')), '2023-05-01-preview').gatewayUrl]"
+            },
+            "apimPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName')), '2023-05-01-preview', 'full').identity.principalId]"
+            },
+            "appInsightsLoggerId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ApiManagement/service/loggers', parameters('apimServiceName'), 'ai-gateway-appinsights')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'observability')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "foundry-rbac",
+      "resourceGroup": "[parameters('foundryResourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "foundryAccountName": {
+            "value": "[parameters('foundryAccountName')]"
+          },
+          "apimPrincipalId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim'), '2022-09-01').outputs.apimPrincipalId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "5163183203364412125"
+            }
+          },
+          "parameters": {
+            "foundryAccountName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the existing Foundry / Azure OpenAI account."
+              }
+            },
+            "apimPrincipalId": {
+              "type": "string",
+              "metadata": {
+                "description": "Object id (principalId) of APIM's system-assigned managed identity."
+              }
+            }
+          },
+          "variables": {
+            "cognitiveServicesUserRoleId": "a97b65f3-24c7-4388-baec-2e87135dc908"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('foundryAccountName'))]",
+              "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryAccountName')), parameters('apimPrincipalId'), variables('cognitiveServicesUserRoleId'))]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('cognitiveServicesUserRoleId'))]",
+                "principalId": "[parameters('apimPrincipalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            }
+          ],
+          "outputs": {
+            "roleAssignmentId": {
+              "type": "string",
+              "value": "[extensionResourceId(resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryAccountName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryAccountName')), parameters('apimPrincipalId'), variables('cognitiveServicesUserRoleId')))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "apim-service-policy",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apimServiceName": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim'), '2022-09-01').outputs.apimName.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "103045419924036475"
+            }
+          },
+          "parameters": {
+            "apimServiceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Existing APIM service name."
+              }
+            }
+          },
+          "variables": {
+            "$fxv#0": "<!--\r\n    Service-level policy applied to every API on this APIM instance.\r\n    Adds CORS so browser-based demos / web SPAs can call the gateway.\r\n    Tightening for production: scope `allowed-origins` to your real domains.\r\n-->\r\n<policies>\r\n    <inbound>\r\n        <!-- DEMO-ONLY CORS: allow-origin=\"*\" lets any web page call the\r\n             gateway. Tighten the <allowed-origins> list to your real domains\r\n             before promoting this configuration past a sandbox. -->\r\n        <cors allow-credentials=\"false\">\r\n            <allowed-origins>\r\n                <origin>*</origin>\r\n            </allowed-origins>\r\n            <allowed-methods preflight-result-max-age=\"3600\">\r\n                <method>GET</method>\r\n                <method>POST</method>\r\n                <method>OPTIONS</method>\r\n            </allowed-methods>\r\n            <allowed-headers>\r\n                <header>*</header>\r\n            </allowed-headers>\r\n            <expose-headers>\r\n                <header>x-ai-gateway-cache</header>\r\n                <header>x-ai-gateway-fallback</header>\r\n                <header>x-ai-gateway-route</header>\r\n                <header>x-request-id</header>\r\n            </expose-headers>\r\n        </cors>\r\n    </inbound>\r\n    <backend>\r\n        <forward-request />\r\n    </backend>\r\n    <outbound>\r\n    </outbound>\r\n    <on-error>\r\n    </on-error>\r\n</policies>\r\n"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service/policies",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'policy')]",
+              "properties": {
+                "format": "rawxml",
+                "value": "[variables('$fxv#0')]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "apim-fragments",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apimServiceName": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim'), '2022-09-01').outputs.apimName.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "9794527055260575130"
+            }
+          },
+          "parameters": {
+            "apimServiceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Existing APIM service name."
+              }
+            }
+          },
+          "variables": {
+            "$fxv#0": "<!--\r\n    Fragment: openai-usage\r\n    Purpose:  Capture token usage for non-streaming Azure OpenAI responses and\r\n              emit it as a structured trace into Application Insights so it can\r\n              be queried with KQL for per-app / per-route / per-region\r\n              charge-back.\r\n\r\n    Pre-conditions (set by the API-level policy):\r\n        - `isStream` (true|false)\r\n        - `apiRoute` (e.g. \"global\" | \"aue\")\r\n        - `apiRegion` (e.g. \"australiaeast\" | \"global\")\r\n        - `appId`, `useCase`, `backendId`, `deployment-id`, `routeLocation`\r\n-->\r\n<fragment>\r\n    <choose>\r\n        <when condition=\"@(context.Variables.GetValueOrDefault<string>(\"isStream\",\"false\").Equals(\"false\", StringComparison.OrdinalIgnoreCase))\">\r\n            <set-variable name=\"responseBody\" value=\"@(context.Response.Body.As<JObject>(preserveContent: true))\" />\r\n\r\n            <choose>\r\n                <when condition=\"@(context.Response.StatusCode == 200)\">\r\n                    <trace source=\"ai-gateway\" severity=\"information\">\r\n                        <message>@(\"ai-gateway-token-usage\")</message>\r\n                        <metadata name=\"appId\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"appId\", \"unknown\"))\" />\r\n                        <metadata name=\"useCase\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"useCase\", \"unknown\"))\" />\r\n                        <metadata name=\"apiRoute\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"apiRoute\", \"unknown\"))\" />\r\n                        <metadata name=\"apiRegion\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"apiRegion\", \"unknown\"))\" />\r\n                        <metadata name=\"subscriptionId\" value=\"@(context.Subscription?.Id ?? \"anonymous\")\" />\r\n                        <metadata name=\"subscriptionName\" value=\"@(context.Subscription?.Name ?? \"anonymous\")\" />\r\n                        <metadata name=\"productId\" value=\"@(context.Product?.Id ?? \"none\")\" />\r\n                        <metadata name=\"productName\" value=\"@(context.Product?.Name ?? \"none\")\" />\r\n                        <metadata name=\"apiId\" value=\"@(context.Api?.Id ?? \"none\")\" />\r\n                        <metadata name=\"operationName\" value=\"@(context.Operation?.Name ?? \"none\")\" />\r\n                        <metadata name=\"deploymentName\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"deployment-id\", \"none\"))\" />\r\n                        <metadata name=\"backendId\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"backendId\", \"default\"))\" />\r\n                        <metadata name=\"routeLocation\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"routeLocation\", \"none\"))\" />\r\n                        <metadata name=\"model\" value=\"@(((JObject)context.Variables[\"responseBody\"])[\"model\"]?.ToString() ?? \"unknown\")\" />\r\n                        <metadata name=\"promptTokens\" value=\"@(((JObject)context.Variables[\"responseBody\"])?[\"usage\"]?[\"prompt_tokens\"]?.Value<int>().ToString() ?? \"0\")\" />\r\n                        <metadata name=\"completionTokens\" value=\"@(((JObject)context.Variables[\"responseBody\"])?[\"usage\"]?[\"completion_tokens\"]?.Value<int>().ToString() ?? \"0\")\" />\r\n                        <metadata name=\"totalTokens\" value=\"@(((JObject)context.Variables[\"responseBody\"])?[\"usage\"]?[\"total_tokens\"]?.Value<int>().ToString() ?? \"0\")\" />\r\n                        <metadata name=\"clientIp\" value=\"@(context.Request.IpAddress ?? \"0.0.0.0\")\" />\r\n                        <metadata name=\"sessionId\" value=\"@(context.Request.Headers.GetValueOrDefault(\"x-session-id\", \"none\"))\" />\r\n                        <metadata name=\"endUserId\" value=\"@(context.Request.Headers.GetValueOrDefault(\"x-user-id\", \"none\"))\" />\r\n                        <metadata name=\"gatewayRegion\" value=\"@(context.Deployment?.Region ?? \"none\")\" />\r\n                    </trace>\r\n                </when>\r\n            </choose>\r\n        </when>\r\n    </choose>\r\n</fragment>\r\n",
+            "$fxv#1": "<!--\r\n    Fragment: throttling-events\r\n    Purpose:  When the upstream Azure OpenAI service returns 429 (rate limit)\r\n              the on-error block calls this fragment to write a structured trace\r\n              into Application Insights so an alert / KQL query can spot\r\n              service degradation per app / product / deployment.\r\n-->\r\n<fragment>\r\n    <choose>\r\n        <when condition=\"@(context.Response != null &amp;&amp; context.Response.StatusCode == 429)\">\r\n            <trace source=\"ai-gateway\" severity=\"error\">\r\n                <message>@(\"ai-gateway-throttling-event\")</message>\r\n                <metadata name=\"appId\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"appId\", \"unknown\"))\" />\r\n                <metadata name=\"useCase\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"useCase\", \"unknown\"))\" />\r\n                <metadata name=\"subscriptionName\" value=\"@(context.Subscription?.Name ?? \"anonymous\")\" />\r\n                <metadata name=\"productName\" value=\"@(context.Product?.Name ?? \"none\")\" />\r\n                <metadata name=\"deploymentName\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"deployment-id\", \"none\"))\" />\r\n                <metadata name=\"backendId\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"backendId\", \"default\"))\" />\r\n                <metadata name=\"retryAfter\" value=\"@(context.Response.Headers.GetValueOrDefault(\"Retry-After\", \"n/a\"))\" />\r\n                <metadata name=\"statusCode\" value=\"@(context.Response.StatusCode.ToString())\" />\r\n                <metadata name=\"reason\" value=\"@(context.Response.StatusReason ?? \"throttled\")\" />\r\n            </trace>\r\n        </when>\r\n    </choose>\r\n</fragment>\r\n",
+            "$fxv#2": "<!--\r\n    Fragment: cache-lookup\r\n    Purpose:  Lightweight response cache for non-streaming chat completions.\r\n              Computes a SHA-256 over (deployment-id + product + body) so identical\r\n              requests from the same product return immediately without hitting\r\n              the model. Demonstrates APIM's built-in cache without external\r\n              infra (no Redis required for the Developer SKU internal cache).\r\n\r\n    NOTE: This is a body-hash cache, not a semantic cache. Semantic cache needs\r\n          `azure-openai-semantic-cache-lookup` + Redis Enterprise + an embeddings\r\n          deployment; out of scope for this single-Foundry demo.\r\n-->\r\n<fragment>\r\n    <choose>\r\n        <when condition=\"@((string)context.Variables.GetValueOrDefault<string>(\"isStream\",\"false\") == \"false\")\">\r\n            <set-variable name=\"cacheKey\" value=\"@{\r\n                var bodyText = context.Request.Body.As<string>(preserveContent: true);\r\n                // Cache key isolation: include the calling APIM subscription\r\n                // id so two different subscriptions never see each other's\r\n                // cached responses, even within the same product.\r\n                var raw = (string)context.Variables.GetValueOrDefault<string>(\"deployment-id\",\"unknown\")\r\n                        + \"|\" + (context.Product?.Id ?? \"none\")\r\n                        + \"|\" + (context.Subscription?.Id ?? \"anonymous\")\r\n                        + \"|\" + bodyText;\r\n                using (var sha = System.Security.Cryptography.SHA256.Create())\r\n                {\r\n                    var bytes = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(raw));\r\n                    return \"ai-gw:\" + Convert.ToBase64String(bytes);\r\n                }\r\n            }\" />\r\n            <cache-lookup-value key=\"@((string)context.Variables[\"cacheKey\"])\" variable-name=\"cachedBody\" />\r\n            <choose>\r\n                <when condition=\"@(context.Variables.ContainsKey(\"cachedBody\"))\">\r\n                    <return-response>\r\n                        <set-status code=\"200\" reason=\"OK (cached)\" />\r\n                        <set-header name=\"content-type\" exists-action=\"override\">\r\n                            <value>application/json</value>\r\n                        </set-header>\r\n                        <set-header name=\"x-ai-gateway-cache\" exists-action=\"override\">\r\n                            <value>HIT</value>\r\n                        </set-header>\r\n                        <set-header name=\"x-ai-gateway-route\" exists-action=\"override\">\r\n                            <value>@((string)context.Variables.GetValueOrDefault<string>(\"apiRoute\",\"unknown\"))</value>\r\n                        </set-header>\r\n                        <set-header name=\"x-ai-gateway-region\" exists-action=\"override\">\r\n                            <value>@((string)context.Variables.GetValueOrDefault<string>(\"apiRegion\",\"unknown\"))</value>\r\n                        </set-header>\r\n                        <set-body>@((string)context.Variables[\"cachedBody\"])</set-body>\r\n                    </return-response>\r\n                </when>\r\n            </choose>\r\n        </when>\r\n    </choose>\r\n</fragment>\r\n",
+            "$fxv#3": "<!--\r\n    Fragment: cache-store\r\n    Purpose:  Persist successful non-streaming chat-completion responses into\r\n              the APIM internal cache for 5 minutes, keyed by the same SHA-256\r\n              hash computed in `frag-cache-lookup`.\r\n-->\r\n<fragment>\r\n    <choose>\r\n        <when condition=\"@((string)context.Variables.GetValueOrDefault<string>(\"isStream\",\"false\") == \"false\"\r\n                            &amp;&amp; context.Response.StatusCode == 200\r\n                            &amp;&amp; context.Variables.ContainsKey(\"cacheKey\")\r\n                            &amp;&amp; context.Variables.ContainsKey(\"responseBody\"))\">\r\n            <cache-store-value\r\n                key=\"@((string)context.Variables[\"cacheKey\"])\"\r\n                value=\"@(((Newtonsoft.Json.Linq.JObject)context.Variables[\"responseBody\"]).ToString())\"\r\n                duration=\"300\" />\r\n            <set-header name=\"x-ai-gateway-cache\" exists-action=\"override\">\r\n                <value>MISS</value>\r\n            </set-header>\r\n        </when>\r\n    </choose>\r\n</fragment>\r\n",
+            "$fxv#4": "<!--\r\n    Fragment: mock-fallback\r\n    Purpose:  When the upstream model backend fails (5xx or circuit breaker\r\n              open), instead of bubbling the raw error up to the caller we\r\n              return a structured, branded fallback response so client apps\r\n              degrade gracefully and customers see APIM's resilience.\r\n\r\n              Triggers only on 5xx (not 429 - those are real throttling and\r\n              the caller should retry; we still log them via frag-throttling\r\n              -events).\r\n-->\r\n<fragment>\r\n    <choose>\r\n        <when condition=\"@(context.Response != null &amp;&amp; context.Response.StatusCode >= 500)\">\r\n            <return-response>\r\n                <set-status code=\"503\" reason=\"Service Unavailable\" />\r\n                <set-header name=\"content-type\" exists-action=\"override\">\r\n                    <value>application/json</value>\r\n                </set-header>\r\n                <set-header name=\"x-ai-gateway-fallback\" exists-action=\"override\">\r\n                    <value>mock</value>\r\n                </set-header>\r\n                <set-body>@{\r\n                    var payload = new Newtonsoft.Json.Linq.JObject(\r\n                        new Newtonsoft.Json.Linq.JProperty(\"error\", new Newtonsoft.Json.Linq.JObject(\r\n                            new Newtonsoft.Json.Linq.JProperty(\"code\", \"ai_gateway_backend_unavailable\"),\r\n                            new Newtonsoft.Json.Linq.JProperty(\"message\", \"The AI Gateway could not reach a healthy model backend. Please retry shortly.\"),\r\n                            new Newtonsoft.Json.Linq.JProperty(\"appId\", (string)context.Variables.GetValueOrDefault<string>(\"appId\",\"unknown\")),\r\n                            new Newtonsoft.Json.Linq.JProperty(\"useCase\", (string)context.Variables.GetValueOrDefault<string>(\"useCase\",\"unknown\")),\r\n                            new Newtonsoft.Json.Linq.JProperty(\"route\", (string)context.Variables.GetValueOrDefault<string>(\"apiRoute\",\"unknown\")),\r\n                            new Newtonsoft.Json.Linq.JProperty(\"requestId\", context.RequestId)\r\n                        ))\r\n                    );\r\n                    return payload.ToString();\r\n                }</set-body>\r\n            </return-response>\r\n        </when>\r\n    </choose>\r\n</fragment>\r\n"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service/policyFragments",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'ai-gateway-openai-usage')]",
+              "properties": {
+                "description": "Captures OpenAI token usage as a structured trace.",
+                "format": "rawxml",
+                "value": "[variables('$fxv#0')]"
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/policyFragments",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'ai-gateway-throttling-events')]",
+              "properties": {
+                "description": "Captures 429 throttling events as warning traces.",
+                "format": "rawxml",
+                "value": "[variables('$fxv#1')]"
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/policyFragments",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'ai-gateway-cache-lookup')]",
+              "properties": {
+                "description": "Body-hash response cache lookup; short-circuits on HIT.",
+                "format": "rawxml",
+                "value": "[variables('$fxv#2')]"
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/policyFragments",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'ai-gateway-cache-store')]",
+              "properties": {
+                "description": "Persists successful non-streaming responses for 5 minutes.",
+                "format": "rawxml",
+                "value": "[variables('$fxv#3')]"
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/policyFragments",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'ai-gateway-mock-fallback')]",
+              "properties": {
+                "description": "Returns a graceful 503 mock response when the backend pool fails.",
+                "format": "rawxml",
+                "value": "[variables('$fxv#4')]"
+              }
+            }
+          ],
+          "outputs": {
+            "fragmentNames": {
+              "type": "array",
+              "value": [
+                "ai-gateway-openai-usage",
+                "ai-gateway-throttling-events",
+                "ai-gateway-cache-lookup",
+                "ai-gateway-cache-store",
+                "ai-gateway-mock-fallback"
+              ]
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "apim-backends",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apimServiceName": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim'), '2022-09-01').outputs.apimName.value]"
+          },
+          "openAiEndpoint": {
+            "value": "[parameters('openAiEndpoint')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "12094363271054604492"
+            }
+          },
+          "parameters": {
+            "apimServiceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Existing APIM service name."
+              }
+            },
+            "openAiEndpoint": {
+              "type": "string",
+              "metadata": {
+                "description": "Public endpoint of the Foundry / Azure OpenAI account."
+              }
+            }
+          },
+          "variables": {
+            "sanitizedEndpoint": "[if(endsWith(parameters('openAiEndpoint'), '/'), substring(parameters('openAiEndpoint'), 0, max(sub(length(parameters('openAiEndpoint')), 1), 0)), parameters('openAiEndpoint'))]",
+            "backendUrl": "[variables('sanitizedEndpoint')]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service/backends",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'openai-backend-primary')]",
+              "properties": {
+                "description": "Primary Foundry / Azure OpenAI backend.",
+                "type": "Single",
+                "url": "[variables('backendUrl')]",
+                "protocol": "http",
+                "tls": {
+                  "validateCertificateChain": true,
+                  "validateCertificateName": true
+                },
+                "circuitBreaker": {
+                  "rules": [
+                    {
+                      "name": "primaryCircuit",
+                      "failureCondition": {
+                        "count": 5,
+                        "errorReasons": [
+                          "Server errors"
+                        ],
+                        "interval": "PT1M",
+                        "statusCodeRanges": [
+                          {
+                            "min": 500,
+                            "max": 599
+                          }
+                        ]
+                      },
+                      "tripDuration": "PT30S",
+                      "acceptRetryAfter": true
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/backends",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'openai-backend-secondary')]",
+              "properties": {
+                "description": "Secondary Foundry / Azure OpenAI backend (used by the pool when primary trips).",
+                "type": "Single",
+                "url": "[variables('backendUrl')]",
+                "protocol": "http",
+                "tls": {
+                  "validateCertificateChain": true,
+                  "validateCertificateName": true
+                },
+                "circuitBreaker": {
+                  "rules": [
+                    {
+                      "name": "secondaryCircuit",
+                      "failureCondition": {
+                        "count": 5,
+                        "errorReasons": [
+                          "Server errors"
+                        ],
+                        "interval": "PT1M",
+                        "statusCodeRanges": [
+                          {
+                            "min": 500,
+                            "max": 599
+                          }
+                        ]
+                      },
+                      "tripDuration": "PT30S",
+                      "acceptRetryAfter": true
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/backends",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'openai-backend-pool')]",
+              "properties": {
+                "description": "AI Gateway model backend pool (primary + secondary, priority routing).",
+                "type": "Pool",
+                "pool": {
+                  "services": [
+                    {
+                      "id": "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), 'openai-backend-primary')]",
+                      "priority": 1,
+                      "weight": 1
+                    },
+                    {
+                      "id": "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), 'openai-backend-secondary')]",
+                      "priority": 2,
+                      "weight": 1
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), 'openai-backend-primary')]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), 'openai-backend-secondary')]"
+              ]
+            }
+          ],
+          "outputs": {
+            "backendPoolId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), 'openai-backend-pool')]"
+            },
+            "backendPoolName": {
+              "type": "string",
+              "value": "openai-backend-pool"
+            },
+            "primaryBackendName": {
+              "type": "string",
+              "value": "openai-backend-primary"
+            },
+            "secondaryBackendName": {
+              "type": "string",
+              "value": "openai-backend-secondary"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('foundryResourceGroupName')), 'Microsoft.Resources/deployments', 'foundry-rbac')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "openai-api-aue",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apimServiceName": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim'), '2022-09-01').outputs.apimName.value]"
+          },
+          "apiName": {
+            "value": "[variables('apiAueName')]"
+          },
+          "apiPath": {
+            "value": "aue"
+          },
+          "apiDisplayName": {
+            "value": "Azure OpenAI - Australia East"
+          },
+          "apiDescription": {
+            "value": "Azure OpenAI route intended for AU data-residency workloads. Backed by the AI Gateway pool with Australia East priority."
+          },
+          "apiRouteLabel": {
+            "value": "aue"
+          },
+          "apiRegionLabel": {
+            "value": "australiaeast"
+          },
+          "openAiEndpoint": {
+            "value": "[parameters('openAiEndpoint')]"
+          },
+          "openAiApiVersion": {
+            "value": "[parameters('openAiApiVersion')]"
+          },
+          "appInsightsLoggerId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim'), '2022-09-01').outputs.appInsightsLoggerId.value]"
+          },
+          "tagNames": {
+            "value": [
+              "region-australia-east",
+              "data-residency-au"
+            ]
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "18248242075237365902"
+            }
+          },
+          "parameters": {
+            "apimServiceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Existing APIM service name."
+              }
+            },
+            "apiName": {
+              "type": "string",
+              "metadata": {
+                "description": "APIM API resource name (must be unique per API)."
+              }
+            },
+            "apiPath": {
+              "type": "string",
+              "metadata": {
+                "description": "APIM API path - the URL prefix the customer sees, e.g. `aue` or `global`."
+              }
+            },
+            "apiDisplayName": {
+              "type": "string",
+              "metadata": {
+                "description": "Display name shown in the developer portal."
+              }
+            },
+            "apiDescription": {
+              "type": "string",
+              "metadata": {
+                "description": "Description shown in the developer portal."
+              }
+            },
+            "apiRouteLabel": {
+              "type": "string",
+              "metadata": {
+                "description": "Route label baked into trace metadata + custom metric dimensions, e.g. `aue` or `global`."
+              }
+            },
+            "apiRegionLabel": {
+              "type": "string",
+              "metadata": {
+                "description": "Region label baked into trace metadata + custom metric dimensions, e.g. `australiaeast` or `global`."
+              }
+            },
+            "openAiEndpoint": {
+              "type": "string",
+              "metadata": {
+                "description": "Public Foundry / Azure OpenAI endpoint (no trailing /openai)."
+              }
+            },
+            "openAiApiVersion": {
+              "type": "string",
+              "defaultValue": "2024-10-21",
+              "metadata": {
+                "description": "Default Azure OpenAI REST API version exposed to clients."
+              }
+            },
+            "appInsightsLoggerId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource id of the Application Insights logger created on APIM."
+              }
+            },
+            "tagNames": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Optional list of APIM tag names to attach to this API."
+              }
+            }
+          },
+          "variables": {
+            "sanitizedEndpoint": "[if(endsWith(parameters('openAiEndpoint'), '/'), substring(parameters('openAiEndpoint'), 0, max(sub(length(parameters('openAiEndpoint')), 1), 0)), parameters('openAiEndpoint'))]",
+            "apiPolicyTemplate": "<!--\r\n    API-level policy for both \"Azure OpenAI - Australia East\" and\r\n    \"Azure OpenAI - Global\" APIs. The same policy is applied to both APIs;\r\n    the per-API differences (route name, region label) come from variables\r\n    substituted by Bicep before the policy is uploaded.\r\n\r\n    Demonstrated capabilities:\r\n      1. Subscription-key auth at the gateway (`api-key` header).\r\n      2. JSON request validation - chat completions must contain a\r\n         non-empty `messages` array.\r\n      3. Body-hash response cache (frag-cache-lookup) -> short-circuit.\r\n      4. Streaming detection.\r\n      5. Drop the caller key, use APIM MI to auth to Foundry.\r\n      6. Per-subscription TPM ceiling via `azure-openai-token-limit`.\r\n      7. Native token metric emission with `azure-openai-emit-token-metric`\r\n         (App ID / Use Case / Product / Deployment / Route / Region).\r\n      8. Backend POOL routing (priority + circuit breaker, set in Bicep)\r\n         with automatic failover.\r\n      9. Streaming-aware response forwarding.\r\n     10. Outbound: structured trace per call (frag-openai-usage).\r\n     11. Outbound: cache-store for repeat-request acceleration.\r\n     12. on-error: graceful mock fallback for 5xx, throttling-event trace\r\n         for 429.\r\n-->\r\n<policies>\r\n    <inbound>\r\n        <base />\r\n\r\n        <!-- ============================================================\r\n             Per-API metadata. The Bicep substitutes the values below per\r\n             API instance via `replace()` before pushing the policy.\r\n             ============================================================ -->\r\n        <set-variable name=\"apiRoute\" value=\"__API_ROUTE__\" />\r\n        <set-variable name=\"apiRegion\" value=\"__API_REGION__\" />\r\n        <set-header name=\"x-ai-gateway-route\" exists-action=\"override\">\r\n            <value>@((string)context.Variables[\"apiRoute\"])</value>\r\n        </set-header>\r\n\r\n        <!-- ============================================================\r\n             1. Capture deployment id from URL template.\r\n             ============================================================ -->\r\n        <set-variable name=\"deployment-id\" value=\"@(context.Request.MatchedParameters.GetValueOrDefault(\"deployment-id\", \"unknown\"))\" />\r\n\r\n        <!-- ============================================================\r\n             1a. Reject query-string subscription keys. APIM's default API\r\n                 config still honours `?subscription-key=...` even when we\r\n                 leave it out of `subscriptionKeyParameterNames` in Bicep.\r\n                 Query-string keys are easier to leak via referrers / logs,\r\n                 so we enforce header-only at the policy layer.\r\n             ============================================================ -->\r\n        <choose>\r\n            <when condition=\"@(!string.IsNullOrEmpty(context.Request.Url.Query.GetValueOrDefault(\"subscription-key\",\"\")))\">\r\n                <return-response>\r\n                    <set-status code=\"400\" reason=\"Bad Request\" />\r\n                    <set-header name=\"content-type\" exists-action=\"override\">\r\n                        <value>application/json</value>\r\n                    </set-header>\r\n                    <set-body>{\"error\":{\"code\":\"ai_gateway_query_key_disabled\",\"message\":\"Subscription keys must be passed in the 'api-key' header. Query-string keys are disabled to avoid leaking credentials via referrers and access logs.\"}}</set-body>\r\n                </return-response>\r\n            </when>\r\n        </choose>\r\n\r\n        <!-- ============================================================\r\n             2. Lightweight request validation - reject malformed chat\r\n                completion requests at the gateway so we don't waste\r\n                backend capacity / TPM budget.\r\n             ============================================================ -->\r\n        <choose>\r\n            <when condition=\"@{\r\n                try {\r\n                    var body = context.Request.Body?.As<JObject>(preserveContent: true);\r\n                    if (body == null) { return true; }\r\n                    var messages = body[\"messages\"] as JArray;\r\n                    return messages == null || messages.Count == 0;\r\n                } catch { return true; }\r\n            }\">\r\n                <return-response>\r\n                    <set-status code=\"400\" reason=\"Bad Request\" />\r\n                    <set-header name=\"content-type\" exists-action=\"override\">\r\n                        <value>application/json</value>\r\n                    </set-header>\r\n                    <set-body>{\"error\":{\"code\":\"ai_gateway_invalid_request\",\"message\":\"Request body must include a non-empty 'messages' array.\"}}</set-body>\r\n                </return-response>\r\n            </when>\r\n        </choose>\r\n\r\n        <!-- ============================================================\r\n             3. Detect streaming early - cache + buffering decisions\r\n                depend on it.\r\n             ============================================================ -->\r\n        <choose>\r\n            <when condition=\"@{\r\n                try {\r\n                    var body = context.Request.Body?.As<JObject>(preserveContent: true);\r\n                    return body != null\r\n                        && body[\"stream\"] != null\r\n                        && body[\"stream\"].Type != JTokenType.Null\r\n                        && body[\"stream\"].Value<bool>();\r\n                } catch { return false; }\r\n            }\">\r\n                <set-variable name=\"isStream\" value=\"true\" />\r\n            </when>\r\n            <otherwise>\r\n                <set-variable name=\"isStream\" value=\"false\" />\r\n            </otherwise>\r\n        </choose>\r\n\r\n        <!-- ============================================================\r\n             4. Response cache lookup (non-streaming only). On HIT the\r\n                fragment short-circuits with a `return-response`.\r\n             ============================================================ -->\r\n        <include-fragment fragment-id=\"ai-gateway-cache-lookup\" />\r\n\r\n        <!-- ============================================================\r\n             5. Strip the caller's gateway keys so they never reach Foundry.\r\n             ============================================================ -->\r\n        <set-header name=\"api-key\" exists-action=\"delete\" />\r\n        <set-header name=\"Ocp-Apim-Subscription-Key\" exists-action=\"delete\" />\r\n\r\n        <!-- ============================================================\r\n             6. Authenticate to Azure OpenAI / Foundry using APIM's MI.\r\n             ============================================================ -->\r\n        <authentication-managed-identity\r\n            resource=\"https://cognitiveservices.azure.com\"\r\n            output-token-variable-name=\"msi-access-token\"\r\n            ignore-error=\"false\" />\r\n        <set-header name=\"Authorization\" exists-action=\"override\">\r\n            <value>@(\"Bearer \" + (string)context.Variables[\"msi-access-token\"])</value>\r\n        </set-header>\r\n\r\n        <!-- ============================================================\r\n             7. Per-subscription TPM safety net (the per-product policy\r\n                layers a tighter limit on top of this).\r\n             ============================================================ -->\r\n        <azure-openai-token-limit\r\n            counter-key=\"@(context.Subscription?.Id ?? \"anonymous\")\"\r\n            tokens-per-minute=\"50000\"\r\n            estimate-prompt-tokens=\"false\"\r\n            tokens-consumed-variable-name=\"consumedTokens\"\r\n            remaining-tokens-variable-name=\"remainingTokens\" />\r\n\r\n        <!-- ============================================================\r\n             8. Native Application Insights token metrics with rich\r\n                charge-back dimensions (incl. Route + Region).\r\n             ============================================================ -->\r\n        <azure-openai-emit-token-metric namespace=\"ai-gateway\">\r\n            <dimension name=\"Subscription ID\" value=\"@(context.Subscription?.Id ?? \"anonymous\")\" />\r\n            <dimension name=\"Subscription Name\" value=\"@(context.Subscription?.Name ?? \"anonymous\")\" />\r\n            <dimension name=\"Product Name\" value=\"@(context.Product?.Name ?? \"none\")\" />\r\n            <dimension name=\"App ID\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"appId\", \"unknown\"))\" />\r\n            <dimension name=\"Use Case\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"useCase\", \"unknown\"))\" />\r\n            <dimension name=\"Deployment\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"deployment-id\", \"none\"))\" />\r\n            <dimension name=\"API ID\" value=\"@(context.Api?.Id ?? \"none\")\" />\r\n            <dimension name=\"Route\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"apiRoute\", \"unknown\"))\" />\r\n            <dimension name=\"Region Label\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"apiRegion\", \"unknown\"))\" />\r\n            <dimension name=\"Client IP\" value=\"@(context.Request.IpAddress ?? \"0.0.0.0\")\" />\r\n        </azure-openai-emit-token-metric>\r\n\r\n        <!-- ============================================================\r\n             9. Route to the backend POOL. The pool (created in Bicep) has\r\n                two members with different priorities + circuit breakers,\r\n                so APIM transparently fails over when a member is unhealthy.\r\n             ============================================================ -->\r\n        <set-backend-service backend-id=\"openai-backend-pool\" />\r\n        <set-variable name=\"backendId\" value=\"openai-backend-pool\" />\r\n        <set-variable name=\"routeLocation\" value=\"@(context.Deployment?.Region ?? \"none\")\" />\r\n    </inbound>\r\n\r\n    <backend>\r\n        <choose>\r\n            <when condition=\"@((string)context.Variables.GetValueOrDefault<string>(\"isStream\", \"false\") == \"true\")\">\r\n                <forward-request buffer-response=\"false\" />\r\n            </when>\r\n            <otherwise>\r\n                <forward-request buffer-response=\"true\" />\r\n            </otherwise>\r\n        </choose>\r\n    </backend>\r\n\r\n    <outbound>\r\n        <base />\r\n        <!-- Add route + region headers so SDK callers see APIM provenance -->\r\n        <set-header name=\"x-ai-gateway-route\" exists-action=\"override\">\r\n            <value>@((string)context.Variables.GetValueOrDefault<string>(\"apiRoute\",\"unknown\"))</value>\r\n        </set-header>\r\n        <set-header name=\"x-ai-gateway-region\" exists-action=\"override\">\r\n            <value>@((string)context.Variables.GetValueOrDefault<string>(\"apiRegion\",\"unknown\"))</value>\r\n        </set-header>\r\n        <!-- Per-request usage trace + cache-store for non-streaming responses -->\r\n        <include-fragment fragment-id=\"ai-gateway-openai-usage\" />\r\n        <include-fragment fragment-id=\"ai-gateway-cache-store\" />\r\n    </outbound>\r\n\r\n    <on-error>\r\n        <base />\r\n        <!-- Capture 429s as warnings before optionally short-circuiting on 5xx -->\r\n        <include-fragment fragment-id=\"ai-gateway-throttling-events\" />\r\n        <include-fragment fragment-id=\"ai-gateway-mock-fallback\" />\r\n    </on-error>\r\n</policies>\r\n"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service/apis",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), parameters('apiName'))]",
+              "properties": {
+                "displayName": "[parameters('apiDisplayName')]",
+                "description": "[parameters('apiDescription')]",
+                "subscriptionRequired": true,
+                "serviceUrl": "[variables('sanitizedEndpoint')]",
+                "path": "[parameters('apiPath')]",
+                "protocols": [
+                  "https"
+                ],
+                "apiType": "http",
+                "type": "http",
+                "subscriptionKeyParameterNames": {
+                  "header": "api-key",
+                  "query": "subscription-key"
+                }
+              }
+            },
+            {
+              "copy": {
+                "name": "apiTags",
+                "count": "[length(parameters('tagNames'))]"
+              },
+              "type": "Microsoft.ApiManagement/service/tags",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), parameters('tagNames')[copyIndex()])]",
+              "properties": {
+                "displayName": "[parameters('tagNames')[copyIndex()]]"
+              }
+            },
+            {
+              "copy": {
+                "name": "apiTagLinks",
+                "count": "[length(parameters('tagNames'))]"
+              },
+              "type": "Microsoft.ApiManagement/service/apis/tags",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('apiName'), parameters('tagNames')[copyIndex()])]",
+              "dependsOn": [
+                "apiTags",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('apiName'), 'chat-completions')]",
+              "properties": {
+                "displayName": "Chat Completions",
+                "method": "POST",
+                "urlTemplate": "/openai/deployments/{deployment-id}/chat/completions",
+                "templateParameters": [
+                  {
+                    "name": "deployment-id",
+                    "type": "string",
+                    "required": true
+                  }
+                ],
+                "request": {
+                  "queryParameters": [
+                    {
+                      "name": "api-version",
+                      "type": "string",
+                      "required": true,
+                      "defaultValue": "[parameters('openAiApiVersion')]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('apiName'), 'completions')]",
+              "properties": {
+                "displayName": "Completions",
+                "method": "POST",
+                "urlTemplate": "/openai/deployments/{deployment-id}/completions",
+                "templateParameters": [
+                  {
+                    "name": "deployment-id",
+                    "type": "string",
+                    "required": true
+                  }
+                ],
+                "request": {
+                  "queryParameters": [
+                    {
+                      "name": "api-version",
+                      "type": "string",
+                      "required": true,
+                      "defaultValue": "[parameters('openAiApiVersion')]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('apiName'), 'embeddings')]",
+              "properties": {
+                "displayName": "Embeddings",
+                "method": "POST",
+                "urlTemplate": "/openai/deployments/{deployment-id}/embeddings",
+                "templateParameters": [
+                  {
+                    "name": "deployment-id",
+                    "type": "string",
+                    "required": true
+                  }
+                ],
+                "request": {
+                  "queryParameters": [
+                    {
+                      "name": "api-version",
+                      "type": "string",
+                      "required": true,
+                      "defaultValue": "[parameters('openAiApiVersion')]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/policies",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('apiName'), 'policy')]",
+              "properties": {
+                "format": "rawxml",
+                "value": "[replace(replace(variables('apiPolicyTemplate'), '__API_ROUTE__', parameters('apiRouteLabel')), '__API_REGION__', parameters('apiRegionLabel'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/diagnostics",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('apiName'), 'applicationinsights')]",
+              "properties": {
+                "alwaysLog": "allErrors",
+                "httpCorrelationProtocol": "W3C",
+                "logClientIp": false,
+                "loggerId": "[parameters('appInsightsLoggerId')]",
+                "verbosity": "verbose",
+                "metrics": true,
+                "sampling": {
+                  "samplingType": "fixed",
+                  "percentage": 100
+                },
+                "frontend": {
+                  "request": {
+                    "headers": [
+                      "Content-Type",
+                      "User-Agent",
+                      "x-session-id",
+                      "x-user-id"
+                    ],
+                    "body": {
+                      "bytes": 0
+                    }
+                  },
+                  "response": {
+                    "headers": [
+                      "Content-Type",
+                      "x-ai-gateway-route",
+                      "x-ai-gateway-region",
+                      "x-ai-gateway-cache",
+                      "x-ai-gateway-fallback"
+                    ],
+                    "body": {
+                      "bytes": 0
+                    }
+                  }
+                },
+                "backend": {
+                  "request": {
+                    "headers": [
+                      "Content-Type"
+                    ],
+                    "body": {
+                      "bytes": 0
+                    }
+                  },
+                  "response": {
+                    "headers": [
+                      "Content-Type"
+                    ],
+                    "body": {
+                      "bytes": 0
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "apiId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            },
+            "apiName": {
+              "type": "string",
+              "value": "[parameters('apiName')]"
+            },
+            "apiPath": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName')), '2024-05-01').path]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim-backends')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim-fragments')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "openai-api-global",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apimServiceName": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim'), '2022-09-01').outputs.apimName.value]"
+          },
+          "apiName": {
+            "value": "[variables('apiGlobalName')]"
+          },
+          "apiPath": {
+            "value": "global"
+          },
+          "apiDisplayName": {
+            "value": "Azure OpenAI - Global"
+          },
+          "apiDescription": {
+            "value": "Azure OpenAI route intended for non-residency workloads. Routes via the AI Gateway pool with global priority."
+          },
+          "apiRouteLabel": {
+            "value": "global"
+          },
+          "apiRegionLabel": {
+            "value": "global"
+          },
+          "openAiEndpoint": {
+            "value": "[parameters('openAiEndpoint')]"
+          },
+          "openAiApiVersion": {
+            "value": "[parameters('openAiApiVersion')]"
+          },
+          "appInsightsLoggerId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim'), '2022-09-01').outputs.appInsightsLoggerId.value]"
+          },
+          "tagNames": {
+            "value": [
+              "region-global"
+            ]
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "18248242075237365902"
+            }
+          },
+          "parameters": {
+            "apimServiceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Existing APIM service name."
+              }
+            },
+            "apiName": {
+              "type": "string",
+              "metadata": {
+                "description": "APIM API resource name (must be unique per API)."
+              }
+            },
+            "apiPath": {
+              "type": "string",
+              "metadata": {
+                "description": "APIM API path - the URL prefix the customer sees, e.g. `aue` or `global`."
+              }
+            },
+            "apiDisplayName": {
+              "type": "string",
+              "metadata": {
+                "description": "Display name shown in the developer portal."
+              }
+            },
+            "apiDescription": {
+              "type": "string",
+              "metadata": {
+                "description": "Description shown in the developer portal."
+              }
+            },
+            "apiRouteLabel": {
+              "type": "string",
+              "metadata": {
+                "description": "Route label baked into trace metadata + custom metric dimensions, e.g. `aue` or `global`."
+              }
+            },
+            "apiRegionLabel": {
+              "type": "string",
+              "metadata": {
+                "description": "Region label baked into trace metadata + custom metric dimensions, e.g. `australiaeast` or `global`."
+              }
+            },
+            "openAiEndpoint": {
+              "type": "string",
+              "metadata": {
+                "description": "Public Foundry / Azure OpenAI endpoint (no trailing /openai)."
+              }
+            },
+            "openAiApiVersion": {
+              "type": "string",
+              "defaultValue": "2024-10-21",
+              "metadata": {
+                "description": "Default Azure OpenAI REST API version exposed to clients."
+              }
+            },
+            "appInsightsLoggerId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource id of the Application Insights logger created on APIM."
+              }
+            },
+            "tagNames": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Optional list of APIM tag names to attach to this API."
+              }
+            }
+          },
+          "variables": {
+            "sanitizedEndpoint": "[if(endsWith(parameters('openAiEndpoint'), '/'), substring(parameters('openAiEndpoint'), 0, max(sub(length(parameters('openAiEndpoint')), 1), 0)), parameters('openAiEndpoint'))]",
+            "apiPolicyTemplate": "<!--\r\n    API-level policy for both \"Azure OpenAI - Australia East\" and\r\n    \"Azure OpenAI - Global\" APIs. The same policy is applied to both APIs;\r\n    the per-API differences (route name, region label) come from variables\r\n    substituted by Bicep before the policy is uploaded.\r\n\r\n    Demonstrated capabilities:\r\n      1. Subscription-key auth at the gateway (`api-key` header).\r\n      2. JSON request validation - chat completions must contain a\r\n         non-empty `messages` array.\r\n      3. Body-hash response cache (frag-cache-lookup) -> short-circuit.\r\n      4. Streaming detection.\r\n      5. Drop the caller key, use APIM MI to auth to Foundry.\r\n      6. Per-subscription TPM ceiling via `azure-openai-token-limit`.\r\n      7. Native token metric emission with `azure-openai-emit-token-metric`\r\n         (App ID / Use Case / Product / Deployment / Route / Region).\r\n      8. Backend POOL routing (priority + circuit breaker, set in Bicep)\r\n         with automatic failover.\r\n      9. Streaming-aware response forwarding.\r\n     10. Outbound: structured trace per call (frag-openai-usage).\r\n     11. Outbound: cache-store for repeat-request acceleration.\r\n     12. on-error: graceful mock fallback for 5xx, throttling-event trace\r\n         for 429.\r\n-->\r\n<policies>\r\n    <inbound>\r\n        <base />\r\n\r\n        <!-- ============================================================\r\n             Per-API metadata. The Bicep substitutes the values below per\r\n             API instance via `replace()` before pushing the policy.\r\n             ============================================================ -->\r\n        <set-variable name=\"apiRoute\" value=\"__API_ROUTE__\" />\r\n        <set-variable name=\"apiRegion\" value=\"__API_REGION__\" />\r\n        <set-header name=\"x-ai-gateway-route\" exists-action=\"override\">\r\n            <value>@((string)context.Variables[\"apiRoute\"])</value>\r\n        </set-header>\r\n\r\n        <!-- ============================================================\r\n             1. Capture deployment id from URL template.\r\n             ============================================================ -->\r\n        <set-variable name=\"deployment-id\" value=\"@(context.Request.MatchedParameters.GetValueOrDefault(\"deployment-id\", \"unknown\"))\" />\r\n\r\n        <!-- ============================================================\r\n             1a. Reject query-string subscription keys. APIM's default API\r\n                 config still honours `?subscription-key=...` even when we\r\n                 leave it out of `subscriptionKeyParameterNames` in Bicep.\r\n                 Query-string keys are easier to leak via referrers / logs,\r\n                 so we enforce header-only at the policy layer.\r\n             ============================================================ -->\r\n        <choose>\r\n            <when condition=\"@(!string.IsNullOrEmpty(context.Request.Url.Query.GetValueOrDefault(\"subscription-key\",\"\")))\">\r\n                <return-response>\r\n                    <set-status code=\"400\" reason=\"Bad Request\" />\r\n                    <set-header name=\"content-type\" exists-action=\"override\">\r\n                        <value>application/json</value>\r\n                    </set-header>\r\n                    <set-body>{\"error\":{\"code\":\"ai_gateway_query_key_disabled\",\"message\":\"Subscription keys must be passed in the 'api-key' header. Query-string keys are disabled to avoid leaking credentials via referrers and access logs.\"}}</set-body>\r\n                </return-response>\r\n            </when>\r\n        </choose>\r\n\r\n        <!-- ============================================================\r\n             2. Lightweight request validation - reject malformed chat\r\n                completion requests at the gateway so we don't waste\r\n                backend capacity / TPM budget.\r\n             ============================================================ -->\r\n        <choose>\r\n            <when condition=\"@{\r\n                try {\r\n                    var body = context.Request.Body?.As<JObject>(preserveContent: true);\r\n                    if (body == null) { return true; }\r\n                    var messages = body[\"messages\"] as JArray;\r\n                    return messages == null || messages.Count == 0;\r\n                } catch { return true; }\r\n            }\">\r\n                <return-response>\r\n                    <set-status code=\"400\" reason=\"Bad Request\" />\r\n                    <set-header name=\"content-type\" exists-action=\"override\">\r\n                        <value>application/json</value>\r\n                    </set-header>\r\n                    <set-body>{\"error\":{\"code\":\"ai_gateway_invalid_request\",\"message\":\"Request body must include a non-empty 'messages' array.\"}}</set-body>\r\n                </return-response>\r\n            </when>\r\n        </choose>\r\n\r\n        <!-- ============================================================\r\n             3. Detect streaming early - cache + buffering decisions\r\n                depend on it.\r\n             ============================================================ -->\r\n        <choose>\r\n            <when condition=\"@{\r\n                try {\r\n                    var body = context.Request.Body?.As<JObject>(preserveContent: true);\r\n                    return body != null\r\n                        && body[\"stream\"] != null\r\n                        && body[\"stream\"].Type != JTokenType.Null\r\n                        && body[\"stream\"].Value<bool>();\r\n                } catch { return false; }\r\n            }\">\r\n                <set-variable name=\"isStream\" value=\"true\" />\r\n            </when>\r\n            <otherwise>\r\n                <set-variable name=\"isStream\" value=\"false\" />\r\n            </otherwise>\r\n        </choose>\r\n\r\n        <!-- ============================================================\r\n             4. Response cache lookup (non-streaming only). On HIT the\r\n                fragment short-circuits with a `return-response`.\r\n             ============================================================ -->\r\n        <include-fragment fragment-id=\"ai-gateway-cache-lookup\" />\r\n\r\n        <!-- ============================================================\r\n             5. Strip the caller's gateway keys so they never reach Foundry.\r\n             ============================================================ -->\r\n        <set-header name=\"api-key\" exists-action=\"delete\" />\r\n        <set-header name=\"Ocp-Apim-Subscription-Key\" exists-action=\"delete\" />\r\n\r\n        <!-- ============================================================\r\n             6. Authenticate to Azure OpenAI / Foundry using APIM's MI.\r\n             ============================================================ -->\r\n        <authentication-managed-identity\r\n            resource=\"https://cognitiveservices.azure.com\"\r\n            output-token-variable-name=\"msi-access-token\"\r\n            ignore-error=\"false\" />\r\n        <set-header name=\"Authorization\" exists-action=\"override\">\r\n            <value>@(\"Bearer \" + (string)context.Variables[\"msi-access-token\"])</value>\r\n        </set-header>\r\n\r\n        <!-- ============================================================\r\n             7. Per-subscription TPM safety net (the per-product policy\r\n                layers a tighter limit on top of this).\r\n             ============================================================ -->\r\n        <azure-openai-token-limit\r\n            counter-key=\"@(context.Subscription?.Id ?? \"anonymous\")\"\r\n            tokens-per-minute=\"50000\"\r\n            estimate-prompt-tokens=\"false\"\r\n            tokens-consumed-variable-name=\"consumedTokens\"\r\n            remaining-tokens-variable-name=\"remainingTokens\" />\r\n\r\n        <!-- ============================================================\r\n             8. Native Application Insights token metrics with rich\r\n                charge-back dimensions (incl. Route + Region).\r\n             ============================================================ -->\r\n        <azure-openai-emit-token-metric namespace=\"ai-gateway\">\r\n            <dimension name=\"Subscription ID\" value=\"@(context.Subscription?.Id ?? \"anonymous\")\" />\r\n            <dimension name=\"Subscription Name\" value=\"@(context.Subscription?.Name ?? \"anonymous\")\" />\r\n            <dimension name=\"Product Name\" value=\"@(context.Product?.Name ?? \"none\")\" />\r\n            <dimension name=\"App ID\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"appId\", \"unknown\"))\" />\r\n            <dimension name=\"Use Case\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"useCase\", \"unknown\"))\" />\r\n            <dimension name=\"Deployment\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"deployment-id\", \"none\"))\" />\r\n            <dimension name=\"API ID\" value=\"@(context.Api?.Id ?? \"none\")\" />\r\n            <dimension name=\"Route\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"apiRoute\", \"unknown\"))\" />\r\n            <dimension name=\"Region Label\" value=\"@((string)context.Variables.GetValueOrDefault<string>(\"apiRegion\", \"unknown\"))\" />\r\n            <dimension name=\"Client IP\" value=\"@(context.Request.IpAddress ?? \"0.0.0.0\")\" />\r\n        </azure-openai-emit-token-metric>\r\n\r\n        <!-- ============================================================\r\n             9. Route to the backend POOL. The pool (created in Bicep) has\r\n                two members with different priorities + circuit breakers,\r\n                so APIM transparently fails over when a member is unhealthy.\r\n             ============================================================ -->\r\n        <set-backend-service backend-id=\"openai-backend-pool\" />\r\n        <set-variable name=\"backendId\" value=\"openai-backend-pool\" />\r\n        <set-variable name=\"routeLocation\" value=\"@(context.Deployment?.Region ?? \"none\")\" />\r\n    </inbound>\r\n\r\n    <backend>\r\n        <choose>\r\n            <when condition=\"@((string)context.Variables.GetValueOrDefault<string>(\"isStream\", \"false\") == \"true\")\">\r\n                <forward-request buffer-response=\"false\" />\r\n            </when>\r\n            <otherwise>\r\n                <forward-request buffer-response=\"true\" />\r\n            </otherwise>\r\n        </choose>\r\n    </backend>\r\n\r\n    <outbound>\r\n        <base />\r\n        <!-- Add route + region headers so SDK callers see APIM provenance -->\r\n        <set-header name=\"x-ai-gateway-route\" exists-action=\"override\">\r\n            <value>@((string)context.Variables.GetValueOrDefault<string>(\"apiRoute\",\"unknown\"))</value>\r\n        </set-header>\r\n        <set-header name=\"x-ai-gateway-region\" exists-action=\"override\">\r\n            <value>@((string)context.Variables.GetValueOrDefault<string>(\"apiRegion\",\"unknown\"))</value>\r\n        </set-header>\r\n        <!-- Per-request usage trace + cache-store for non-streaming responses -->\r\n        <include-fragment fragment-id=\"ai-gateway-openai-usage\" />\r\n        <include-fragment fragment-id=\"ai-gateway-cache-store\" />\r\n    </outbound>\r\n\r\n    <on-error>\r\n        <base />\r\n        <!-- Capture 429s as warnings before optionally short-circuiting on 5xx -->\r\n        <include-fragment fragment-id=\"ai-gateway-throttling-events\" />\r\n        <include-fragment fragment-id=\"ai-gateway-mock-fallback\" />\r\n    </on-error>\r\n</policies>\r\n"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service/apis",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), parameters('apiName'))]",
+              "properties": {
+                "displayName": "[parameters('apiDisplayName')]",
+                "description": "[parameters('apiDescription')]",
+                "subscriptionRequired": true,
+                "serviceUrl": "[variables('sanitizedEndpoint')]",
+                "path": "[parameters('apiPath')]",
+                "protocols": [
+                  "https"
+                ],
+                "apiType": "http",
+                "type": "http",
+                "subscriptionKeyParameterNames": {
+                  "header": "api-key",
+                  "query": "subscription-key"
+                }
+              }
+            },
+            {
+              "copy": {
+                "name": "apiTags",
+                "count": "[length(parameters('tagNames'))]"
+              },
+              "type": "Microsoft.ApiManagement/service/tags",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), parameters('tagNames')[copyIndex()])]",
+              "properties": {
+                "displayName": "[parameters('tagNames')[copyIndex()]]"
+              }
+            },
+            {
+              "copy": {
+                "name": "apiTagLinks",
+                "count": "[length(parameters('tagNames'))]"
+              },
+              "type": "Microsoft.ApiManagement/service/apis/tags",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('apiName'), parameters('tagNames')[copyIndex()])]",
+              "dependsOn": [
+                "apiTags",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('apiName'), 'chat-completions')]",
+              "properties": {
+                "displayName": "Chat Completions",
+                "method": "POST",
+                "urlTemplate": "/openai/deployments/{deployment-id}/chat/completions",
+                "templateParameters": [
+                  {
+                    "name": "deployment-id",
+                    "type": "string",
+                    "required": true
+                  }
+                ],
+                "request": {
+                  "queryParameters": [
+                    {
+                      "name": "api-version",
+                      "type": "string",
+                      "required": true,
+                      "defaultValue": "[parameters('openAiApiVersion')]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('apiName'), 'completions')]",
+              "properties": {
+                "displayName": "Completions",
+                "method": "POST",
+                "urlTemplate": "/openai/deployments/{deployment-id}/completions",
+                "templateParameters": [
+                  {
+                    "name": "deployment-id",
+                    "type": "string",
+                    "required": true
+                  }
+                ],
+                "request": {
+                  "queryParameters": [
+                    {
+                      "name": "api-version",
+                      "type": "string",
+                      "required": true,
+                      "defaultValue": "[parameters('openAiApiVersion')]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('apiName'), 'embeddings')]",
+              "properties": {
+                "displayName": "Embeddings",
+                "method": "POST",
+                "urlTemplate": "/openai/deployments/{deployment-id}/embeddings",
+                "templateParameters": [
+                  {
+                    "name": "deployment-id",
+                    "type": "string",
+                    "required": true
+                  }
+                ],
+                "request": {
+                  "queryParameters": [
+                    {
+                      "name": "api-version",
+                      "type": "string",
+                      "required": true,
+                      "defaultValue": "[parameters('openAiApiVersion')]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/policies",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('apiName'), 'policy')]",
+              "properties": {
+                "format": "rawxml",
+                "value": "[replace(replace(variables('apiPolicyTemplate'), '__API_ROUTE__', parameters('apiRouteLabel')), '__API_REGION__', parameters('apiRegionLabel'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/diagnostics",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('apiName'), 'applicationinsights')]",
+              "properties": {
+                "alwaysLog": "allErrors",
+                "httpCorrelationProtocol": "W3C",
+                "logClientIp": false,
+                "loggerId": "[parameters('appInsightsLoggerId')]",
+                "verbosity": "verbose",
+                "metrics": true,
+                "sampling": {
+                  "samplingType": "fixed",
+                  "percentage": 100
+                },
+                "frontend": {
+                  "request": {
+                    "headers": [
+                      "Content-Type",
+                      "User-Agent",
+                      "x-session-id",
+                      "x-user-id"
+                    ],
+                    "body": {
+                      "bytes": 0
+                    }
+                  },
+                  "response": {
+                    "headers": [
+                      "Content-Type",
+                      "x-ai-gateway-route",
+                      "x-ai-gateway-region",
+                      "x-ai-gateway-cache",
+                      "x-ai-gateway-fallback"
+                    ],
+                    "body": {
+                      "bytes": 0
+                    }
+                  }
+                },
+                "backend": {
+                  "request": {
+                    "headers": [
+                      "Content-Type"
+                    ],
+                    "body": {
+                      "bytes": 0
+                    }
+                  },
+                  "response": {
+                    "headers": [
+                      "Content-Type"
+                    ],
+                    "body": {
+                      "bytes": 0
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "apiId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            },
+            "apiName": {
+              "type": "string",
+              "value": "[parameters('apiName')]"
+            },
+            "apiPath": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName')), '2024-05-01').path]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim-backends')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim-fragments')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'openai-api-aue')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "apim-products",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apimServiceName": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim'), '2022-09-01').outputs.apimName.value]"
+          },
+          "apiNames": {
+            "value": [
+              "[variables('apiAueName')]",
+              "[variables('apiGlobalName')]"
+            ]
+          },
+          "products": {
+            "value": "[parameters('products')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "1087046351866073865"
+            }
+          },
+          "parameters": {
+            "apimServiceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Existing APIM service name."
+              }
+            },
+            "apiNames": {
+              "type": "array",
+              "metadata": {
+                "description": "Names of the AOAI APIs to attach each product to (one or more)."
+              }
+            },
+            "products": {
+              "type": "array",
+              "metadata": {
+                "description": "Definition of the products / use-cases to onboard."
+              }
+            }
+          },
+          "variables": {
+            "productPolicyTemplate": "<!--\r\n    Product-level policy template.\r\n\r\n    Each APIM Product (one per business app / use-case in this demo) sets two\r\n    variables that the API-level policy then logs and emits as custom metric\r\n    dimensions. The Bicep `apim-products.bicep` module substitutes the\r\n    `__APP_ID__`, `__USE_CASE__`, `__TPM_LIMIT__` placeholders before applying.\r\n\r\n    The product policy ALSO sets a tighter per-product token-per-minute limit\r\n    so the demo can show different SKUs / tiers throttling independently.\r\n-->\r\n<policies>\r\n    <inbound>\r\n        <base />\r\n        <set-variable name=\"appId\" value=\"__APP_ID__\" />\r\n        <set-variable name=\"useCase\" value=\"__USE_CASE__\" />\r\n\r\n        <!-- Per-product TPM ceiling. Counter is keyed by subscription so each\r\n             onboarded subscription gets its own bucket within the product. -->\r\n        <azure-openai-token-limit\r\n            counter-key=\"@(context.Subscription?.Id ?? \"anonymous\")\"\r\n            tokens-per-minute=\"__TPM_LIMIT__\"\r\n            estimate-prompt-tokens=\"false\" />\r\n    </inbound>\r\n    <backend>\r\n        <base />\r\n    </backend>\r\n    <outbound>\r\n        <base />\r\n    </outbound>\r\n    <on-error>\r\n        <base />\r\n    </on-error>\r\n</policies>\r\n"
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "demoProducts",
+                "count": "[length(parameters('products'))]"
+              },
+              "type": "Microsoft.ApiManagement/service/products",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), parameters('products')[copyIndex()].id)]",
+              "properties": {
+                "displayName": "[parameters('products')[copyIndex()].displayName]",
+                "description": "[parameters('products')[copyIndex()].description]",
+                "subscriptionRequired": true,
+                "approvalRequired": false,
+                "state": "published"
+              }
+            },
+            {
+              "copy": {
+                "name": "productApiLinks",
+                "count": "[length(parameters('products'))]"
+              },
+              "type": "Microsoft.ApiManagement/service/products/apis",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('products')[copyIndex()].id, parameters('apiNames')[0])]",
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/products', parameters('apimServiceName'), parameters('products')[copyIndex()].id)]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "productApiLinksExtra",
+                "count": "[length(parameters('products'))]"
+              },
+              "condition": "[greater(length(parameters('apiNames')), 1)]",
+              "type": "Microsoft.ApiManagement/service/products/apis",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('products')[copyIndex()].id, parameters('apiNames')[1])]",
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/products', parameters('apimServiceName'), parameters('products')[copyIndex()].id)]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "productPolicies",
+                "count": "[length(parameters('products'))]"
+              },
+              "type": "Microsoft.ApiManagement/service/products/policies",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('products')[copyIndex()].id, 'policy')]",
+              "properties": {
+                "format": "rawxml",
+                "value": "[replace(replace(replace(variables('productPolicyTemplate'), '__APP_ID__', parameters('products')[copyIndex()].appId), '__USE_CASE__', parameters('products')[copyIndex()].useCase), '__TPM_LIMIT__', string(parameters('products')[copyIndex()].tpmLimit))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/products', parameters('apimServiceName'), parameters('products')[copyIndex()].id)]",
+                "productApiLinks"
+              ]
+            },
+            {
+              "copy": {
+                "name": "productSubscriptions",
+                "count": "[length(parameters('products'))]"
+              },
+              "type": "Microsoft.ApiManagement/service/subscriptions",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), format('{0}-demo-sub', parameters('products')[copyIndex()].id))]",
+              "properties": {
+                "displayName": "[format('{0} demo subscription', parameters('products')[copyIndex()].displayName)]",
+                "scope": "[format('/products/{0}', resourceId('Microsoft.ApiManagement/service/products', parameters('apimServiceName'), parameters('products')[copyIndex()].id))]",
+                "state": "active",
+                "allowTracing": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/products', parameters('apimServiceName'), parameters('products')[copyIndex()].id)]",
+                "productApiLinks",
+                "productApiLinksExtra"
+              ]
+            }
+          ],
+          "outputs": {
+            "productNames": {
+              "type": "array",
+              "copy": {
+                "count": "[length(parameters('products'))]",
+                "input": "[parameters('products')[copyIndex()].id]"
+              }
+            },
+            "subscriptionResourceIds": {
+              "type": "array",
+              "copy": {
+                "count": "[length(parameters('products'))]",
+                "input": "[resourceId('Microsoft.ApiManagement/service/subscriptions', parameters('apimServiceName'), format('{0}-demo-sub', parameters('products')[copyIndex()].id))]"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'openai-api-aue')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'openai-api-global')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[parameters('resourceGroupName')]"
+    },
+    "apimName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim'), '2022-09-01').outputs.apimName.value]"
+    },
+    "apimGatewayUrl": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim'), '2022-09-01').outputs.apimGatewayUrl.value]"
+    },
+    "appInsightsName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'observability'), '2022-09-01').outputs.appInsightsName.value]"
+    },
+    "workspaceName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'observability'), '2022-09-01').outputs.workspaceName.value]"
+    },
+    "workspaceCustomerId": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'observability'), '2022-09-01').outputs.workspaceCustomerId.value]"
+    },
+    "productIds": {
+      "type": "array",
+      "copy": {
+        "count": "[length(parameters('products'))]",
+        "input": "[parameters('products')[copyIndex()].id]"
+      }
+    },
+    "subscriptionResourceIds": {
+      "type": "array",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'apim-products'), '2022-09-01').outputs.subscriptionResourceIds.value]"
+    },
+    "apiRoutes": {
+      "type": "array",
+      "value": [
+        {
+          "name": "[variables('apiAueName')]",
+          "path": "aue",
+          "displayName": "Azure OpenAI - Australia East",
+          "region": "australiaeast"
+        },
+        {
+          "name": "[variables('apiGlobalName')]",
+          "path": "global",
+          "displayName": "Azure OpenAI - Global",
+          "region": "global"
+        }
+      ]
+    }
+  }
+}
