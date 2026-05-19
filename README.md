@@ -14,6 +14,31 @@ A collection of Azure infrastructure templates for experimentation and learning.
 - **Learning Azure** - Hands-on examples of Azure service integrations
 - **Rapid Prototyping** - Pre-built infrastructure for PoCs and experiments
 
+## ⭐ Featured Scenario
+
+<table>
+<tr>
+<td width="55%" valign="top">
+
+### [APIM Backend Fan-out Benchmark](./src/apim-backend-fanout-benchmark/)
+
+Head-to-head benchmark of **shared-`Backend` + `rewrite-uri`** vs **one-`Backend`-per-API** on APIM Premium.
+
+**Result after 1.67M requests:** No measurable difference. **882 vs 874 req/s, 146 vs 153 ms p95, 0 errors** on both sides. Pick the pattern based on operational simplicity, not performance.
+
+- 2× APIM Premium · .NET 10 mock backend on Flex Consumption FC1
+- k6 stepped load: 50 → 100 → 200 VUs over ~32 min
+- App Insights `BackendTime` / `ClientTime` KQL
+- Interactive HTML dashboard + auto-generated Markdown report
+- Includes the methodology trap that nearly made me publish the wrong answer
+
+</td>
+<td width="45%" valign="top">
+<a href="./src/apim-backend-fanout-benchmark/"><img src="./src/apim-backend-fanout-benchmark/docs/dashboard.png" alt="APIM Backend Fan-out Benchmark dashboard"></a>
+</td>
+</tr>
+</table>
+
 ## 🏗️ Available Scenarios
 
 ### Networking & Security
@@ -28,10 +53,12 @@ A collection of Azure infrastructure templates for experimentation and learning.
 | [AKS Static Egress Gateway](./src/aks-unique-egress-ip-per-namespace/) | Unique static egress IP per Kubernetes namespace, replicating OpenShift's EgressIP | ✅ Ready | Static Egress Gateway, per-namespace public/private IPs, gateway node pool, live dashboard |
 | [AKS Namespace Create](./src/aks-namespace-create/) | Automated AKS namespace provisioning with Terraform and test manifests | 🚧 Coming Soon | Namespace bootstrap, RBAC scaffolding, test workloads |
 
-### Integration & Messaging
+### Integration, API Management & Messaging
 
 | Scenario | Description | Status | Key Features |
 |----------|-------------|--------|--------------|
+| [APIM Backend Fan-out Benchmark](./src/apim-backend-fanout-benchmark/) | Head-to-head benchmark of **shared-backend + `rewrite-uri`** vs **one-backend-per-API** on APIM Premium. **Result: no measurable difference** — 882 vs 874 req/s, 146 vs 153 ms p95 over 1.67M requests | ✅ Ready | 2× APIM Premium, .NET 10 mock backend on Flex Consumption FC1, k6 stepped load (50→100→200 VUs), interactive HTML dashboard, App Insights `BackendTime`/`ClientTime` KQL, auto-generated Markdown report |
+| [APIM Monitoring](./src/apim-monitoring-scenario/) | APIM Developer SKU with 6 mock APIs, Application Insights, Log Analytics, and an Azure Workbook dashboard — no backend services required | ✅ Ready | Full request/response capture, 6 mock APIs (caching, rate limiting, JWT, etc.), KQL queries, Azure Workbook |
 | [Azure Integration Services Load Test](./src/azure-integration-services-load-test/) | Load testing scenario for microservices architecture with Function Apps and Service Bus Premium | ✅ Ready | 5 independent functions, Service Bus topics, private endpoints, comprehensive load testing tools |
 
 ### Data Processing
@@ -52,22 +79,6 @@ A collection of Azure infrastructure templates for experimentation and learning.
 | Scenario | Description | Status | Key Features |
 |----------|-------------|--------|--------------|
 | [Simple App Service with Sample App](./src/simple-app-service-with-sample-app/) | Lightweight App Service hosting a Python sample application | ✅ Ready | Zero-to-deployed in minutes, configurable SKU, VNet integration option |
-
-### API Management
-
-| Scenario | Description | Status | Key Features |
-|----------|-------------|--------|--------------|
-| [APIM Backend Fan-out Benchmark](./src/apim-backend-fanout-benchmark/) | Head-to-head benchmark of **shared-backend + `rewrite-uri`** vs **one-backend-per-API** on APIM Premium. **Result: no measurable difference** \u2014 882 vs 874 req/s, 146 vs 153 ms p95 over 1.67M requests | ✅ Ready | 2× APIM Premium, .NET 10 mock backend on Flex Consumption FC1, k6 stepped load (50→100→200 VUs), interactive HTML dashboard, App Insights `BackendTime`/`ClientTime` KQL, auto-generated Markdown report with pass/fail thresholds |
-<p align="center">
-  <a href="./src/apim-backend-fanout-benchmark/">
-    <img src="./src/apim-backend-fanout-benchmark/docs/dashboard.png" alt="APIM Backend Fan-out Benchmark dashboard — no measurable difference between shared-backend+rewrite-uri and one-backend-per-API" width="800">
-  </a>
-</p>
-### Operations
-
-| Scenario | Description | Status | Key Features |
-|----------|-------------|--------|--------------|
-| [APIM Monitoring](./src/apim-monitoring-scenario/) | APIM Developer SKU with 6 mock APIs, Application Insights, Log Analytics, and an Azure Workbook dashboard — no backend services required | ✅ Ready | Full request/response capture, 6 mock APIs (caching, rate limiting, JWT, etc.), KQL queries, Azure Workbook |
 
 ### More scenarios coming soon! 
 Have a specific scenario request? [Open an issue](https://github.com/Ricky-G/azure-scenario-hub/issues) to suggest it.
