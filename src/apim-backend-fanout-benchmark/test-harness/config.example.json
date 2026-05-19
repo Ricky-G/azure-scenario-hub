@@ -1,0 +1,9 @@
+{
+  "$schema": "./config.schema.json",
+  "apimAGatewayUrl": "https://apim-apimfo-a-xxxxx.azure-api.net",
+  "apimBGatewayUrl": "https://apim-apimfo-b-xxxxx.azure-api.net",
+  "appInsightsName": "appi-apimfo-xxxxx",
+  "resourceGroupName": "rg-apimfo-benchmark",
+  "apiCount": 10,
+  "subscriptionId": "00000000-0000-0000-0000-000000000000"
+}

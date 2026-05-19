@@ -1,0 +1,10 @@
+<!--
+  Policy fragment: per-api-passthrough
+  Used by APIM-B. Each API references its own backend entity whose URL already
+  encodes the correct path prefix, so no rewrite-uri is needed.
+  Backend selection happens at the API scope; this fragment is intentionally
+  trivial so policy-evaluation cost matches APIM-A.
+-->
+<fragment>
+    <!-- backend-id is set per-API by apim-b-per-api-backend.bicep before invoking this fragment. -->
+</fragment>

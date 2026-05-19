@@ -1,0 +1,1313 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.33.13.18514",
+      "templateHash": "18275691818361424707"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "australiaeast",
+      "metadata": {
+        "description": "Azure region for all resources"
+      }
+    },
+    "namePrefix": {
+      "type": "string",
+      "defaultValue": "apimfo",
+      "minLength": 3,
+      "maxLength": 8,
+      "metadata": {
+        "description": "3–8 char prefix used to derive every resource name"
+      }
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "defaultValue": "[format('rg-{0}-benchmark', parameters('namePrefix'))]",
+      "metadata": {
+        "description": "Resource group to create"
+      }
+    },
+    "publisherEmail": {
+      "type": "string",
+      "defaultValue": "admin@example.com",
+      "metadata": {
+        "description": "Publisher email used by both APIMs"
+      }
+    },
+    "publisherName": {
+      "type": "string",
+      "defaultValue": "Benchmark",
+      "metadata": {
+        "description": "Publisher name used by both APIMs"
+      }
+    },
+    "apiCount": {
+      "type": "int",
+      "defaultValue": 10,
+      "minValue": 1,
+      "maxValue": 50,
+      "metadata": {
+        "description": "Number of APIs per APIM (kept identical between A and B)"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {
+        "Environment": "Development",
+        "Project": "AzureScenarioHub",
+        "Scenario": "APIM-Backend-Fanout-Benchmark",
+        "ManagedBy": "Bicep"
+      },
+      "metadata": {
+        "description": "Tags applied to every resource"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('resourceGroupName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "deploy-monitoring",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "namePrefix": {
+            "value": "[parameters('namePrefix')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "6234224108175294069"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for the workspace and App Insights"
+              }
+            },
+            "namePrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Name prefix used to derive resource names"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags applied to all resources"
+              }
+            }
+          },
+          "variables": {
+            "workspaceName": "[format('log-{0}-{1}', parameters('namePrefix'), uniqueString(resourceGroup().id))]",
+            "appInsightsName": "[format('appi-{0}-{1}', parameters('namePrefix'), uniqueString(resourceGroup().id))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2022-10-01",
+              "name": "[variables('workspaceName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                },
+                "retentionInDays": 30,
+                "features": {
+                  "enableLogAccessUsingOnlyResourcePermissions": true
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "[variables('appInsightsName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web",
+                "Flow_Type": "Bluefield",
+                "Request_Source": "rest",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]",
+                "IngestionMode": "LogAnalytics",
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "workspaceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+            },
+            "workspaceName": {
+              "type": "string",
+              "value": "[variables('workspaceName')]"
+            },
+            "appInsightsId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]"
+            },
+            "appInsightsName": {
+              "type": "string",
+              "value": "[variables('appInsightsName')]"
+            },
+            "appInsightsInstrumentationKey": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName')), '2020-02-02').InstrumentationKey]"
+            },
+            "appInsightsConnectionString": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName')), '2020-02-02').ConnectionString]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "deploy-backend",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "namePrefix": {
+            "value": "[parameters('namePrefix')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "appInsightsConnectionString": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-monitoring'), '2022-09-01').outputs.appInsightsConnectionString.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "2551876940284749842"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region"
+              }
+            },
+            "namePrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Name prefix used to derive resource names"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags applied to all resources"
+              }
+            },
+            "appInsightsConnectionString": {
+              "type": "string",
+              "metadata": {
+                "description": "Application Insights connection string"
+              }
+            }
+          },
+          "variables": {
+            "unique": "[uniqueString(resourceGroup().id)]",
+            "storageAccountName": "[toLower(format('st{0}{1}', parameters('namePrefix'), take(variables('unique'), 8)))]",
+            "planName": "[format('plan-{0}-{1}', parameters('namePrefix'), variables('unique'))]",
+            "functionAppName": "[format('func-{0}-{1}', parameters('namePrefix'), variables('unique'))]",
+            "deploymentContainerName": "app-package"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2023-01-01",
+              "name": "[variables('storageAccountName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                "minimumTlsVersion": "TLS1_2",
+                "allowBlobPublicAccess": false,
+                "supportsHttpsTrafficOnly": true,
+                "publicNetworkAccess": "Enabled",
+                "allowSharedKeyAccess": false,
+                "networkAcls": {
+                  "bypass": "AzureServices",
+                  "defaultAction": "Allow"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices",
+              "apiVersion": "2023-01-01",
+              "name": "[format('{0}/{1}', variables('storageAccountName'), 'default')]",
+              "properties": {},
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2023-01-01",
+              "name": "[format('{0}/{1}/{2}', variables('storageAccountName'), 'default', variables('deploymentContainerName'))]",
+              "properties": {
+                "publicAccess": "None"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2023-12-01",
+              "name": "[variables('planName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "FC1",
+                "tier": "FlexConsumption"
+              },
+              "kind": "functionapp",
+              "properties": {
+                "reserved": true
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2023-12-01",
+              "name": "[variables('functionAppName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "functionapp,linux",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('planName'))]",
+                "httpsOnly": true,
+                "clientAffinityEnabled": false,
+                "functionAppConfig": {
+                  "deployment": {
+                    "storage": {
+                      "type": "blobContainer",
+                      "value": "[format('{0}{1}', reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2023-01-01').primaryEndpoints.blob, variables('deploymentContainerName'))]",
+                      "authentication": {
+                        "type": "SystemAssignedIdentity"
+                      }
+                    }
+                  },
+                  "runtime": {
+                    "name": "dotnet-isolated",
+                    "version": "8.0"
+                  },
+                  "scaleAndConcurrency": {
+                    "maximumInstanceCount": 40,
+                    "instanceMemoryMB": 2048,
+                    "alwaysReady": [
+                      {
+                        "name": "http",
+                        "instanceCount": 1
+                      }
+                    ]
+                  }
+                },
+                "siteConfig": {
+                  "minTlsVersion": "1.2",
+                  "http20Enabled": true,
+                  "ftpsState": "Disabled",
+                  "appSettings": [
+                    {
+                      "name": "AzureWebJobsStorage__accountName",
+                      "value": "[variables('storageAccountName')]"
+                    },
+                    {
+                      "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                      "value": "[parameters('appInsightsConnectionString')]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageAccountName'), 'default', variables('deploymentContainerName'))]",
+                "[resourceId('Microsoft.Web/serverfarms', variables('planName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageAccountName'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), resourceId('Microsoft.Web/sites', variables('functionAppName')), 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b')]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2023-12-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "functionAppName": {
+              "type": "string",
+              "value": "[variables('functionAppName')]"
+            },
+            "functionAppDefaultHostname": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2023-12-01').defaultHostName]"
+            },
+            "functionAppId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-monitoring')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "deploy-apim-a",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "apimServiceName": {
+            "value": "[format('apim-{0}-a-{1}', parameters('namePrefix'), uniqueString(subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))))]"
+          },
+          "publisherEmail": {
+            "value": "[parameters('publisherEmail')]"
+          },
+          "publisherName": {
+            "value": "[parameters('publisherName')]"
+          },
+          "sku": {
+            "value": "Premium"
+          },
+          "capacity": {
+            "value": 1
+          },
+          "appInsightsId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-monitoring'), '2022-09-01').outputs.appInsightsId.value]"
+          },
+          "appInsightsInstrumentationKey": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-monitoring'), '2022-09-01').outputs.appInsightsInstrumentationKey.value]"
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-monitoring'), '2022-09-01').outputs.workspaceId.value]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "17180157079714585903"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region"
+              }
+            },
+            "apimServiceName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "metadata": {
+                "description": "Globally-unique APIM service name"
+              }
+            },
+            "publisherEmail": {
+              "type": "string",
+              "metadata": {
+                "description": "Publisher email"
+              }
+            },
+            "publisherName": {
+              "type": "string",
+              "metadata": {
+                "description": "Publisher name"
+              }
+            },
+            "sku": {
+              "type": "string",
+              "defaultValue": "Premium",
+              "allowedValues": [
+                "Premium"
+              ],
+              "metadata": {
+                "description": "APIM SKU (must be Premium for the benchmark)"
+              }
+            },
+            "capacity": {
+              "type": "int",
+              "defaultValue": 1,
+              "metadata": {
+                "description": "APIM capacity (units)"
+              }
+            },
+            "appInsightsId": {
+              "type": "string",
+              "metadata": {
+                "description": "Application Insights resource ID"
+              }
+            },
+            "appInsightsInstrumentationKey": {
+              "type": "string",
+              "metadata": {
+                "description": "Application Insights instrumentation key"
+              }
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Log Analytics workspace resource ID for diagnostic settings"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags applied to all resources"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[parameters('apimServiceName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "[parameters('sku')]",
+                "capacity": "[parameters('capacity')]"
+              },
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "publisherEmail": "[parameters('publisherEmail')]",
+                "publisherName": "[parameters('publisherName')]",
+                "virtualNetworkType": "None",
+                "publicNetworkAccess": "Enabled",
+                "apiVersionConstraint": {},
+                "customProperties": {
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11": "false",
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10": "false",
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11": "false",
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10": "false",
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2": "true"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/loggers",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'applicationinsights-logger')]",
+              "properties": {
+                "loggerType": "applicationInsights",
+                "description": "Shared App Insights logger",
+                "credentials": {
+                  "instrumentationKey": "[parameters('appInsightsInstrumentationKey')]"
+                },
+                "isBuffered": true,
+                "resourceId": "[parameters('appInsightsId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/diagnostics",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'applicationinsights')]",
+              "properties": {
+                "alwaysLog": "allErrors",
+                "logClientIp": true,
+                "httpCorrelationProtocol": "W3C",
+                "verbosity": "information",
+                "loggerId": "[resourceId('Microsoft.ApiManagement/service/loggers', parameters('apimServiceName'), 'applicationinsights-logger')]",
+                "sampling": {
+                  "samplingType": "fixed",
+                  "percentage": 100
+                },
+                "frontend": {
+                  "request": {
+                    "headers": [
+                      "Content-Type",
+                      "User-Agent",
+                      "X-Correlation-Id",
+                      "traceparent"
+                    ]
+                  },
+                  "response": {
+                    "headers": [
+                      "Content-Type",
+                      "X-Correlation-Id",
+                      "traceparent"
+                    ]
+                  }
+                },
+                "backend": {
+                  "request": {
+                    "headers": [
+                      "Content-Type"
+                    ]
+                  },
+                  "response": {
+                    "headers": [
+                      "Content-Type"
+                    ]
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/loggers', parameters('apimServiceName'), 'applicationinsights-logger')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.ApiManagement/service/{0}', parameters('apimServiceName'))]",
+              "name": "apim-diagnostics-law",
+              "properties": {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "apimId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+            },
+            "apimName": {
+              "type": "string",
+              "value": "[parameters('apimServiceName')]"
+            },
+            "gatewayUrl": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName')), '2023-05-01-preview').gatewayUrl]"
+            },
+            "principalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName')), '2023-05-01-preview', 'full').identity.principalId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-monitoring')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "deploy-apim-b",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "apimServiceName": {
+            "value": "[format('apim-{0}-b-{1}', parameters('namePrefix'), uniqueString(subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))))]"
+          },
+          "publisherEmail": {
+            "value": "[parameters('publisherEmail')]"
+          },
+          "publisherName": {
+            "value": "[parameters('publisherName')]"
+          },
+          "sku": {
+            "value": "Premium"
+          },
+          "capacity": {
+            "value": 1
+          },
+          "appInsightsId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-monitoring'), '2022-09-01').outputs.appInsightsId.value]"
+          },
+          "appInsightsInstrumentationKey": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-monitoring'), '2022-09-01').outputs.appInsightsInstrumentationKey.value]"
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-monitoring'), '2022-09-01').outputs.workspaceId.value]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "17180157079714585903"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region"
+              }
+            },
+            "apimServiceName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "metadata": {
+                "description": "Globally-unique APIM service name"
+              }
+            },
+            "publisherEmail": {
+              "type": "string",
+              "metadata": {
+                "description": "Publisher email"
+              }
+            },
+            "publisherName": {
+              "type": "string",
+              "metadata": {
+                "description": "Publisher name"
+              }
+            },
+            "sku": {
+              "type": "string",
+              "defaultValue": "Premium",
+              "allowedValues": [
+                "Premium"
+              ],
+              "metadata": {
+                "description": "APIM SKU (must be Premium for the benchmark)"
+              }
+            },
+            "capacity": {
+              "type": "int",
+              "defaultValue": 1,
+              "metadata": {
+                "description": "APIM capacity (units)"
+              }
+            },
+            "appInsightsId": {
+              "type": "string",
+              "metadata": {
+                "description": "Application Insights resource ID"
+              }
+            },
+            "appInsightsInstrumentationKey": {
+              "type": "string",
+              "metadata": {
+                "description": "Application Insights instrumentation key"
+              }
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Log Analytics workspace resource ID for diagnostic settings"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags applied to all resources"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[parameters('apimServiceName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "[parameters('sku')]",
+                "capacity": "[parameters('capacity')]"
+              },
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "publisherEmail": "[parameters('publisherEmail')]",
+                "publisherName": "[parameters('publisherName')]",
+                "virtualNetworkType": "None",
+                "publicNetworkAccess": "Enabled",
+                "apiVersionConstraint": {},
+                "customProperties": {
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11": "false",
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10": "false",
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11": "false",
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10": "false",
+                  "Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2": "true"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/loggers",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'applicationinsights-logger')]",
+              "properties": {
+                "loggerType": "applicationInsights",
+                "description": "Shared App Insights logger",
+                "credentials": {
+                  "instrumentationKey": "[parameters('appInsightsInstrumentationKey')]"
+                },
+                "isBuffered": true,
+                "resourceId": "[parameters('appInsightsId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/diagnostics",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'applicationinsights')]",
+              "properties": {
+                "alwaysLog": "allErrors",
+                "logClientIp": true,
+                "httpCorrelationProtocol": "W3C",
+                "verbosity": "information",
+                "loggerId": "[resourceId('Microsoft.ApiManagement/service/loggers', parameters('apimServiceName'), 'applicationinsights-logger')]",
+                "sampling": {
+                  "samplingType": "fixed",
+                  "percentage": 100
+                },
+                "frontend": {
+                  "request": {
+                    "headers": [
+                      "Content-Type",
+                      "User-Agent",
+                      "X-Correlation-Id",
+                      "traceparent"
+                    ]
+                  },
+                  "response": {
+                    "headers": [
+                      "Content-Type",
+                      "X-Correlation-Id",
+                      "traceparent"
+                    ]
+                  }
+                },
+                "backend": {
+                  "request": {
+                    "headers": [
+                      "Content-Type"
+                    ]
+                  },
+                  "response": {
+                    "headers": [
+                      "Content-Type"
+                    ]
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/loggers', parameters('apimServiceName'), 'applicationinsights-logger')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.ApiManagement/service/{0}', parameters('apimServiceName'))]",
+              "name": "apim-diagnostics-law",
+              "properties": {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "apimId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+            },
+            "apimName": {
+              "type": "string",
+              "value": "[parameters('apimServiceName')]"
+            },
+            "gatewayUrl": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName')), '2023-05-01-preview').gatewayUrl]"
+            },
+            "principalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName')), '2023-05-01-preview', 'full').identity.principalId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-monitoring')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "configure-apim-a",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apimServiceName": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-apim-a'), '2022-09-01').outputs.apimName.value]"
+          },
+          "backendHostname": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-backend'), '2022-09-01').outputs.functionAppDefaultHostname.value]"
+          },
+          "apiCount": {
+            "value": "[parameters('apiCount')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "18281379506412310863"
+            }
+          },
+          "parameters": {
+            "apimServiceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the APIM service to configure"
+              }
+            },
+            "backendHostname": {
+              "type": "string",
+              "metadata": {
+                "description": "Hostname of the mock backend Function App (no scheme)"
+              }
+            },
+            "apiCount": {
+              "type": "int",
+              "defaultValue": 10,
+              "metadata": {
+                "description": "Number of APIs to create"
+              }
+            }
+          },
+          "variables": {
+            "$fxv#0": "<!--\r\n  Policy fragment: shared-backend-rewrite\r\n  Used by APIM-A. Routes every API to the single shared backend entity and\r\n  reconstructs the original request path on top of /api/echo so the backend\r\n  receives the full path the caller asked for.\r\n-->\r\n<fragment>\r\n    <set-backend-service backend-id=\"shared-mock-backend\" />\r\n    <rewrite-uri template=\"@(\"/api/echo\" + context.Request.OriginalUrl.Path + (string.IsNullOrEmpty(context.Request.OriginalUrl.QueryString) ? \"\" : \"?\" + context.Request.OriginalUrl.QueryString))\" copy-unmatched-params=\"false\" />\r\n</fragment>\r\n",
+            "sharedBackendId": "shared-mock-backend",
+            "rewriteFragmentId": "shared-backend-rewrite"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service/backends",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), variables('sharedBackendId'))]",
+              "properties": {
+                "protocol": "http",
+                "url": "[format('https://{0}/api/echo', parameters('backendHostname'))]",
+                "tls": {
+                  "validateCertificateChain": true,
+                  "validateCertificateName": true
+                }
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/policyFragments",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), variables('rewriteFragmentId'))]",
+              "properties": {
+                "description": "Routes to shared backend and reconstructs the original path",
+                "format": "rawxml",
+                "value": "[variables('$fxv#0')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), variables('sharedBackendId'))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "apis",
+                "count": "[length(range(1, parameters('apiCount')))]"
+              },
+              "type": "Microsoft.ApiManagement/service/apis",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), format('api-shared-{0}', padLeft(range(1, parameters('apiCount'))[copyIndex()], 2, '0')))]",
+              "properties": {
+                "displayName": "[format('Shared Backend API {0}', padLeft(range(1, parameters('apiCount'))[copyIndex()], 2, '0'))]",
+                "path": "[format('svc{0}/v1', padLeft(range(1, parameters('apiCount'))[copyIndex()], 2, '0'))]",
+                "protocols": [
+                  "https"
+                ],
+                "subscriptionRequired": false,
+                "serviceUrl": "[format('https://{0}/api/echo', parameters('backendHostname'))]"
+              }
+            },
+            {
+              "copy": {
+                "name": "apiOperations",
+                "count": "[length(range(1, parameters('apiCount')))]"
+              },
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), format('api-shared-{0}', padLeft(range(1, parameters('apiCount'))[sub(range(1, parameters('apiCount'))[copyIndex()], 1)], 2, '0')), 'get-resource')]",
+              "properties": {
+                "displayName": "Get Resource",
+                "method": "GET",
+                "urlTemplate": "/resource/{id}",
+                "templateParameters": [
+                  {
+                    "name": "id",
+                    "required": true,
+                    "type": "string"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), format('api-shared-{0}', padLeft(range(1, parameters('apiCount'))[sub(range(1, parameters('apiCount'))[copyIndex()], 1)], 2, '0')))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "apiPolicies",
+                "count": "[length(range(1, parameters('apiCount')))]"
+              },
+              "type": "Microsoft.ApiManagement/service/apis/policies",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), format('api-shared-{0}', padLeft(range(1, parameters('apiCount'))[sub(range(1, parameters('apiCount'))[copyIndex()], 1)], 2, '0')), 'policy')]",
+              "properties": {
+                "format": "rawxml",
+                "value": "[format('<policies><inbound><base /><include-fragment fragment-id=\"{0}\" /></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>', variables('rewriteFragmentId'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), format('api-shared-{0}', padLeft(range(1, parameters('apiCount'))[sub(range(1, parameters('apiCount'))[sub(range(1, parameters('apiCount'))[copyIndex()], 1)], 1)], 2, '0')), 'get-resource')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), format('api-shared-{0}', padLeft(range(1, parameters('apiCount'))[sub(range(1, parameters('apiCount'))[copyIndex()], 1)], 2, '0')))]",
+                "[resourceId('Microsoft.ApiManagement/service/policyFragments', parameters('apimServiceName'), variables('rewriteFragmentId'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-apim-a')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-backend')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "configure-apim-b",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apimServiceName": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-apim-b'), '2022-09-01').outputs.apimName.value]"
+          },
+          "backendHostname": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-backend'), '2022-09-01').outputs.functionAppDefaultHostname.value]"
+          },
+          "apiCount": {
+            "value": "[parameters('apiCount')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.13.18514",
+              "templateHash": "2683059837090376943"
+            }
+          },
+          "parameters": {
+            "apimServiceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the APIM service to configure"
+              }
+            },
+            "backendHostname": {
+              "type": "string",
+              "metadata": {
+                "description": "Hostname of the mock backend Function App (no scheme)"
+              }
+            },
+            "apiCount": {
+              "type": "int",
+              "defaultValue": 10,
+              "metadata": {
+                "description": "Number of APIs / backends to create"
+              }
+            }
+          },
+          "variables": {
+            "$fxv#0": "<!--\r\n  Policy fragment: per-api-passthrough\r\n  Used by APIM-B. Each API references its own backend entity whose URL already\r\n  encodes the correct path prefix, so no rewrite-uri is needed.\r\n  Backend selection happens at the API scope; this fragment is intentionally\r\n  trivial so policy-evaluation cost matches APIM-A.\r\n-->\r\n<fragment>\r\n    <!-- backend-id is set per-API by apim-b-per-api-backend.bicep before invoking this fragment. -->\r\n</fragment>\r\n",
+            "passthroughFragmentId": "per-api-passthrough"
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "backends",
+                "count": "[length(range(1, parameters('apiCount')))]"
+              },
+              "type": "Microsoft.ApiManagement/service/backends",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), format('mock-backend-{0}', padLeft(range(1, parameters('apiCount'))[copyIndex()], 2, '0')))]",
+              "properties": {
+                "protocol": "http",
+                "url": "[format('https://{0}/api/echo/svc{1}/v1', parameters('backendHostname'), padLeft(range(1, parameters('apiCount'))[copyIndex()], 2, '0'))]",
+                "tls": {
+                  "validateCertificateChain": true,
+                  "validateCertificateName": true
+                }
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/policyFragments",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), variables('passthroughFragmentId'))]",
+              "properties": {
+                "description": "Trivial passthrough fragment (kept for fairness with APIM-A)",
+                "format": "rawxml",
+                "value": "[variables('$fxv#0')]"
+              }
+            },
+            {
+              "copy": {
+                "name": "apis",
+                "count": "[length(range(1, parameters('apiCount')))]"
+              },
+              "type": "Microsoft.ApiManagement/service/apis",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), format('api-perapi-{0}', padLeft(range(1, parameters('apiCount'))[copyIndex()], 2, '0')))]",
+              "properties": {
+                "displayName": "[format('Per-API Backend API {0}', padLeft(range(1, parameters('apiCount'))[copyIndex()], 2, '0'))]",
+                "path": "[format('svc{0}/v1', padLeft(range(1, parameters('apiCount'))[copyIndex()], 2, '0'))]",
+                "protocols": [
+                  "https"
+                ],
+                "subscriptionRequired": false,
+                "serviceUrl": "[format('https://{0}/api/echo/svc{1}/v1', parameters('backendHostname'), padLeft(range(1, parameters('apiCount'))[copyIndex()], 2, '0'))]"
+              }
+            },
+            {
+              "copy": {
+                "name": "apiOperations",
+                "count": "[length(range(1, parameters('apiCount')))]"
+              },
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), format('api-perapi-{0}', padLeft(range(1, parameters('apiCount'))[sub(range(1, parameters('apiCount'))[copyIndex()], 1)], 2, '0')), 'get-resource')]",
+              "properties": {
+                "displayName": "Get Resource",
+                "method": "GET",
+                "urlTemplate": "/resource/{id}",
+                "templateParameters": [
+                  {
+                    "name": "id",
+                    "required": true,
+                    "type": "string"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), format('api-perapi-{0}', padLeft(range(1, parameters('apiCount'))[sub(range(1, parameters('apiCount'))[copyIndex()], 1)], 2, '0')))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "apiPolicies",
+                "count": "[length(range(1, parameters('apiCount')))]"
+              },
+              "type": "Microsoft.ApiManagement/service/apis/policies",
+              "apiVersion": "2023-05-01-preview",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), format('api-perapi-{0}', padLeft(range(1, parameters('apiCount'))[sub(range(1, parameters('apiCount'))[copyIndex()], 1)], 2, '0')), 'policy')]",
+              "properties": {
+                "format": "rawxml",
+                "value": "[format('<policies><inbound><base /><set-backend-service backend-id=\"mock-backend-{0}\" /><include-fragment fragment-id=\"{1}\" /></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>', padLeft(range(1, parameters('apiCount'))[copyIndex()], 2, '0'), variables('passthroughFragmentId'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), format('api-perapi-{0}', padLeft(range(1, parameters('apiCount'))[sub(range(1, parameters('apiCount'))[sub(range(1, parameters('apiCount'))[copyIndex()], 1)], 1)], 2, '0')), 'get-resource')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), format('api-perapi-{0}', padLeft(range(1, parameters('apiCount'))[sub(range(1, parameters('apiCount'))[copyIndex()], 1)], 2, '0')))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), format('mock-backend-{0}', padLeft(range(1, parameters('apiCount'))[sub(range(1, parameters('apiCount'))[copyIndex()], 1)], 2, '0')))]",
+                "[resourceId('Microsoft.ApiManagement/service/policyFragments', parameters('apimServiceName'), variables('passthroughFragmentId'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-apim-b')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-backend')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[parameters('resourceGroupName')]"
+    },
+    "functionAppName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-backend'), '2022-09-01').outputs.functionAppName.value]"
+    },
+    "functionAppHostname": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-backend'), '2022-09-01').outputs.functionAppDefaultHostname.value]"
+    },
+    "apimAName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-apim-a'), '2022-09-01').outputs.apimName.value]"
+    },
+    "apimAGatewayUrl": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-apim-a'), '2022-09-01').outputs.gatewayUrl.value]"
+    },
+    "apimBName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-apim-b'), '2022-09-01').outputs.apimName.value]"
+    },
+    "apimBGatewayUrl": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-apim-b'), '2022-09-01').outputs.gatewayUrl.value]"
+    },
+    "appInsightsName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-monitoring'), '2022-09-01').outputs.appInsightsName.value]"
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-monitoring'), '2022-09-01').outputs.workspaceName.value]"
+    },
+    "apiCount": {
+      "type": "int",
+      "value": "[parameters('apiCount')]"
+    }
+  }
+}

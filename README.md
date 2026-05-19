@@ -53,6 +53,16 @@ A collection of Azure infrastructure templates for experimentation and learning.
 |----------|-------------|--------|--------------|
 | [Simple App Service with Sample App](./src/simple-app-service-with-sample-app/) | Lightweight App Service hosting a Python sample application | ✅ Ready | Zero-to-deployed in minutes, configurable SKU, VNet integration option |
 
+### API Management
+
+| Scenario | Description | Status | Key Features |
+|----------|-------------|--------|--------------|
+| [APIM Backend Fan-out Benchmark](./src/apim-backend-fanout-benchmark/) | Head-to-head benchmark of **shared-backend + `rewrite-uri`** vs **one-backend-per-API** on APIM Premium. **Result: no measurable difference** \u2014 882 vs 874 req/s, 146 vs 153 ms p95 over 1.67M requests | ✅ Ready | 2× APIM Premium, .NET 10 mock backend on Flex Consumption FC1, k6 stepped load (50→100→200 VUs), interactive HTML dashboard, App Insights `BackendTime`/`ClientTime` KQL, auto-generated Markdown report with pass/fail thresholds |
+<p align="center">
+  <a href="./src/apim-backend-fanout-benchmark/">
+    <img src="./src/apim-backend-fanout-benchmark/docs/dashboard.png" alt="APIM Backend Fan-out Benchmark dashboard — no measurable difference between shared-backend+rewrite-uri and one-backend-per-API" width="800">
+  </a>
+</p>
 ### Operations
 
 | Scenario | Description | Status | Key Features |

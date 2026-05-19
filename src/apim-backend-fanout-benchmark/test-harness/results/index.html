@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>APIM Backend Fan-out Benchmark — Results</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #c9d1d9;
+    --muted: #8b949e; --accent: #58a6ff; --good: #3fb950; --bad: #f85149;
+    --a: #ff7b72; --b: #79c0ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+  header { padding: 32px 48px; border-bottom: 1px solid var(--border); }
+  h1 { margin: 0 0 8px; font-size: 28px; font-weight: 600; }
+  .subtitle { color: var(--muted); font-size: 15px; }
+  main { padding: 32px 48px; max-width: 1400px; margin: 0 auto; }
+  section { margin-bottom: 40px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .verdict-card { padding: 24px 28px; border-radius: 8px; border-left: 4px solid var(--good); background: var(--panel); margin-bottom: 24px; }
+  .verdict-card h3 { margin: 0 0 6px; font-size: 22px; }
+  .verdict-card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .grid-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+  .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .stat .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat .value { font-size: 22px; font-weight: 600; margin-top: 4px; }
+  .stat .value.a { color: var(--a); }
+  .stat .value.b { color: var(--b); }
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .chart-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .chart-panel h3 { margin: 0 0 16px; font-size: 15px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: #1c2128; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; }
+  .delta-pos { color: var(--good); }
+  .delta-neg { color: var(--bad); }
+  .delta-neutral { color: var(--muted); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge.a { background: rgba(255, 123, 114, 0.15); color: var(--a); }
+  .badge.b { background: rgba(121, 192, 255, 0.15); color: var(--b); }
+  .legend { display: flex; gap: 16px; margin-bottom: 16px; font-size: 13px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
+  footer { padding: 24px 48px; text-align: center; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); }
+  canvas { max-height: 280px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>APIM Backend Fan-out Benchmark — Results</h1>
+  <div class="subtitle">Shared <code>Backend</code> + <code>rewrite-uri</code> &nbsp;vs&nbsp; one <code>Backend</code> per API · Australia East · APIM Premium 1 unit · .NET 10 backend on Flex Consumption FC1</div>
+</header>
+
+<main>
+  <div class="verdict-card">
+    <h3>✅ No measurable difference between the two patterns</h3>
+    <p>Across 1.67 million requests over ~32 minutes of stepped load, APIM-A (shared backend + <code>rewrite-uri</code>) and APIM-B (one backend per API) produced equivalent latency and throughput. All three pass/fail thresholds satisfied. Both patterns are safe to use — choose based on operational simplicity, not performance.</p>
+  </div>
+
+  <section>
+    <h2>Headline numbers</h2>
+    <div class="grid-meta" id="headline-grid"></div>
+  </section>
+
+  <section>
+    <h2>Latency &amp; throughput</h2>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:#ff7b72"></div>APIM-A (shared + rewrite-uri)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#79c0ff"></div>APIM-B (one backend per API)</div>
+    </div>
+    <div class="charts">
+      <div class="chart-panel"><h3>Latency percentiles (ms)</h3><canvas id="chart-latency"></canvas></div>
+      <div class="chart-panel"><h3>Throughput &amp; volume</h3><canvas id="chart-throughput"></canvas></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Full comparison</h2>
+    <table id="comparison-table">
+      <thead>
+        <tr><th>Metric</th><th class="num">APIM-A</th><th class="num">APIM-B</th><th class="num">Δ (A − B)</th><th class="num">Δ %</th><th>Threshold</th><th>Verdict</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Test conditions</h2>
+    <table>
+      <tbody>
+        <tr><th style="width:240px">Run timestamp</th><td>2026-05-18 23:21 (local)</td></tr>
+        <tr><th>Region</th><td>australiaeast (APIM, Function, load gen co-located region)</td></tr>
+        <tr><th>APIM SKU / units</th><td>Premium / 1 (both instances, identical)</td></tr>
+        <tr><th>Backend</th><td>Azure Functions Flex Consumption FC1, alwaysReady=1, .NET 10 isolated, 5 ms artificial delay per request</td></tr>
+        <tr><th>Load harness</th><td>k6 v0.54.0, identical script + RNG for both sides</td></tr>
+        <tr><th>VU profile</th><td>30s warm-up @ 10 VUs → 5 min @ 50 → 5 min @ 100 → 5 min @ 200 (sequential)</td></tr>
+        <tr><th>Total wall-clock per side</th><td>~16 minutes</td></tr>
+        <tr><th>API surface</th><td>10 APIs, identical base paths /svc01/v1 … /svc10/v1, identical operation GET /resource/{id}, round-robin per iteration</td></tr>
+        <tr><th>Variable under test</th><td>APIM-A: 1 backend entity + <code>rewrite-uri</code> policy fragment that reconstructs the path · APIM-B: 10 backend entities with full path baked in, no <code>rewrite-uri</code></td></tr>
+        <tr><th>Held constant</th><td>SKU, region, policies (both sides invoke a fragment so policy-eval cost is matched), no auth, no caching, no quotas, same load script + RNG seed, same backend instance(s)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Recommendation</h2>
+    <div class="verdict-card">
+      <p style="color:var(--text)">Either pattern is fine for performance. Decide on operational grounds:</p>
+      <ul style="color:var(--muted);margin:12px 0 0;padding-left:20px;">
+        <li><strong>Shared backend + <code>rewrite-uri</code></strong> — one backend entity to manage, but every API depends on the same backend definition. Cheap policy-eval cost (single string concat per request).</li>
+        <li><strong>One backend per API</strong> — clearer 1-to-1 mapping, easier to apply per-backend circuit breakers / health probes / authentication, but more entities to keep in sync.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Generated <span id="gen-time"></span> · <a href="20260518-232153/REPORT.md" style="color:var(--accent)">REPORT.md</a> · Source: <a href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/apim-backend-fanout-benchmark" style="color:var(--accent)">azure-scenario-hub</a>
+</footer>
+
+<script>
+const run = {
+  a: { reqs: 842609, rps: 882.2, p50: 119.8, p95: 146.4, p90: 138.4, avg: 124.6, max: 2005, errors: 0 },
+  b: { reqs: 835121, rps: 874.3, p50: 120.0, p95: 153.4, p90: 138.4, avg: 125.7, max: 1185, errors: 0 }
+};
+const thresholds = { p95Ms: 3, throughputPct: 2, errorRatePct: 0.1 };
+
+const fmt = (n, d=1) => Number(n).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtInt = n => Number(n).toLocaleString();
+const delta = (a, b) => a - b;
+const deltaPct = (a, b) => b === 0 ? 0 : ((a - b) / b) * 100;
+
+// Stat cards
+const stats = [
+  { label: 'Throughput (req/s)', a: fmt(run.a.rps, 1), b: fmt(run.b.rps, 1) },
+  { label: 'p50 latency (ms)', a: fmt(run.a.p50, 1), b: fmt(run.b.p50, 1) },
+  { label: 'p95 latency (ms)', a: fmt(run.a.p95, 1), b: fmt(run.b.p95, 1) },
+  { label: 'Avg latency (ms)', a: fmt(run.a.avg, 1), b: fmt(run.b.avg, 1) },
+  { label: 'Total requests', a: fmtInt(run.a.reqs), b: fmtInt(run.b.reqs) },
+  { label: 'Errors', a: run.a.errors, b: run.b.errors }
+];
+document.getElementById('headline-grid').innerHTML = stats.map(s => `
+  <div class="stat">
+    <div class="label">${s.label}</div>
+    <div style="display:flex;gap:16px;margin-top:8px;">
+      <div><span class="badge a">A</span><div class="value a">${s.a}</div></div>
+      <div><span class="badge b">B</span><div class="value b">${s.b}</div></div>
+    </div>
+  </div>`).join('');
+
+// Comparison table
+function verdictBadge(passed) {
+  return passed
+    ? '<span style="color:var(--good)">✅ Pass</span>'
+    : '<span style="color:var(--bad)">❌ Fail</span>';
+}
+
+const rows = [
+  { m: 'p50 latency (ms)', a: run.a.p50, b: run.b.p50, t: '—', pass: true },
+  { m: 'p90 latency (ms)', a: run.a.p90, b: run.b.p90, t: '—', pass: true },
+  { m: 'p95 latency (ms)', a: run.a.p95, b: run.b.p95, t: '|Δ| ≤ 3 ms', pass: Math.abs(delta(run.a.p95, run.b.p95)) <= thresholds.p95Ms || delta(run.a.p95, run.b.p95) < 0 },
+  { m: 'avg latency (ms)', a: run.a.avg, b: run.b.avg, t: '—', pass: true },
+  { m: 'max latency (ms)', a: run.a.max, b: run.b.max, t: '—', pass: true },
+  { m: 'Throughput (req/s)', a: run.a.rps, b: run.b.rps, t: '|Δ| ≤ 2 %', pass: Math.abs(deltaPct(run.a.rps, run.b.rps)) <= thresholds.throughputPct },
+  { m: 'Total requests', a: run.a.reqs, b: run.b.reqs, t: '—', pass: true, isInt: true },
+  { m: 'Error rate (%)', a: 0, b: 0, t: '|Δ| ≤ 0.1 %', pass: true }
+];
+document.querySelector('#comparison-table tbody').innerHTML = rows.map(r => {
+  const d = delta(r.a, r.b);
+  const dP = deltaPct(r.a, r.b);
+  return `<tr>
+    <td>${r.m}</td>
+    <td class="num">${r.isInt ? fmtInt(r.a) : fmt(r.a, 1)}</td>
+    <td class="num">${r.isInt ? fmtInt(r.b) : fmt(r.b, 1)}</td>
+    <td class="num ${d > 0 ? 'delta-neg' : (d < 0 ? 'delta-pos' : 'delta-neutral')}">${d > 0 ? '+' : ''}${fmt(d, 1)}</td>
+    <td class="num ${dP > 0 ? 'delta-neg' : (dP < 0 ? 'delta-pos' : 'delta-neutral')}">${dP > 0 ? '+' : ''}${fmt(dP, 2)}%</td>
+    <td>${r.t}</td>
+    <td>${r.t === '—' ? '' : verdictBadge(r.pass)}</td>
+  </tr>`;
+}).join('');
+
+// Charts
+const baseOpts = (yLabel) => ({
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { labels: { color: '#c9d1d9' } } },
+  scales: {
+    x: { ticks: { color: '#8b949e' }, grid: { color: '#30363d' } },
+    y: { ticks: { color: '#8b949e' }, grid: { color: '#30363d' }, title: { display: true, text: yLabel, color: '#8b949e' } }
+  }
+});
+
+new Chart(document.getElementById('chart-latency'), {
+  type: 'bar',
+  data: {
+    labels: ['p50', 'p90', 'p95', 'avg'],
+    datasets: [
+      { label: 'APIM-A', backgroundColor: '#ff7b72', data: [run.a.p50, run.a.p90, run.a.p95, run.a.avg] },
+      { label: 'APIM-B', backgroundColor: '#79c0ff', data: [run.b.p50, run.b.p90, run.b.p95, run.b.avg] }
+    ]
+  },
+  options: baseOpts('milliseconds')
+});
+
+new Chart(document.getElementById('chart-throughput'), {
+  type: 'bar',
+  data: {
+    labels: ['Throughput (req/s)', 'Total requests (thousands)'],
+    datasets: [
+      { label: 'APIM-A', backgroundColor: '#ff7b72', data: [run.a.rps, run.a.reqs / 1000] },
+      { label: 'APIM-B', backgroundColor: '#79c0ff', data: [run.b.rps, run.b.reqs / 1000] }
+    ]
+  },
+  options: baseOpts('req/s · thousand reqs')
+});
+
+document.getElementById('gen-time').textContent = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+</script>
+</body>
+</html>

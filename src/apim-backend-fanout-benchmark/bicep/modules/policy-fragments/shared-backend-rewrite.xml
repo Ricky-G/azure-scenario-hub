@@ -1,0 +1,10 @@
+<!--
+  Policy fragment: shared-backend-rewrite
+  Used by APIM-A. Routes every API to the single shared backend entity and
+  reconstructs the original request path on top of /api/echo so the backend
+  receives the full path the caller asked for.
+-->
+<fragment>
+    <set-backend-service backend-id="shared-mock-backend" />
+    <rewrite-uri template="@("/api/echo" + context.Request.OriginalUrl.Path + (string.IsNullOrEmpty(context.Request.OriginalUrl.QueryString) ? "" : "?" + context.Request.OriginalUrl.QueryString))" copy-unmatched-params="false" />
+</fragment>

@@ -1,0 +1,13 @@
+// Per-API latency percentiles from APIM diagnostics.
+// Run in Log Analytics scoped to the shared workspace.
+ApiManagementGatewayLogs
+| where TimeGenerated > ago(2h)
+| extend serviceName = tostring(split(_ResourceId, "/")[8])
+| summarize
+    requests = count(),
+    p50 = percentile(TotalTime, 50),
+    p95 = percentile(TotalTime, 95),
+    p99 = percentile(TotalTime, 99),
+    max_ms = max(TotalTime)
+    by serviceName, ApiId
+| order by serviceName asc, ApiId asc

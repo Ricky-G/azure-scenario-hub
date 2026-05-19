@@ -1,0 +1,8 @@
+# Live config containing subscription IDs / gateway URLs
+config.json
+
+# Raw k6 NDJSON output (gigabytes — never commit)
+*.ndjson
+
+# Per-run metadata containing subscription ID
+results/**/run.json

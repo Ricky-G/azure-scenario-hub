@@ -1,0 +1,7 @@
+// Failure breakdown by APIM service, API, and response code.
+ApiManagementGatewayLogs
+| where TimeGenerated > ago(2h)
+| where ResponseCode >= 400
+| extend serviceName = tostring(split(_ResourceId, "/")[8])
+| summarize failures = count() by serviceName, ApiId, ResponseCode, BackendResponseCode
+| order by failures desc

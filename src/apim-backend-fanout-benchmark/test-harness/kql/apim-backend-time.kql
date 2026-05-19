@@ -1,0 +1,13 @@
+// APIM BackendTime vs ClientTime — the measurement that isolates APIM overhead.
+// ClientTime - BackendTime ≈ time spent inside the APIM gateway.
+ApiManagementGatewayLogs
+| where TimeGenerated > ago(2h)
+| extend serviceName = tostring(split(_ResourceId, "/")[8])
+| summarize
+    requests   = count(),
+    avg_backend_ms = avg(BackendTime),
+    avg_client_ms  = avg(TotalTime),
+    avg_overhead_ms = avg(TotalTime - BackendTime),
+    p95_overhead_ms = percentile(TotalTime - BackendTime, 95)
+    by serviceName
+| order by serviceName asc
