@@ -52,6 +52,7 @@ Head-to-head benchmark of **shared-`Backend` + `rewrite-uri`** vs **one-`Backend
 | [Public Container Apps Environment](./src/public-container-apps-environment-scenario/) | Container hosting with public accessibility | 🚧 Coming Soon | Auto-scaling, public endpoints |
 | [AKS Static Egress Gateway](./src/aks-unique-egress-ip-per-namespace/) | Unique static egress IP per Kubernetes namespace, replicating OpenShift's EgressIP | ✅ Ready | Static Egress Gateway, per-namespace public/private IPs, gateway node pool, live dashboard |
 | [AKS Namespace Create](./src/aks-namespace-create/) | Automated AKS namespace provisioning with Terraform and test manifests | 🚧 Coming Soon | Namespace bootstrap, RBAC scaffolding, test workloads |
+| [App Service Easy Auth — Query String Round-Trip](./src/app-service-easy-auth/) | Proves App Service Easy Auth preserves arbitrary custom query string params (`nhi`, `login_hint`, `view`, …) across the full Microsoft Entra ID sign-in redirect — with **zero auth code in the app** | ✅ Ready | Easy Auth v2 + Entra ID, hybrid OAuth flow (`code+id_token` / `form_post`), `login_hint` auto-forwarded to Entra, claims via `x-ms-client-principal`, Mermaid sequence diagram, captured-traffic validation, Node 20 sample app |
 
 ### Integration, API Management & Messaging
 
