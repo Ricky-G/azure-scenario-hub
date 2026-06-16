@@ -1,0 +1,11 @@
+# Microsoft Agent Framework (agents, tools, middleware, workflows)
+agent-framework>=1.8.1
+
+# Agent Governance Toolkit — deterministic prompt static analysis (agent_compliance)
+agent-governance-toolkit>=4.1.0
+
+# AGT runtime policy engine — PolicyEvaluator / PolicyDocument (agent_os.policies)
+agent-os-kernel>=3.7.0
+
+# Kernel for running AGT-MAF-Governance-Demo.ipynb in VS Code / Jupyter
+ipykernel>=6.29

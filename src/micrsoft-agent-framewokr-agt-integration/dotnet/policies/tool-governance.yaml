@@ -1,0 +1,97 @@
+# ═════════════════════════════════════════════════════════════════════════════
+# AGT tool-governance policy  —  agent-level governance of tool-call ARGUMENTS (.NET)
+# ═════════════════════════════════════════════════════════════════════════════
+# Evaluated by Microsoft.AgentGovernance GovernanceKernel.EvaluateToolCall(...) on
+# EVERY outbound tool call, before the tool executes. ONE policy, attached ONCE at
+# the agent level (one FunctionMiddleware), governs every tool — including the
+# *values of its arguments*. The tools themselves contain no governance code.
+#
+# The kernel merges each tool call into the evaluation context, so a rule's string
+# condition can reference the tool name AND the argument values directly:
+#
+#   tool_name   "transfer_budget"   <- the tool being called
+#   amount      75000               <- an argument value
+#   to          "external"          <- an argument value
+#
+# This is why a single compound expression can express a precise per-tool argument
+# boundary — e.g. `tool_name == 'transfer_budget' and amount > 50000`.
+#
+# Rules are sorted by priority (descending); the first match wins. DEFAULT-DENY:
+# a tool runs only if an allow rule matches and no higher-priority deny fires first.
+#
+# ── .NET expression notes / documented differences vs the Python demo ──────────
+#  * Conditions are STRING EXPRESSIONS (not Python's structured field/operator/value).
+#    Supported: == != > >= < <=, compound `and`/`or`, `in <listField>`, boolean truthiness.
+#  * The `in` operator's right-hand side must be a CONTEXT FIELD that holds a list —
+#    inline list literals like `in ['a','b']` are NOT supported. So we express the
+#    capability allow/deny lists as compound `or` chains, and "region not in set" as
+#    a compound `!=` chain. (Python's structured policy used `in:[...]` / `not_in:[...]`.)
+#  * Escalation: AGT runtime actions are allow/deny/warn/rate_limit (no `escalate`).
+#    Following AGT's policy-as-code convention, "needs a human" is a DENY whose message
+#    contains "requires human approval"; the middleware surfaces that as ESCALATE.
+# ═════════════════════════════════════════════════════════════════════════════
+apiVersion: governance.toolkit/v1
+name: contoso-tool-governance
+default_action: deny
+
+rules:
+  # ───────────────────────────────────────────────────────────────────────────
+  # ARGUMENT-BOUNDARY RULES — the answer to "can I govern tool-call arguments at
+  # the agent level?". Each inspects an argument VALUE on a specific tool, by name,
+  # from this single agent-attached policy. Compound `and` keeps each rule to one
+  # readable line.
+  # ───────────────────────────────────────────────────────────────────────────
+
+  # A) Forbidden target — budget may never be moved to an external destination,
+  #    regardless of amount. (string equality on an argument)
+  - name: deny-external-budget-transfer
+    condition: "tool_name == 'transfer_budget' and to == 'external'"
+    action: deny
+    priority: 120
+    message: "Budget cannot be transferred to an external destination."
+
+  # B) Numeric ceiling — scaling beyond 20 replicas is blocked. (numeric comparison)
+  - name: deny-excessive-scale
+    condition: "tool_name == 'scale_resource' and replicas > 20"
+    action: deny
+    priority: 115
+    message: "Scaling above 20 replicas exceeds the approved ceiling."
+
+  # C) Data residency — VMs may only be provisioned in approved regions. Expressed
+  #    as a compound `!=` chain because .NET string expressions can't take an inline
+  #    list literal for `in` (see notes above).
+  - name: deny-out-of-region-vm
+    condition: "tool_name == 'provision_vm' and region != 'australiaeast' and region != 'australiasoutheast' and region != 'eastus' and region != 'westeurope'"
+    action: deny
+    priority: 113
+    message: "VM region is outside the approved data-residency boundary."
+
+  # D) Numeric ceiling with human approval — large budget transfers are escalated
+  #    rather than denied outright. The "requires human approval" marker in the
+  #    message is what the middleware turns into an ESCALATE outcome.
+  - name: escalate-large-budget-transfer
+    condition: "tool_name == 'transfer_budget' and amount > 50000"
+    action: deny
+    priority: 110
+    message: "A budget transfer over $50,000 requires human approval before it can run."
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # CAPABILITY RULES — tool-level allow/deny (the part most people already know),
+  # written as compound `or` chains (no inline list literals in .NET expressions).
+  # ───────────────────────────────────────────────────────────────────────────
+
+  # Destructive / privileged tools are never callable, whatever the arguments.
+  - name: deny-destructive-tools
+    condition: "tool_name == 'delete_resource' or tool_name == 'rotate_secret' or tool_name == 'deprovision_environment'"
+    action: deny
+    priority: 100
+    message: "Destructive or privileged tool blocked by the capability sandbox."
+
+  # The tools this agent may call at all (still subject to the argument rules above).
+  - name: allow-finops-tools
+    condition: "tool_name == 'get_cost_summary' or tool_name == 'list_resources' or tool_name == 'forecast_spend' or tool_name == 'transfer_budget' or tool_name == 'scale_resource' or tool_name == 'provision_vm' or tool_name == 'send_report_email'"
+    action: allow
+    priority: 50
+    message: "Tool is on the FinOps capability allowlist."
+
+# Default-deny: any tool not matched above is rejected (default_action: deny).

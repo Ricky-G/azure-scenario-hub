@@ -1,0 +1,68 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# AGT prompt-governance policy
+# Evaluated by agent_os.policies.PolicyEvaluator on EVERY outbound user prompt,
+# before the prompt reaches the model. The evaluation context is produced by
+# deterministic static analysis (see agt_maf/analyzers.py):
+#
+#   input_text             the raw prompt text
+#   prompt_length          len(prompt)
+#   contains_pii           bool  – SSN / credit-card pattern present
+#   contains_secret        bool  – API key / token / "password" present
+#   injection_marker_count int   – number of prompt-injection phrases matched
+#
+# Rules are sorted by priority (descending); the first match wins. If nothing
+# matches, the default action (allow) is applied.
+# ─────────────────────────────────────────────────────────────────────────────
+version: "1.0"
+name: contoso-prompt-governance
+description: >-
+  Deterministic guardrails for outbound prompts to the Contoso FinOps agent.
+  Blocks prompt-injection attempts, PII, and secret leakage before they reach
+  the model.
+
+rules:
+  # 1) Headline prompt-injection rule — raw regex over the prompt text.
+  - name: block-prompt-injection
+    condition:
+      field: input_text
+      operator: matches
+      value: '(?i)(ignore|disregard)\s+(all\s+|any\s+|the\s+)?(previous|prior|above)\s+(instructions|prompt)'
+    action: deny
+    priority: 100
+    message: "Prompt-injection signature detected - request blocked (OWASP LLM01)."
+
+  # 2) Heuristic backstop — uses the deterministic injection-marker count so that
+  #    subtler attacks ("you are now in developer mode", "jailbreak", "exfiltrate")
+  #    are caught even when the headline regex above does not match.
+  - name: block-injection-heuristic
+    condition:
+      field: injection_marker_count
+      operator: gt
+      value: 0
+    action: deny
+    priority: 95
+    message: "Prompt contains a known jailbreak / injection marker - request blocked (OWASP LLM01)."
+
+  # 3) PII protection — raw regex for a US SSN pattern over the prompt text.
+  - name: block-pii-ssn
+    condition:
+      field: input_text
+      operator: matches
+      value: '\b\d{3}-\d{2}-\d{4}\b'
+    action: deny
+    priority: 90
+    message: "Prompt contains PII (SSN pattern) - blocked by data-protection policy (OWASP LLM06)."
+
+  # 4) Secret protection — derived boolean from static analysis (keys, tokens,
+  #    "password", connection strings).
+  - name: block-secret-exposure
+    condition:
+      field: contains_secret
+      operator: eq
+      value: true
+    action: deny
+    priority: 85
+    message: "Prompt appears to contain a secret / credential - blocked by data-protection policy."
+
+defaults:
+  action: allow

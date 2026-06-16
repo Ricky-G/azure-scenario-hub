@@ -1,0 +1,127 @@
+# ═════════════════════════════════════════════════════════════════════════════
+# AGT tool-governance policy  —  agent-level governance of tool-call ARGUMENTS
+# ═════════════════════════════════════════════════════════════════════════════
+# Evaluated by agent_os.policies.PolicyEvaluator on EVERY outbound tool call,
+# before the tool executes. ONE policy, attached ONCE at the agent level, governs
+# every tool — including the *values of its arguments*. The tools themselves
+# contain no governance code.
+#
+# The middleware flattens each tool call into the evaluation context two ways, so
+# you can write either broad or precise rules:
+#
+#   tool_name                 "transfer_budget"   <- the tool being called
+#   amount                    75000               <- flat arg: matches ANY tool with `amount`
+#   transfer_budget.amount    75000               <- namespaced arg: matches ONLY this tool
+#   transfer_budget.to        "external"
+#
+# Because the evaluator does a flat key lookup, the namespaced `tool.arg` keys are
+# just literal context keys — which is what lets a single agent-level policy apply
+# precise, per-tool argument boundaries without touching any tool's code.
+#
+# Rules are sorted by priority (descending); the first match wins. This policy is
+# DEFAULT-DENY, so a tool runs only if an allow rule matches and no higher-priority
+# deny/escalate rule fires first.
+#
+# Escalation note: AGT's runtime actions are allow/deny/audit/block. Following
+# AGT's own policy-as-code convention, "needs a human" is modelled as a DENY whose
+# message contains "requires human approval"; the middleware surfaces that as an
+# ESCALATE outcome.
+# ═════════════════════════════════════════════════════════════════════════════
+version: "1.0"
+name: contoso-tool-governance
+description: >-
+  Agent-level capability sandbox AND argument-boundary policy for the Contoso
+  FinOps agent. Governs which tools may run and whether each call's arguments are
+  within approved boundaries.
+
+rules:
+  # ───────────────────────────────────────────────────────────────────────────
+  # ARGUMENT-BOUNDARY RULES — the answer to "can I govern tool-call arguments at
+  # the agent level?". Each rule inspects an argument VALUE on a specific tool,
+  # by name, from this single agent-attached policy.
+  # ───────────────────────────────────────────────────────────────────────────
+
+  # A) Forbidden target — budget may never be moved to an external destination,
+  #    regardless of amount. (string equality on an argument)
+  - name: deny-external-budget-transfer
+    condition:
+      field: transfer_budget.to
+      operator: eq
+      value: external
+    action: deny
+    priority: 120
+    message: "Budget cannot be transferred to an external destination."
+
+  # B) Numeric ceiling — scaling beyond 20 replicas is blocked. (gt on an argument)
+  - name: deny-excessive-scale
+    condition:
+      field: scale_resource.replicas
+      operator: gt
+      value: 20
+    action: deny
+    priority: 115
+    message: "Scaling above 20 replicas exceeds the approved ceiling."
+
+  # C) Data residency — VMs may only be provisioned in approved regions.
+  #    (set membership: deny when the region is NOT in the allowed list)
+  - name: deny-out-of-region-vm
+    condition:
+      field: provision_vm.region
+      operator: not_in
+      value:
+        - australiaeast
+        - australiasoutheast
+        - eastus
+        - westeurope
+    action: deny
+    priority: 113
+    message: "VM region is outside the approved data-residency boundary."
+
+  # D) Numeric ceiling with human approval — large budget transfers are escalated
+  #    rather than denied outright. (gt on an argument -> escalate)
+  - name: escalate-large-budget-transfer
+    condition:
+      field: transfer_budget.amount
+      operator: gt
+      value: 50000
+    action: deny
+    priority: 110
+    message: "A budget transfer over $50,000 requires human approval before it can run."
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # CAPABILITY RULES — tool-level allow/deny (the part most people already know).
+  # ───────────────────────────────────────────────────────────────────────────
+
+  # Destructive / privileged tools are never callable, whatever the arguments.
+  - name: deny-destructive-tools
+    condition:
+      field: tool_name
+      operator: in
+      value:
+        - delete_resource
+        - rotate_secret
+        - deprovision_environment
+    action: deny
+    priority: 100
+    message: "Destructive or privileged tool blocked by the capability sandbox."
+
+  # The tools this agent may call at all (still subject to the argument rules above).
+  - name: allow-finops-tools
+    condition:
+      field: tool_name
+      operator: in
+      value:
+        - get_cost_summary
+        - list_resources
+        - forecast_spend
+        - transfer_budget
+        - scale_resource
+        - provision_vm
+        - send_report_email
+    action: allow
+    priority: 50
+    message: "Tool is on the FinOps capability allowlist."
+
+# Default-deny: any tool not matched above is rejected.
+defaults:
+  action: deny

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <!-- CS1591: this is a demo library; XML doc comments are not required on every member. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Microsoft Agent Framework (.NET): agents, tools, middleware, workflows. -->
+    <PackageReference Include="Microsoft.Agents.AI" Version="1.10.0" />
+    <!-- Microsoft.Extensions.AI: IChatClient, ChatMessage, AIFunctionFactory, FunctionInvocationContext. -->
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.6.0" />
+    <!-- Agent Governance Toolkit (.NET): GovernanceKernel, PolicyEngine, string-expression policies. -->
+    <PackageReference Include="Microsoft.AgentGovernance" Version="4.0.0" />
+    <!-- Used only to read each rule's custom `message` from a policy file for nicer display. -->
+    <PackageReference Include="YamlDotNet" Version="18.0.0" />
+  </ItemGroup>
+
+</Project>

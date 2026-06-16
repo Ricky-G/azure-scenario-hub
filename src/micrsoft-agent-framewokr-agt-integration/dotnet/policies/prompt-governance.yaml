@@ -1,0 +1,48 @@
+# ═════════════════════════════════════════════════════════════════════════════
+# AGT prompt-governance policy (.NET)
+# Evaluated by the GovernanceKernel on EVERY outbound user prompt, before the
+# prompt reaches the model. Denied prompts never reach the model.
+#
+# ── .NET expression note / documented difference vs the Python demo ────────────
+#  The .NET string-expression engine supports ==, !=, numeric comparisons, `in`,
+#  compound and/or, and boolean truthiness — but NOT a regex `matches` operator.
+#  So the deterministic regex / keyword detection runs in the C# analyzer
+#  (StaticPromptAnalyzer), which passes the resulting BOOLEAN SIGNALS into the
+#  evaluation context, and this policy decides based on them:
+#
+#     contains_injection   bool  – a prompt-injection / jailbreak phrase matched
+#     contains_pii         bool  – an SSN / credit-card pattern was found
+#     contains_secret      bool  – an API key / token / "password" was found
+#     injection_markers    int   – number of injection phrases matched
+#
+#  (Python could alternatively express the regex directly in the policy via its
+#  structured `matches` operator; in .NET the regex lives in code and the policy
+#  keys off the boolean result. The decision still belongs entirely to the policy.)
+# ═════════════════════════════════════════════════════════════════════════════
+apiVersion: governance.toolkit/v1
+name: contoso-prompt-governance
+default_action: allow
+
+rules:
+  # 1) Prompt-injection / jailbreak — deny when the analyzer flagged a marker.
+  - name: block-prompt-injection
+    condition: "contains_injection"
+    action: deny
+    priority: 100
+    message: "Prompt-injection signature detected - request blocked (OWASP LLM01)."
+
+  # 2) PII protection — deny when an SSN / credit-card pattern was detected.
+  - name: block-pii
+    condition: "contains_pii"
+    action: deny
+    priority: 90
+    message: "Prompt contains PII - blocked by data-protection policy (OWASP LLM06)."
+
+  # 3) Secret protection — deny when a key / token / password was detected.
+  - name: block-secret-exposure
+    condition: "contains_secret"
+    action: deny
+    priority: 85
+    message: "Prompt appears to contain a secret / credential - blocked by data-protection policy."
+
+# Default-allow: a clean prompt with no risky signals passes to the model.

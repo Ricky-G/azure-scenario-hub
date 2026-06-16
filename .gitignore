@@ -447,3 +447,4 @@ temp/
 
 appsettings.json
 .venv
+.playwright-mcp
