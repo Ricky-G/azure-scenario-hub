@@ -1,0 +1,21 @@
+# Local .terraform directories
+**/.terraform/*
+
+# Terraform lockfile is optional to commit; ignored here to keep the scenario clean.
+.terraform.lock.hcl
+
+# State files (never commit - may contain secrets)
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Variable files that may contain real values
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# Plan output files
+*.tfplan

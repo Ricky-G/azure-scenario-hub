@@ -1,0 +1,11 @@
+{
+  "AddedByAppTeam": "drift-test",
+  "Environment": "Development",
+  "ManagedBy": "Terraform",
+  "Owner": "PlatformTeam",
+  "Project": "AzureScenarioHub",
+  "Scenario": "terraform-drift-detection-shared-platform"
+}
+
+
+

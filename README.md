@@ -82,6 +82,12 @@ Head-to-head benchmark of **shared-`Backend` + `rewrite-uri`** vs **one-`Backend
 |----------|-------------|--------|--------------|
 | [Simple App Service with Sample App](./src/simple-app-service-with-sample-app/) | Lightweight App Service hosting a Python sample application | ✅ Ready | Zero-to-deployed in minutes, configurable SKU, VNet integration option |
 
+### Governance & Operations
+
+| Scenario | Description | Status | Key Features |
+|----------|-------------|--------|--------------|
+| [Terraform Drift Detection — Shared Platform vs. App Team](./src/terraform-drift-detection-shared-platform/) | Pinpoints **exactly where Terraform drift triggers** between a platform team's Terraform landing zone and an app team's Bicep additions. **Result from a live run:** adding child resources (Foundry projects, Cosmos databases, blob containers) causes **zero drift** — only changing a *managed attribute* (e.g. a tag) crosses the line. Includes a styled HTML report of every run | ✅ Ready | Platform Terraform (azurerm + azapi) vs app-team Bicep, serverless Cosmos + project-capable Foundry, full-`plan` drift checks, child-resource vs managed-attribute boundary, `ignore_changes` escape hatch, Azure Policy drift finding, HTML report + raw run captures |
+
 ### More scenarios coming soon! 
 Have a specific scenario request? [Open an issue](https://github.com/Ricky-G/azure-scenario-hub/issues) to suggest it.
 

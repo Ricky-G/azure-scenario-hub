@@ -1,0 +1,198 @@
+WARNING: A new Bicep release is available: v0.44.1. Upgrade now by running "az bicep upgrade".
+WARNING: C:\_GitHub\azure-scenario-hub\src\terraform-drift-detection-shared-platform\app-team-changes\main.bicep(100,25) : Warning BCP081: Resource type "Microsoft.CognitiveServices/accounts@2025-04-01-preview" does not have types available. Bicep is unable to validate resource properties prior to deployment, but this will not block the resource from being deployed. [https://aka.ms/bicep/core-diagnostics#BCP081]
+
+C:\_GitHub\azure-scenario-hub\src\terraform-drift-detection-shared-platform\app-team-changes\main.bicep(104,25) : Warning BCP081: Resource type "Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview" does not have types available. Bicep is unable to validate resource properties prior to deployment, but this will not block the resource from being deployed. [https://aka.ms/bicep/core-diagnostics#BCP081]
+
+
+{
+  "id": "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.Resources/deployments/appteam-changes",
+  "location": null,
+  "name": "appteam-changes",
+  "properties": {
+    "correlationId": "<GUID>",
+    "debugSetting": null,
+    "dependencies": [
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-drift-975z483r/sqlDatabases/appteam-db",
+            "resourceGroup": "rg-drift-demo-975z483r",
+            "resourceName": "cosmos-drift-975z483r/appteam-db",
+            "resourceType": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases"
+          }
+        ],
+        "id": "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-drift-975z483r/sqlDatabases/appteam-db/containers/orders",
+        "resourceGroup": "rg-drift-demo-975z483r",
+        "resourceName": "cosmos-drift-975z483r/appteam-db/orders",
+        "resourceType": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers"
+      }
+    ],
+    "duration": "PT33.5201824S",
+    "error": null,
+    "mode": "Incremental",
+    "onErrorDeployment": null,
+    "outputResources": [
+      {
+        "id": "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.CognitiveServices/accounts/foundry-drift-975z483r/projects/appteam-project",
+        "resourceGroup": "rg-drift-demo-975z483r"
+      },
+      {
+        "id": "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-drift-975z483r/sqlDatabases/appteam-db",
+        "resourceGroup": "rg-drift-demo-975z483r"
+      },
+      {
+        "id": "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-drift-975z483r/sqlDatabases/appteam-db/containers/orders",
+        "resourceGroup": "rg-drift-demo-975z483r"
+      },
+      {
+        "id": "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.Storage/storageAccounts/stdrift975z483r/blobServices/default/containers/appteam-data",
+        "resourceGroup": "rg-drift-demo-975z483r"
+      }
+    ],
+    "outputs": {
+      "addedContainerName": {
+        "type": "String",
+        "value": "appteam-data"
+      },
+      "addedCosmosDatabaseName": {
+        "type": "String",
+        "value": "appteam-db"
+      },
+      "addedFoundryProjectName": {
+        "type": "String",
+        "value": "appteam-project"
+      }
+    },
+    "parameters": {
+      "containerName": {
+        "type": "String",
+        "value": "appteam-data"
+      },
+      "cosmosAccountName": {
+        "type": "String",
+        "value": "cosmos-drift-975z483r"
+      },
+      "cosmosContainerName": {
+        "type": "String",
+        "value": "orders"
+      },
+      "cosmosDatabaseName": {
+        "type": "String",
+        "value": "appteam-db"
+      },
+      "foundryAccountName": {
+        "type": "String",
+        "value": "foundry-drift-975z483r"
+      },
+      "foundryProjectName": {
+        "type": "String",
+        "value": "appteam-project"
+      },
+      "location": {
+        "type": "String",
+        "value": "eastus2"
+      },
+      "storageAccountName": {
+        "type": "String",
+        "value": "stdrift975z483r"
+      }
+    },
+    "parametersLink": null,
+    "providers": [
+      {
+        "id": null,
+        "namespace": "Microsoft.Storage",
+        "providerAuthorizationConsentState": null,
+        "registrationPolicy": null,
+        "registrationState": null,
+        "resourceTypes": [
+          {
+            "aliases": null,
+            "apiProfiles": null,
+            "apiVersions": null,
+            "capabilities": null,
+            "defaultApiVersion": null,
+            "locationMappings": null,
+            "locations": [
+              null
+            ],
+            "properties": null,
+            "resourceType": "storageAccounts/blobServices/containers",
+            "zoneMappings": null
+          }
+        ]
+      },
+      {
+        "id": null,
+        "namespace": "Microsoft.DocumentDB",
+        "providerAuthorizationConsentState": null,
+        "registrationPolicy": null,
+        "registrationState": null,
+        "resourceTypes": [
+          {
+            "aliases": null,
+            "apiProfiles": null,
+            "apiVersions": null,
+            "capabilities": null,
+            "defaultApiVersion": null,
+            "locationMappings": null,
+            "locations": [
+              null
+            ],
+            "properties": null,
+            "resourceType": "databaseAccounts/sqlDatabases",
+            "zoneMappings": null
+          },
+          {
+            "aliases": null,
+            "apiProfiles": null,
+            "apiVersions": null,
+            "capabilities": null,
+            "defaultApiVersion": null,
+            "locationMappings": null,
+            "locations": [
+              null
+            ],
+            "properties": null,
+            "resourceType": "databaseAccounts/sqlDatabases/containers",
+            "zoneMappings": null
+          }
+        ]
+      },
+      {
+        "id": null,
+        "namespace": "Microsoft.CognitiveServices",
+        "providerAuthorizationConsentState": null,
+        "registrationPolicy": null,
+        "registrationState": null,
+        "resourceTypes": [
+          {
+            "aliases": null,
+            "apiProfiles": null,
+            "apiVersions": null,
+            "capabilities": null,
+            "defaultApiVersion": null,
+            "locationMappings": null,
+            "locations": [
+              "eastus2"
+            ],
+            "properties": null,
+            "resourceType": "accounts/projects",
+            "zoneMappings": null
+          }
+        ]
+      }
+    ],
+    "provisioningState": "Succeeded",
+    "templateHash": "8351394269106000224",
+    "templateLink": null,
+    "timestamp": "2026-06-25T08:48:30.993456+00:00",
+    "validatedResources": null
+  },
+  "resourceGroup": "rg-drift-demo-975z483r",
+  "tags": null,
+  "type": "Microsoft.Resources/deployments"
+}
+
+
+

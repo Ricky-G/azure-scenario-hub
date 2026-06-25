@@ -1,0 +1,10 @@
+# Copy this file to terraform.tfvars and adjust as needed.
+
+# Azure region for all resources.
+location = "eastus2"
+
+# Optional: pin an explicit resource group name. Leave empty to auto-generate.
+# resource_group_name = "rg-drift-demo"
+
+# Deploy Redis (Basic C0)? Set to false to skip the ~15-20 min provisioning and ~$16/mo cost.
+deploy_redis = true

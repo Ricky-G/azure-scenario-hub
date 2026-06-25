@@ -1,0 +1,47 @@
+random_string.suffix: Refreshing state... [id=975z483r]
+azurerm_resource_group.main: Refreshing state... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r]
+azurerm_cosmosdb_account.main: Refreshing state... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-drift-975z483r]
+azurerm_storage_account.main: Refreshing state... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.Storage/storageAccounts/stdrift975z483r]
+azapi_resource.foundry: Refreshing state... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.CognitiveServices/accounts/foundry-drift-975z483r]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+Terraform will perform the following actions:
+
+  # azurerm_storage_account.main will be updated in-place
+  ~ resource "azurerm_storage_account" "main" {
+        id                                 = "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.Storage/storageAccounts/stdrift975z483r"
+        name                               = "stdrift975z483r"
+      ~ tags                               = {
+          - "AddedByAppTeam" = "drift-test" -> null
+            "Environment"    = "Development"
+            "ManagedBy"      = "Terraform"
+            "Owner"          = "PlatformTeam"
+            "Project"        = "AzureScenarioHub"
+            "Scenario"       = "terraform-drift-detection-shared-platform"
+        }
+        # (97 unchanged attributes hidden)
+
+        # (3 unchanged blocks hidden)
+    }
+
+Plan: 0 to add, 1 to change, 0 to destroy.
+
+Warning: Argument is deprecated
+
+  with azurerm_redis_cache.main,
+  on redis.tf line 20, in resource "azurerm_redis_cache" "main":
+  20:   enable_non_ssl_port = false
+
+`enable_non_ssl_port` will be removed in favour of the property
+`non_ssl_port_enabled` in version 4.0 of the AzureRM Provider.
+
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
+
+
+

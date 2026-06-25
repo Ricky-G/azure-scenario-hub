@@ -1,0 +1,1174 @@
+random_string.suffix: Refreshing state... [id=975z483r]
+azurerm_resource_group.main: Refreshing state... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r]
+azurerm_cosmosdb_account.main: Refreshing state... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-drift-975z483r]
+azurerm_storage_account.main: Refreshing state... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.Storage/storageAccounts/stdrift975z483r]
+azapi_resource.foundry: Refreshing state... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.CognitiveServices/accounts/foundry-drift-975z483r]
+
+Note: Objects have changed outside of Terraform
+
+Terraform detected the following changes made outside of Terraform since the
+last "terraform apply" which may have affected this plan:
+
+  # azurerm_storage_account.main has been deleted
+  - resource "azurerm_storage_account" "main" {
+      - id                                = "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.Storage/storageAccounts/stdrift975z483r" -> null
+      - name                              = "stdrift975z483r" -> null
+        tags                              = {
+            "Environment" = "Development"
+            "ManagedBy"   = "Terraform"
+            "Owner"       = "PlatformTeam"
+            "Project"     = "AzureScenarioHub"
+            "Scenario"    = "terraform-drift-detection-shared-platform"
+        }
+        # (20 unchanged attributes hidden)
+    }
+
+
+Unless you have made equivalent changes to your configuration, or ignored the
+relevant attributes using ignore_changes, the following plan may include
+actions to undo or respond to these changes.
+
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+  ~ update in-place
+
+Terraform will perform the following actions:
+
+  # azapi_resource.foundry will be updated in-place
+  ~ resource "azapi_resource" "foundry" {
+      ~ body                      = {
+          ~ properties = {
+              ~ disableLocalAuth       = true -> false
+                # (3 unchanged attributes hidden)
+            }
+            # (2 unchanged attributes hidden)
+        }
+        id                        = "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.CognitiveServices/accounts/foundry-drift-975z483r"
+        name                      = "foundry-drift-975z483r"
+      ~ output                    = {
+          - id         = "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.CognitiveServices/accounts/foundry-drift-975z483r"
+          - identity   = {
+              - principalId = "<GUID>"
+              - tenantId    = "<TENANT_ID>"
+            }
+          - properties = {
+              - callRateLimit     = {
+                  - rules = [
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                              - {},
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                      - {
+                          - matchPatterns = [
+                              - {},
+                            ]
+                        },
+                    ]
+                }
+              - capabilities      = [
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                  - {},
+                ]
+              - dateCreated       = "2026-06-25T08:36:17.9475591Z"
+              - endpoint          = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+              - endpoints         = {
+                  - "AI Foundry API"                                    = "https://foundry-drift-975z483r.services.ai.azure.com/"
+                  - "Azure AI Model Inference API"                      = "https://foundry-drift-975z483r.services.ai.azure.com/"
+                  - "Azure MAI Model Inference API"                     = "https://foundry-drift-975z483r.services.ai.azure.com/"
+                  - "Azure MAI Model Inference API v1.0"                = "https://foundry-drift-975z483r.services.ai.azure.com/"
+                  - "Azure OpenAI Legacy API - Latest moniker"          = "https://foundry-drift-975z483r.openai.azure.com/"
+                  - "Cohere AI API"                                     = "https://foundry-drift-975z483r.services.ai.azure.com/"
+                  - "Computer Vision"                                   = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - Container                                           = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Content Safety"                                    = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Content Understanding"                             = "https://foundry-drift-975z483r.services.ai.azure.com/"
+                  - "Conversational Language Understanding Authoring"   = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - ConversationalLURuntime                             = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Custom Question Answering"                         = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Custom Question Answering Authoring"               = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Custom Text Authoring"                             = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - CustomTranslator                                    = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - DocumentTranslation                                 = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - FormRecognizer                                      = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - LUIS                                                = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - Language                                            = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Language Remote MCP Server"                        = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "MAAP Managed Deployments API"                      = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Mistral AI API"                                    = "https://foundry-drift-975z483r.services.ai.azure.com/"
+                  - "OpenAI Dall-E API"                                 = "https://foundry-drift-975z483r.openai.azure.com/"
+                  - "OpenAI Language Model Instance API"                = "https://foundry-drift-975z483r.openai.azure.com/"
+                  - "OpenAI Model Scaleset API"                         = "https://foundry-drift-975z483r.openai.azure.com/"
+                  - "OpenAI Moderations API"                            = "https://foundry-drift-975z483r.openai.azure.com/"
+                  - "OpenAI Realtime API"                               = "https://foundry-drift-975z483r.openai.azure.com/"
+                  - "OpenAI Realtime Translation WebSocket API"         = "https://foundry-drift-975z483r.openai.azure.com/"
+                  - "OpenAI Response API on Websocket"                  = "https://foundry-drift-975z483r.openai.azure.com/"
+                  - "OpenAI Sora API"                                   = "https://foundry-drift-975z483r.openai.azure.com/"
+                  - "OpenAI Whisper API"                                = "https://foundry-drift-975z483r.openai.azure.com/"
+                  - "ProjectA APIs"                                     = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - QnAMaker                                            = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - QuestionAnswering                                   = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Audio Content Creation"            = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Batch Avatar"                      = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Batch Text to Speech"              = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Custom Avatar"                     = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Custom Voice"                      = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Custom Voice Trial"                = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Podcast"                           = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Speaker Identification"            = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Speaker Verification"              = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Speech to Text"                    = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Speech to Text (Standard)"         = "https://eastus2.stt.speech.microsoft.com"
+                  - "Speech Services Speech to Text 2024-05-15-preview" = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Speech to Text 2024-11-15"         = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Speech to Text 2025-10-15"         = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Speech to Text v3.2"               = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Speech to Text v3.2_internal.1"    = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services TTS Player"                        = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Speech Services Text to Speech (Neural)"           = "https://eastus2.tts.speech.microsoft.com"
+                  - "Text Analytics"                                    = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - TextTranslation                                     = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - TextTranslation-Global                              = "https://api.cognitive.microsofttranslator.com/"
+                  - Token                                               = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Token Service API"                                 = "https://foundry-drift-975z483r.openai.azure.com/"
+                  - Turing                                              = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Video Translation"                                 = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Voice Agent Realtime API"                          = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Voice Live Media Gateway Calls API"                = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                  - "Voice Live Realtime API"                           = "https://foundry-drift-975z483r.cognitiveservices.azure.com/"
+                }
+              - internalId        = "c19d1600208e4445b8dc8f8f8212f845"
+              - isMigrated        = false
+              - provisioningState = "Succeeded"
+            }
+          - tags       = {
+              - Environment = "Development"
+              - ManagedBy   = "Terraform"
+              - Owner       = "PlatformTeam"
+              - Project     = "AzureScenarioHub"
+              - Scenario    = "terraform-drift-detection-shared-platform"
+            }
+          - type       = "Microsoft.CognitiveServices/accounts"
+        } -> (known after apply)
+        tags                      = {
+            "Environment" = "Development"
+            "ManagedBy"   = "Terraform"
+            "Owner"       = "PlatformTeam"
+            "Project"     = "AzureScenarioHub"
+            "Scenario"    = "terraform-drift-detection-shared-platform"
+        }
+        # (8 unchanged attributes hidden)
+
+        # (1 unchanged block hidden)
+    }
+
+  # azurerm_cosmosdb_account.main will be updated in-place
+  ~ resource "azurerm_cosmosdb_account" "main" {
+        id                                       = "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-drift-975z483r"
+      ~ local_authentication_disabled            = true -> false
+        name                                     = "cosmos-drift-975z483r"
+        tags                                     = {
+            "Environment" = "Development"
+            "ManagedBy"   = "Terraform"
+            "Owner"       = "PlatformTeam"
+            "Project"     = "AzureScenarioHub"
+            "Scenario"    = "terraform-drift-detection-shared-platform"
+        }
+        # (34 unchanged attributes hidden)
+
+        # (5 unchanged blocks hidden)
+    }
+
+  # azurerm_storage_account.main will be created
+  + resource "azurerm_storage_account" "main" {
+      + access_tier                        = "Hot"
+      + account_kind                       = "StorageV2"
+      + account_replication_type           = "LRS"
+      + account_tier                       = "Standard"
+      + allow_nested_items_to_be_public    = false
+      + cross_tenant_replication_enabled   = true
+      + default_to_oauth_authentication    = false
+      + dns_endpoint_type                  = "Standard"
+      + enable_https_traffic_only          = (known after apply)
+      + https_traffic_only_enabled         = (known after apply)
+      + id                                 = (known after apply)
+      + infrastructure_encryption_enabled  = false
+      + is_hns_enabled                     = false
+      + large_file_share_enabled           = (known after apply)
+      + local_user_enabled                 = true
+      + location                           = "eastus2"
+      + min_tls_version                    = "TLS1_2"
+      + name                               = "stdrift975z483r"
+      + nfsv3_enabled                      = false
+      + primary_access_key                 = (sensitive value)
+      + primary_blob_connection_string     = (sensitive value)
+      + primary_blob_endpoint              = (known after apply)
+      + primary_blob_host                  = (known after apply)
+      + primary_blob_internet_endpoint     = (known after apply)
+      + primary_blob_internet_host         = (known after apply)
+      + primary_blob_microsoft_endpoint    = (known after apply)
+      + primary_blob_microsoft_host        = (known after apply)
+      + primary_connection_string          = (sensitive value)
+      + primary_dfs_endpoint               = (known after apply)
+      + primary_dfs_host                   = (known after apply)
+      + primary_dfs_internet_endpoint      = (known after apply)
+      + primary_dfs_internet_host          = (known after apply)
+      + primary_dfs_microsoft_endpoint     = (known after apply)
+      + primary_dfs_microsoft_host         = (known after apply)
+      + primary_file_endpoint              = (known after apply)
+      + primary_file_host                  = (known after apply)
+      + primary_file_internet_endpoint     = (known after apply)
+      + primary_file_internet_host         = (known after apply)
+      + primary_file_microsoft_endpoint    = (known after apply)
+      + primary_file_microsoft_host        = (known after apply)
+      + primary_location                   = (known after apply)
+      + primary_queue_endpoint             = (known after apply)
+      + primary_queue_host                 = (known after apply)
+      + primary_queue_microsoft_endpoint   = (known after apply)
+      + primary_queue_microsoft_host       = (known after apply)
+      + primary_table_endpoint             = (known after apply)
+      + primary_table_host                 = (known after apply)
+      + primary_table_microsoft_endpoint   = (known after apply)
+      + primary_table_microsoft_host       = (known after apply)
+      + primary_web_endpoint               = (known after apply)
+      + primary_web_host                   = (known after apply)
+      + primary_web_internet_endpoint      = (known after apply)
+      + primary_web_internet_host          = (known after apply)
+      + primary_web_microsoft_endpoint     = (known after apply)
+      + primary_web_microsoft_host         = (known after apply)
+      + public_network_access_enabled      = true
+      + queue_encryption_key_type          = "Service"
+      + resource_group_name                = "rg-drift-demo-975z483r"
+      + secondary_access_key               = (sensitive value)
+      + secondary_blob_connection_string   = (sensitive value)
+      + secondary_blob_endpoint            = (known after apply)
+      + secondary_blob_host                = (known after apply)
+      + secondary_blob_internet_endpoint   = (known after apply)
+      + secondary_blob_internet_host       = (known after apply)
+      + secondary_blob_microsoft_endpoint  = (known after apply)
+      + secondary_blob_microsoft_host      = (known after apply)
+      + secondary_connection_string        = (sensitive value)
+      + secondary_dfs_endpoint             = (known after apply)
+      + secondary_dfs_host                 = (known after apply)
+      + secondary_dfs_internet_endpoint    = (known after apply)
+      + secondary_dfs_internet_host        = (known after apply)
+      + secondary_dfs_microsoft_endpoint   = (known after apply)
+      + secondary_dfs_microsoft_host       = (known after apply)
+      + secondary_file_endpoint            = (known after apply)
+      + secondary_file_host                = (known after apply)
+      + secondary_file_internet_endpoint   = (known after apply)
+      + secondary_file_internet_host       = (known after apply)
+      + secondary_file_microsoft_endpoint  = (known after apply)
+      + secondary_file_microsoft_host      = (known after apply)
+      + secondary_location                 = (known after apply)
+      + secondary_queue_endpoint           = (known after apply)
+      + secondary_queue_host               = (known after apply)
+      + secondary_queue_microsoft_endpoint = (known after apply)
+      + secondary_queue_microsoft_host     = (known after apply)
+      + secondary_table_endpoint           = (known after apply)
+      + secondary_table_host               = (known after apply)
+      + secondary_table_microsoft_endpoint = (known after apply)
+      + secondary_table_microsoft_host     = (known after apply)
+      + secondary_web_endpoint             = (known after apply)
+      + secondary_web_host                 = (known after apply)
+      + secondary_web_internet_endpoint    = (known after apply)
+      + secondary_web_internet_host        = (known after apply)
+      + secondary_web_microsoft_endpoint   = (known after apply)
+      + secondary_web_microsoft_host       = (known after apply)
+      + sftp_enabled                       = false
+      + shared_access_key_enabled          = false
+      + table_encryption_key_type          = "Service"
+      + tags                               = {
+          + "Environment" = "Development"
+          + "ManagedBy"   = "Terraform"
+          + "Owner"       = "PlatformTeam"
+          + "Project"     = "AzureScenarioHub"
+          + "Scenario"    = "terraform-drift-detection-shared-platform"
+        }
+
+      + blob_properties (known after apply)
+
+      + network_rules (known after apply)
+
+      + queue_properties (known after apply)
+
+      + routing (known after apply)
+
+      + share_properties (known after apply)
+
+      + static_website (known after apply)
+    }
+
+Plan: 1 to add, 2 to change, 0 to destroy.
+
+Changes to Outputs:
+  + storage_account_id   = (known after apply)
+  + storage_account_name = "stdrift975z483r"
+azurerm_cosmosdb_account.main: Modifying... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-drift-975z483r]
+azurerm_storage_account.main: Creating...
+azapi_resource.foundry: Modifying... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.CognitiveServices/accounts/foundry-drift-975z483r]
+azurerm_cosmosdb_account.main: Still modifying... [id=/subscriptions/<SUBSCRIPTION_ID>-...databaseAccounts/cosmos-drift-975z483r, 00m10s elapsed]
+azurerm_storage_account.main: Still creating... [00m10s elapsed]
+azapi_resource.foundry: Still modifying... [id=/subscriptions/<SUBSCRIPTION_ID>-...rvices/accounts/foundry-drift-975z483r, 00m10s elapsed]
+azapi_resource.foundry: Modifications complete after 14s [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.CognitiveServices/accounts/foundry-drift-975z483r]
+azurerm_cosmosdb_account.main: Still modifying... [id=/subscriptions/<SUBSCRIPTION_ID>-...databaseAccounts/cosmos-drift-975z483r, 00m20s elapsed]
+azurerm_storage_account.main: Still creating... [00m20s elapsed]
+azurerm_cosmosdb_account.main: Still modifying... [id=/subscriptions/<SUBSCRIPTION_ID>-...databaseAccounts/cosmos-drift-975z483r, 00m30s elapsed]
+azurerm_storage_account.main: Still creating... [00m30s elapsed]
+azurerm_cosmosdb_account.main: Still modifying... [id=/subscriptions/<SUBSCRIPTION_ID>-...databaseAccounts/cosmos-drift-975z483r, 00m40s elapsed]
+azurerm_storage_account.main: Still creating... [00m40s elapsed]
+azurerm_cosmosdb_account.main: Modifications complete after 47s [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-drift-975z483r]
+azurerm_storage_account.main: Still creating... [00m50s elapsed]
+azurerm_storage_account.main: Still creating... [01m00s elapsed]
+azurerm_storage_account.main: Still creating... [01m10s elapsed]
+azurerm_storage_account.main: Still creating... [01m20s elapsed]
+azurerm_storage_account.main: Creation complete after 1m25s [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.Storage/storageAccounts/stdrift975z483r]
+
+Warning: Argument is deprecated
+
+  with azurerm_redis_cache.main,
+  on redis.tf line 20, in resource "azurerm_redis_cache" "main":
+  20:   enable_non_ssl_port = false
+
+`enable_non_ssl_port` will be removed in favour of the property
+`non_ssl_port_enabled` in version 4.0 of the AzureRM Provider.
+
+Apply complete! Resources: 1 added, 2 changed, 0 destroyed.
+
+Outputs:
+
+cosmos_account_name = "cosmos-drift-975z483r"
+foundry_account_id = "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.CognitiveServices/accounts/foundry-drift-975z483r"
+foundry_account_name = "foundry-drift-975z483r"
+resource_group_name = "rg-drift-demo-975z483r"
+storage_account_id = "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.Storage/storageAccounts/stdrift975z483r"
+storage_account_name = "stdrift975z483r"
+
+
+

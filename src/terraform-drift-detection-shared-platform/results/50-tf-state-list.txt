@@ -1,0 +1,8 @@
+azapi_resource.foundry
+azurerm_cosmosdb_account.main
+azurerm_resource_group.main
+azurerm_storage_account.main
+random_string.suffix
+
+
+

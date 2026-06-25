@@ -1,0 +1,22 @@
+random_string.suffix: Refreshing state... [id=975z483r]
+azurerm_resource_group.main: Refreshing state... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r]
+azurerm_cosmosdb_account.main: Refreshing state... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-drift-975z483r]
+azurerm_storage_account.main: Refreshing state... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.Storage/storageAccounts/stdrift975z483r]
+azapi_resource.foundry: Refreshing state... [id=/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-drift-demo-975z483r/providers/Microsoft.CognitiveServices/accounts/foundry-drift-975z483r]
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
+
+Warning: Argument is deprecated
+
+  with azurerm_redis_cache.main,
+  on redis.tf line 20, in resource "azurerm_redis_cache" "main":
+  20:   enable_non_ssl_port = false
+
+`enable_non_ssl_port` will be removed in favour of the property
+`non_ssl_port_enabled` in version 4.0 of the AzureRM Provider.
+
+
+
