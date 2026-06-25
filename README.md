@@ -4,7 +4,7 @@ A collection of ready-to-deploy Azure architecture scenarios. Infrastructure-as-
 
 [![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-17-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) ![IaC](https://img.shields.io/badge/IaC-Bicep%20%2B%20Terraform-9b8cff?style=for-the-badge)
 
-> 🌐 **Browse every scenario in the interactive gallery → [clouddev.blog/azure-scenario-hub](https://clouddev.blog/azure-scenario-hub/)** — featuring the live, styled [Terraform drift report](https://clouddev.blog/azure-scenario-hub/reports/terraform-drift-detection-shared-platform/).
+> 🌐 **Browse every scenario in the interactive gallery → [clouddev.blog/azure-scenario-hub](https://clouddev.blog/azure-scenario-hub/)** — featuring the styled [Terraform drift report](https://clouddev.blog/azure-scenario-hub/reports/terraform-drift-detection-shared-platform/).
 
 > [!IMPORTANT]
 > **These scenarios are built for experimentation, learning, and lab environments — not production.**
@@ -92,7 +92,7 @@ Head-to-head benchmark of **shared-`Backend` + `rewrite-uri`** vs **one-`Backend
 
 | Scenario | Description | Status | Key Features |
 |----------|-------------|--------|--------------|
-| [Terraform Drift Detection — Shared Platform vs. App Team](./src/terraform-drift-detection-shared-platform/) | Pinpoints **exactly where Terraform drift triggers** between a platform team's Terraform landing zone and an app team's Bicep additions. **Result from a live run:** adding child resources (Foundry projects, Cosmos databases, blob containers) causes **zero drift** — only changing a *managed attribute* (e.g. a tag) crosses the line. Includes a styled HTML report of every run | ✅ Ready | Platform Terraform (azurerm + azapi) vs app-team Bicep, serverless Cosmos + project-capable Foundry, full-`plan` drift checks, child-resource vs managed-attribute boundary, `ignore_changes` escape hatch, Azure Policy drift finding, HTML report + raw run captures |
+| [Terraform Drift Detection — Shared Platform vs. App Team](./src/terraform-drift-detection-shared-platform/) | Pinpoints **exactly where Terraform drift triggers** between a platform team's Terraform landing zone and an app team's Bicep additions. **Result from a real run:** adding child resources (Foundry projects, Cosmos databases, blob containers) causes **zero drift** — only changing a *managed attribute* (e.g. a tag) crosses the line. Includes a styled HTML report of every run | ✅ Ready | Platform Terraform (azurerm + azapi) vs app-team Bicep, serverless Cosmos + project-capable Foundry, full-`plan` drift checks, child-resource vs managed-attribute boundary, `ignore_changes` escape hatch, Azure Policy drift finding, HTML report + raw run captures |
 
 ### More scenarios coming soon! 
 Have a specific scenario request? [Open an issue](https://github.com/Ricky-G/azure-scenario-hub/issues) to suggest it.
