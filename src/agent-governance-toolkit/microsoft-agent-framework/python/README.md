@@ -1,4 +1,4 @@
-# Governing Microsoft Agent Framework agents with the Agent Governance Toolkit
+# Governing Microsoft Agent Framework agents with the Agent Governance Toolkit — **Python**
 
 Wrap **Microsoft Agent Framework (MAF)** agents and workflows with the **Microsoft Agent
 Governance Toolkit (AGT)** so that **every outbound prompt and every outbound tool call is
@@ -18,7 +18,10 @@ works unchanged in front of a live model.
 - **AGT** — [github.com/microsoft/agent-governance-toolkit](https://github.com/microsoft/agent-governance-toolkit) — deterministic policy engine, prompt static-analysis, audit primitives.
 
 > 💡 **.NET/C# developer?** A full C# twin of this demo — same scenario, same policies, same
-> hero feature — lives in [`dotnet/`](./dotnet/README.md) (class library + console app).
+> hero feature — lives in [`../dotnet/`](../dotnet/README.md) (class library + console app).
+>
+> ⬆️ This is one implementation of the **Microsoft Agent Framework** integration. See the
+> [integration overview](../README.md) or the [Agent Governance Toolkit hub](../../README.md).
 
 ---
 
@@ -136,7 +139,7 @@ flowchart TD
 
 ## Quick start
 
-From this scenario folder (`src/micrsoft-agent-framewokr-agt-integration`):
+From this folder (`src/agent-governance-toolkit/microsoft-agent-framework/python`):
 
 ```powershell
 # 1) Create and activate an isolated environment
@@ -165,7 +168,7 @@ kernel.
 ## What's included
 
 ```
-micrsoft-agent-framewokr-agt-integration/
+python/
 ├── AGT-MAF-Governance-Demo.ipynb   # interactive notebook (start here)
 ├── requirements.txt
 ├── verify.py                       # offline self-check / governance regression guard

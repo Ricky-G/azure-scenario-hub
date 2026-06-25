@@ -1,6 +1,6 @@
 # Governing Microsoft Agent Framework agents with the Agent Governance Toolkit — **.NET / C#**
 
-This is the **C#/.NET** twin of the [Python demo](../README.md). It wraps **Microsoft Agent
+This is the **C#/.NET** twin of the [Python demo](../python/README.md). It wraps **Microsoft Agent
 Framework (MAF) for .NET** agents and workflows with the **Microsoft Agent Governance Toolkit
 (AGT) for .NET** so that **every outbound prompt and every outbound tool call is intercepted
 and evaluated by a real, deterministic AGT policy** — before anything reaches a model or
@@ -13,6 +13,9 @@ works unchanged in front of a live model.
 
 - **MAF (.NET)** — [`Microsoft.Agents.AI`](https://www.nuget.org/packages/Microsoft.Agents.AI) — agents, tools, middleware, workflows.
 - **AGT (.NET)** — [`Microsoft.AgentGovernance`](https://www.nuget.org/packages/Microsoft.AgentGovernance) — `GovernanceKernel`, `PolicyEngine`, string-expression policies.
+
+> ⬆️ This is the .NET implementation of the **Microsoft Agent Framework** integration. See the
+> [integration overview](../README.md) or the [Agent Governance Toolkit hub](../../README.md).
 
 > **Why this matters.** Prompt-level safety ("please follow the rules") is a *request* to a
 > stochastic system. AGT instead intercepts each action in deterministic application code:
@@ -332,7 +335,8 @@ Remove-Item -Recurse -Force AgtMaf/bin, AgtMaf/obj, AgtMaf.Demos/bin, AgtMaf.Dem
 
 - [Agent Governance Toolkit — .NET tutorial](https://github.com/microsoft/agent-governance-toolkit/blob/main/docs/tutorials/19-dotnet-sdk.md) · [MAF .NET hook integration](https://github.com/microsoft/agent-governance-toolkit/blob/main/docs/tutorials/43-dotnet-maf-hook-integration.md)
 - [Microsoft Agent Framework docs](https://learn.microsoft.com/agent-framework/) · [.NET middleware samples](https://github.com/microsoft/agent-framework/tree/main/dotnet/samples/02-agents)
-- The [Python twin of this demo](../README.md) — same scenario, same policies, structured-policy style.
+- The [Python twin of this demo](../python/README.md) — same scenario, same policies, structured-policy style.
+- The [Microsoft Agent Framework integration overview](../README.md) · the [Agent Governance Toolkit hub](../../README.md).
 
 > These templates are optimised for learning and experimentation, **not** production. For
 > production-grade Azure infrastructure, see [Azure Verified Modules](https://aka.ms/avm).
