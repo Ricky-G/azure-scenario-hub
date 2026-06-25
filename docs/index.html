@@ -102,6 +102,26 @@
   .stat .n.g { color: var(--green); } .stat .n.b { color: var(--blue); } .stat .n.p { color: var(--purple); } .stat .n.a { color: var(--amber); }
   .stat .l { font-size: 12.5px; color: var(--faint); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
 
+  /* ---------- notice ---------- */
+  .notice-sec { padding: 28px 0 0; }
+  .notice {
+    display: flex; align-items: center; gap: 18px;
+    background: linear-gradient(135deg, rgba(245,179,66,.12), rgba(155,140,255,.06));
+    border: 1px solid rgba(245,179,66,.34); border-left: 4px solid var(--amber);
+    border-radius: 16px; padding: 18px 22px;
+  }
+  .notice .ic { font-size: 24px; flex: none; line-height: 1; }
+  .notice .tx { flex: 1; color: var(--muted); font-size: 14.5px; }
+  .notice .tx strong { color: var(--ink); }
+  .notice .tx a { color: var(--amber); font-weight: 600; }
+  .notice .cta {
+    flex: none; white-space: nowrap; font-weight: 700; font-size: 13.5px;
+    color: #1a1205; background: linear-gradient(135deg, var(--amber), #ffce6a);
+    padding: 10px 16px; border-radius: 11px; transition: .16s;
+  }
+  .notice .cta:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  @media (max-width: 720px) { .notice { flex-wrap: wrap; } .notice .cta { width: 100%; text-align: center; } }
+
   /* ---------- section heading ---------- */
   .sec { padding: 46px 0 8px; }
   .sec-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
@@ -239,6 +259,17 @@
     </div>
   </div>
 </header>
+
+<!-- NOTICE -->
+<section class="notice-sec">
+  <div class="wrap">
+    <div class="notice reveal">
+      <div class="ic">⚠️</div>
+      <div class="tx"><strong>Built for experimentation, learning &amp; lab environments — not production.</strong> These scenarios prioritise clarity and speed over hardening. For production deployments, use <a href="https://aka.ms/avm" target="_blank" rel="noopener">Azure Verified Modules</a> and follow your organization's security and compliance requirements.</div>
+      <a class="cta" href="https://aka.ms/avm" target="_blank" rel="noopener">Azure Verified Modules →</a>
+    </div>
+  </div>
+</section>
 
 <!-- FEATURED -->
 <section class="sec" id="featured">

@@ -6,7 +6,9 @@ A collection of ready-to-deploy Azure architecture scenarios. Infrastructure-as-
 
 > 🌐 **Browse every scenario in the interactive gallery → [clouddev.blog/azure-scenario-hub](https://clouddev.blog/azure-scenario-hub/)** — featuring the live, styled [Terraform drift report](https://clouddev.blog/azure-scenario-hub/reports/terraform-drift-detection-shared-platform/).
 
-> **Note**: These scenarios are designed for experimentation, learning, and lab environments. For production deployments, consider using [Azure Verified Modules](https://aka.ms/avm) and follow your organization's security and compliance requirements.
+> [!IMPORTANT]
+> **These scenarios are built for experimentation, learning, and lab environments — not production.**
+> For production deployments, use [Azure Verified Modules](https://aka.ms/avm) and follow your organization's security and compliance requirements.
 
 ## 🎯 What is this?
 
