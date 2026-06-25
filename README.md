@@ -2,6 +2,10 @@
 
 A collection of ready-to-deploy Azure architecture scenarios. Infrastructure-as-code templates for common patterns, designed for rapid deployment and learning.
 
+[![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-17-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) ![IaC](https://img.shields.io/badge/IaC-Bicep%20%2B%20Terraform-9b8cff?style=for-the-badge)
+
+> 🌐 **Browse every scenario in the interactive gallery → [clouddev.blog/azure-scenario-hub](https://clouddev.blog/azure-scenario-hub/)** — featuring the live, styled [Terraform drift report](https://clouddev.blog/azure-scenario-hub/reports/terraform-drift-detection-shared-platform/).
+
 > **Note**: These scenarios are designed for experimentation, learning, and lab environments. For production deployments, consider using [Azure Verified Modules](https://aka.ms/avm) and follow your organization's security and compliance requirements.
 
 ## 🎯 What is this?
