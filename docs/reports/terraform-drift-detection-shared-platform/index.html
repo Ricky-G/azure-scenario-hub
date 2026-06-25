@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Terraform Drift Boundary — Live Test Results</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-2: #11182f;
+    --card: #151d36;
+    --card-2: #1a2342;
+    --ink: #e8edf7;
+    --muted: #9aa7c7;
+    --line: #273152;
+    --green: #2ecc71;
+    --green-d: #18794e;
+    --amber: #f5a623;
+    --amber-d: #8a5a00;
+    --red: #ff5d6c;
+    --blue: #4ea3ff;
+    --purple: #9b8cff;
+    --mono: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Liberation Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    color: var(--ink);
+    background: radial-gradient(1200px 800px at 80% -10%, #1c2750 0%, transparent 60%),
+                radial-gradient(1000px 700px at -10% 10%, #182043 0%, transparent 55%),
+                var(--bg);
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
+
+  /* Hero */
+  .hero {
+    padding: 72px 0 52px;
+    text-align: center;
+    position: relative;
+  }
+  .eyebrow {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--blue);
+    background: rgba(78,163,255,.1);
+    border: 1px solid rgba(78,163,255,.25);
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom: 22px;
+  }
+  .hero h1 {
+    font-size: clamp(30px, 5vw, 52px);
+    line-height: 1.1;
+    margin: 0 0 18px;
+    letter-spacing: -.5px;
+    background: linear-gradient(180deg, #ffffff, #b9c6ee);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero p.lead {
+    max-width: 720px;
+    margin: 0 auto;
+    color: var(--muted);
+    font-size: 18px;
+  }
+  .meta-row {
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    margin-top: 28px;
+  }
+  .chip {
+    font-family: var(--mono); font-size: 12.5px;
+    color: var(--ink);
+    background: var(--card);
+    border: 1px solid var(--line);
+    padding: 7px 12px; border-radius: 8px;
+  }
+  .chip b { color: var(--blue); font-weight: 600; }
+
+  /* THE LINE centerpiece */
+  .verdict {
+    margin: 34px 0 10px;
+    background: linear-gradient(135deg, #131c38, #0e1530);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 8px;
+    overflow: hidden;
+  }
+  .verdict-grid {
+    display: grid;
+    grid-template-columns: 1fr 64px 1fr;
+    align-items: stretch;
+  }
+  .side { padding: 26px; }
+  .side h3 { margin: 0 0 6px; font-size: 15px; letter-spacing: .3px; text-transform: uppercase; }
+  .side.safe h3 { color: var(--green); }
+  .side.drift h3 { color: var(--amber); }
+  .side ul { margin: 14px 0 0; padding: 0; list-style: none; }
+  .side li {
+    font-family: var(--mono); font-size: 13.5px;
+    padding: 9px 12px; margin-bottom: 8px; border-radius: 9px;
+    background: rgba(255,255,255,.03); border: 1px solid var(--line);
+    display: flex; gap: 9px; align-items: flex-start;
+  }
+  .side.safe li { border-left: 3px solid var(--green); }
+  .side.drift li { border-left: 3px solid var(--amber); }
+  .side small { display:block; color: var(--muted); font-family: var(--sans); font-size: 11.5px; margin-top: 2px; }
+  .divider {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .divider::before {
+    content: ""; position: absolute; top: 14px; bottom: 14px; width: 2px;
+    background: linear-gradient(180deg, transparent, var(--amber), transparent);
+  }
+  .divider span {
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    font-family: var(--mono); font-size: 11px; letter-spacing: 3px;
+    color: var(--amber); text-transform: uppercase;
+    background: var(--bg-2); padding: 14px 5px; border-radius: 999px;
+    border: 1px solid var(--amber-d); z-index: 1;
+  }
+  .verdict-foot {
+    padding: 16px 26px 22px; color: var(--muted); font-size: 14px;
+    border-top: 1px dashed var(--line); margin-top: 4px;
+  }
+  .verdict-foot b { color: var(--ink); }
+
+  /* sections */
+  section { padding: 30px 0; }
+  h2.section-title {
+    font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 18px; font-weight: 700;
+    display: flex; align-items: center; gap: 10px;
+  }
+  h2.section-title::before {
+    content: ""; width: 22px; height: 2px; background: var(--blue); border-radius: 2px;
+  }
+
+  /* run cards */
+  .runs { display: grid; gap: 14px; }
+  .run {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    overflow: hidden;
+  }
+  .run-head {
+    display: flex; align-items: center; gap: 14px; padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .run-num {
+    font-family: var(--mono); font-weight: 700; font-size: 13px;
+    width: 34px; height: 34px; flex: none; border-radius: 9px;
+    display: grid; place-items: center; color: #0b1020;
+    background: linear-gradient(135deg, #6ea8ff, #9b8cff);
+  }
+  .run-title { font-weight: 600; font-size: 16px; flex: 1; }
+  .badge {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 700;
+    padding: 5px 11px; border-radius: 999px; letter-spacing: .4px; white-space: nowrap;
+  }
+  .badge.ok   { color: #d6ffe6; background: rgba(46,204,113,.16); border: 1px solid var(--green-d); }
+  .badge.warn { color: #ffe9c2; background: rgba(245,166,35,.16); border: 1px solid var(--amber-d); }
+  .run-body { padding: 16px 20px; display: grid; gap: 14px; }
+  .ee {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .ee .box {
+    background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+  }
+  .ee .box .k { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 4px; }
+  .ee .box .v { font-size: 14px; }
+  .ee .box.match { border-color: var(--green-d); }
+  .what { color: var(--muted); font-size: 14px; }
+  .what b { color: var(--ink); }
+
+  /* terminal */
+  .term {
+    background: #0a0e1c; border: 1px solid var(--line); border-radius: 11px; overflow: hidden;
+    font-family: var(--mono);
+  }
+  .term-bar {
+    display: flex; align-items: center; gap: 8px; padding: 9px 13px;
+    background: #0c1124; border-bottom: 1px solid var(--line);
+  }
+  .term-bar .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.r { background: #ff5f57; } .dot.y { background: #febc2e; } .dot.g { background: #28c840; }
+  .term-bar .ttl { margin-left: 8px; font-size: 12px; color: var(--muted); }
+  .term pre {
+    margin: 0; padding: 14px 16px; font-size: 12.8px; line-height: 1.55;
+    overflow-x: auto; color: #cdd7f0; white-space: pre;
+  }
+  .term pre .c-green { color: #5ce08a; }
+  .term pre .c-red { color: #ff8a95; }
+  .term pre .c-amber { color: #ffcf7a; }
+  .term pre .c-mut { color: #6b7aa3; }
+  .term pre .c-cmd { color: #7fb6ff; }
+
+  /* evidence table */
+  table.ev { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.ev th, table.ev td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  table.ev th { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  table.ev td.mono, table.ev th.mono { font-family: var(--mono); font-size: 13px; }
+  .tick { color: var(--green); font-weight: 700; }
+  .cross { color: var(--red); font-weight: 700; }
+
+  /* callout */
+  .callout {
+    background: linear-gradient(135deg, rgba(155,140,255,.10), rgba(78,163,255,.06));
+    border: 1px solid #34407a; border-left: 4px solid var(--purple);
+    border-radius: 12px; padding: 18px 20px; margin-top: 6px;
+  }
+  .callout h4 { margin: 0 0 6px; color: var(--purple); font-size: 15px; }
+  .callout p { margin: 0; color: var(--muted); font-size: 14px; }
+  .callout code { font-family: var(--mono); color: var(--ink); background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 5px; font-size: 12.5px; }
+
+  /* conclusion */
+  .conclusion {
+    background: linear-gradient(135deg, #14224a, #0e1530);
+    border: 1px solid var(--line); border-radius: 18px; padding: 32px;
+    margin: 10px 0 40px;
+  }
+  .conclusion h2 { margin: 0 0 14px; font-size: 24px; }
+  .rule {
+    font-family: var(--mono); font-size: 15px; line-height: 1.7;
+    background: #0a0e1c; border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 20px; color: #cdd7f0; margin: 16px 0;
+  }
+  .rule .hl-g { color: #5ce08a; font-weight: 700; }
+  .rule .hl-a { color: #ffcf7a; font-weight: 700; }
+  .steps { margin: 12px 0 0; padding-left: 20px; color: var(--muted); }
+  .steps li { margin-bottom: 7px; }
+  .steps b { color: var(--ink); }
+
+  .plain {
+    background: linear-gradient(135deg, #13234a, #0e1530);
+    border: 1px solid var(--line); border-left: 4px solid var(--green);
+    border-radius: 16px; padding: 24px 26px; margin: 4px 0 8px;
+  }
+  .plain h2 { margin: 0 0 6px; font-size: 21px; }
+  .plain .sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+  .plain .pe { display: grid; gap: 13px; }
+  .plain .pe .row { display: flex; gap: 13px; align-items: flex-start; }
+  .plain .pe .ic {
+    flex: none; width: 28px; height: 28px; border-radius: 8px;
+    display: grid; place-items: center; font-size: 15px; font-weight: 800; margin-top: 1px;
+  }
+  .plain .pe .ic.no  { background: rgba(46,204,113,.16); color: var(--green);  border: 1px solid var(--green-d); }
+  .plain .pe .ic.yes { background: rgba(245,166,35,.16); color: var(--amber);  border: 1px solid var(--amber-d); }
+  .plain .pe .ic.opt { background: rgba(155,140,255,.16); color: var(--purple); border: 1px solid #34407a; }
+  .plain .pe .tx { font-size: 15px; color: var(--ink); }
+  .plain .pe .tx b { color: #fff; }
+  .plain .pe .tx em { color: var(--muted); font-style: italic; }
+  .plain code { font-family: var(--mono); background: rgba(255,255,255,.07); padding: 1px 6px; border-radius: 5px; font-size: 13px; color: #fff; }
+
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 30px 0 50px; }
+  footer code { font-family: var(--mono); }
+
+  @media (max-width: 760px) {
+    .verdict-grid { grid-template-columns: 1fr; }
+    .divider { height: 44px; }
+    .divider::before { top: auto; bottom: auto; left: 14px; right: 14px; height: 2px; width: auto; background: linear-gradient(90deg, transparent, var(--amber), transparent); }
+    .divider span { writing-mode: horizontal-tb; transform: none; }
+    .ee, .ee.tri { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Tested end-to-end on Azure</span>
+    <h1>Where exactly does Terraform call it&nbsp;“drift”?</h1>
+    <p class="lead">
+      A platform team owns shared landing-zone resources in Terraform. An app team adds their own
+      Foundry projects, Cosmos databases and blob containers out-of-band with Bicep. We deployed it
+      for real and measured the precise line where the platform team’s pipeline starts shouting “drift.”
+    </p>
+    <div class="meta-row">
+      <span class="chip"><b>Region</b> eastus2</span>
+      <span class="chip"><b>Terraform</b> 1.15.6</span>
+      <span class="chip"><b>azurerm</b> 3.117.1</span>
+      <span class="chip"><b>azapi</b> 2.10.0</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- PLAIN ENGLISH -->
+  <div class="plain">
+    <h2>In plain English 🗣️</h2>
+    <p class="sub">New to drift? Read this first — it clears up the most common mix-up.</p>
+    <div class="pe">
+      <div class="row">
+        <div class="ic no">✓</div>
+        <div class="tx">Terraform keeps a checklist of <b>only the things it personally created</b>. Here that's three accounts: the <b>storage account</b>, the <b>Cosmos account</b>, and the <b>Foundry account</b>.</div>
+      </div>
+      <div class="row">
+        <div class="ic no">✓</div>
+        <div class="tx">When the app team adds new things <b>inside</b> those accounts — a blob container, a Cosmos database, a Foundry project — Terraform never sees them, because they were never on its checklist. So it says <b>“nothing changed.”</b> <em>This is genuine blindness, not suppression — we did not hide anything.</em></div>
+      </div>
+      <div class="row">
+        <div class="ic yes">!</div>
+        <div class="tx">The <b>only</b> time Terraform reports drift is when someone edits a setting on one of those three accounts it created — like adding a <b>tag</b> to the storage account. Now reality no longer matches its notes, so it flags it.</div>
+      </div>
+      <div class="row">
+        <div class="ic opt">~</div>
+        <div class="tx"><code>ignore_changes</code> is an <b>optional mute button for that tag case only</b>. It tells Terraform “I'm fine with people editing the tags, stop reporting it.” <em>It has nothing to do with the container, database, or project — those were already invisible.</em></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THE LINE -->
+  <div class="verdict">
+    <div class="verdict-grid">
+      <div class="side safe">
+        <h3>● Invisible to Terraform</h3>
+        <div class="what">App team created brand-new <b>child resources</b>. Platform <code style="font-family:var(--mono);font-size:12px">terraform plan</code> stayed silent — nothing was hidden, Terraform simply never tracked them.</div>
+        <ul>
+          <li>blob container <small>appteam-data → in the platform storage account</small></li>
+          <li>cosmos sql database + container <small>appteam-db / orders</small></li>
+          <li>foundry project <small>appteam-project</small></li>
+        </ul>
+      </div>
+      <div class="divider"><span>The Line</span></div>
+      <div class="side drift">
+        <h3>● Triggers drift</h3>
+        <div class="what">Anything that <b>changes an attribute Terraform already manages</b> on a resource it owns.</div>
+        <ul>
+          <li>tag added to the storage account <small>tags is a managed attribute → plan wants to remove it</small></li>
+          <li>SKU / TLS / network / public-access flags <small>any first-class managed property</small></li>
+          <li>policy flipping disableLocalAuth <small>policy-as-code is just another out-of-band actor</small></li>
+        </ul>
+      </div>
+    </div>
+    <div class="verdict-foot">
+      <b>Bottom line:</b> new, independent ARM child resources are invisible to the platform state.
+      Drift only fires when an out-of-band change touches a property Terraform records for a resource it manages —
+      and <code style="font-family:var(--mono);font-size:12px">ignore_changes</code> only mutes <em>that</em> second case.
+    </div>
+  </div>
+
+  <!-- SETUP -->
+  <section>
+    <h2 class="section-title">The setup we deployed</h2>
+    <div class="ee" style="grid-template-columns:1fr 1fr;">
+      <div class="box">
+        <div class="k">Platform team — Terraform</div>
+        <div class="v" style="font-family:var(--mono);font-size:13px;line-height:1.9">
+          rg-drift-demo-•••<br/>
+          ├─ azurerm_storage_account &nbsp;<span style="color:var(--muted)">stdrift•••</span><br/>
+          ├─ azurerm_cosmosdb_account <span style="color:var(--muted)">(serverless)</span><br/>
+          └─ azapi_resource.foundry &nbsp;<span style="color:var(--muted)">AIServices</span>
+        </div>
+      </div>
+      <div class="box">
+        <div class="k">App team — Bicep (out-of-band)</div>
+        <div class="v" style="font-family:var(--mono);font-size:13px;line-height:1.9">
+          az deployment group create<br/>
+          ├─ blobServices/containers <span style="color:var(--muted)">appteam-data</span><br/>
+          ├─ sqlDatabases[/containers] <span style="color:var(--muted)">appteam-db</span><br/>
+          └─ accounts/projects &nbsp;<span style="color:var(--muted)">appteam-project</span>
+        </div>
+      </div>
+    </div>
+    <p class="what" style="margin-top:14px">
+      Drift was measured with <code style="font-family:var(--mono);font-size:12.5px">terraform plan</code> — the faithful local
+      equivalent of Terraform Cloud’s drift / health-assessment runs, which compare real infrastructure against the committed configuration.
+    </p>
+  </section>
+
+  <!-- RUNS -->
+  <section>
+    <h2 class="section-title">The four runs · expected vs. actual</h2>
+    <div class="runs">
+
+      <!-- Run 0 -->
+      <div class="run">
+        <div class="run-head">
+          <div class="run-num">0</div>
+          <div class="run-title">Baseline — right after <code style="font-family:var(--mono);font-size:13px">terraform apply</code></div>
+          <span class="badge ok">AS EXPECTED</span>
+        </div>
+        <div class="run-body">
+          <div class="ee">
+            <div class="box"><div class="k">Expected</div><div class="v">Clean — no changes</div></div>
+            <div class="box match"><div class="k">Actual</div><div class="v">No changes ✓</div></div>
+          </div>
+          <div class="term">
+            <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="ttl">terraform plan</span></div>
+<pre><span class="c-green">No changes.</span> Your infrastructure matches the configuration.</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Run 1 -->
+      <div class="run">
+        <div class="run-head">
+          <div class="run-num">1</div>
+          <div class="run-title">App team adds a container, a database &amp; a Foundry project</div>
+          <span class="badge ok">NO DRIFT</span>
+        </div>
+        <div class="run-body">
+          <div class="what">The app team’s Bicep deployment <b>succeeded</b> (<code style="font-family:var(--mono);font-size:12.5px">provisioningState: Succeeded</code>) and created three real child resources. Then we re-ran the platform plan:</div>
+          <div class="ee">
+            <div class="box"><div class="k">Expected</div><div class="v">No drift — children aren’t in state</div></div>
+            <div class="box match"><div class="k">Actual</div><div class="v">No changes ✓</div></div>
+          </div>
+          <div class="term">
+            <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="ttl">terraform plan &nbsp;(after app-team Bicep deploy)</span></div>
+<pre><span class="c-mut"># app team deployed: appteam-data, appteam-db/orders, appteam-project</span>
+<span class="c-green">No changes.</span> Your infrastructure matches the configuration.</pre>
+          </div>
+          <div class="what" style="font-size:13.5px">This is the headline result: <b>adding child resources caused zero drift</b> in the platform workspace — and we suppressed nothing here; they're simply not in Terraform's state.</div>
+        </div>
+      </div>
+
+      <!-- Run 2 -->
+      <div class="run">
+        <div class="run-head">
+          <div class="run-num">2</div>
+          <div class="run-title">App team adds a <em>tag</em> to the storage account</div>
+          <span class="badge warn">DRIFT DETECTED</span>
+        </div>
+        <div class="run-body">
+          <div class="what">A tag is part of <code style="font-family:var(--mono);font-size:12.5px">azurerm_storage_account</code>’s managed schema. We added one out-of-band with <code style="font-family:var(--mono);font-size:12.5px">az resource tag</code>, then re-ran the plan:</div>
+          <div class="ee">
+            <div class="box"><div class="k">Expected</div><div class="v">Drift — managed attribute changed</div></div>
+            <div class="box" style="border-color:var(--amber-d)"><div class="k">Actual</div><div class="v">1 to change — wants to remove the tag ⚠️</div></div>
+          </div>
+          <div class="term">
+            <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="ttl">terraform plan &nbsp;(after out-of-band tag)</span></div>
+<pre><span class="c-mut">  # azurerm_storage_account.main will be updated in-place</span>
+  <span class="c-amber">~</span> resource "azurerm_storage_account" "main" {
+      <span class="c-amber">~</span> tags = {
+          <span class="c-red">-</span> "AddedByAppTeam" = "drift-test" <span class="c-red">-&gt; null</span>
+            <span class="c-mut"># (5 unchanged elements hidden)</span>
+        }
+    }
+
+<span class="c-amber">Plan: 0 to add, 1 to change, 0 to destroy.</span></pre>
+          </div>
+          <div class="what" style="font-size:13.5px">Terraform proposes to <b>revert</b> the tag — the unmistakable drift signal a platform pipeline would surface.</div>
+        </div>
+      </div>
+
+      <!-- Run 3 -->
+      <div class="run">
+        <div class="run-head">
+          <div class="run-num">3</div>
+          <div class="run-title">Platform team cedes tags with <code style="font-family:var(--mono);font-size:13px">ignore_changes</code></div>
+          <span class="badge ok">DRIFT SUPPRESSED</span>
+        </div>
+        <div class="run-body">
+          <div class="what">With the tag still present in Azure, we added <code style="font-family:var(--mono);font-size:12.5px">lifecycle { ignore_changes = [tags] }</code> and re-ran the same plan:</div>
+          <div class="ee">
+            <div class="box"><div class="k">Expected</div><div class="v">No drift — tags intentionally ignored</div></div>
+            <div class="box match"><div class="k">Actual</div><div class="v">No changes ✓</div></div>
+          </div>
+          <div class="term">
+            <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="ttl">terraform plan &nbsp;(with ignore_changes = [tags])</span></div>
+<pre><span class="c-green">No changes.</span> Your infrastructure matches the configuration.</pre>
+          </div>
+          <div class="what" style="font-size:13.5px">The deliberate escape hatch: the platform team hands the <code style="font-family:var(--mono);font-size:12.5px">tags</code> field to the app team and the noise disappears. <b>This step only affects the Run&nbsp;2 tag</b> — the container, database and project were never tracked, so it doesn't touch them.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- EVIDENCE -->
+  <section>
+    <h2 class="section-title">Hard evidence — real in Azure, absent from state</h2>
+    <table class="ev">
+      <thead>
+        <tr><th>App-team resource</th><th class="mono">Exists in Azure?</th><th class="mono">In Terraform state?</th><th>Caused drift?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">blob container · appteam-data</td><td class="mono"><span class="tick">✓ yes</span></td><td class="mono"><span class="cross">✗ no</span></td><td><span class="tick">No</span></td></tr>
+        <tr><td class="mono">cosmos database · appteam-db</td><td class="mono"><span class="tick">✓ yes</span></td><td class="mono"><span class="cross">✗ no</span></td><td><span class="tick">No</span></td></tr>
+        <tr><td class="mono">cosmos container · orders</td><td class="mono"><span class="tick">✓ yes</span></td><td class="mono"><span class="cross">✗ no</span></td><td><span class="tick">No</span></td></tr>
+        <tr><td class="mono">foundry project · appteam-project</td><td class="mono"><span class="tick">✓ yes</span></td><td class="mono"><span class="cross">✗ no</span></td><td><span class="tick">No</span></td></tr>
+        <tr><td class="mono">tag · AddedByAppTeam (on storage)</td><td class="mono"><span class="tick">✓ yes</span></td><td class="mono">managed attribute</td><td><span style="color:var(--amber);font-weight:700">Yes ⚠️</span></td></tr>
+      </tbody>
+    </table>
+    <div class="term" style="margin-top:16px">
+      <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="ttl">terraform state list</span></div>
+<pre><span class="c-cmd">$ terraform state list</span>
+azapi_resource.foundry
+azurerm_cosmosdb_account.main
+azurerm_resource_group.main
+azurerm_storage_account.main
+random_string.suffix
+<span class="c-mut"># 5 platform resources. Zero child resources. That is why Run 1 saw nothing.</span></pre>
+    </div>
+  </section>
+
+  <!-- BONUS -->
+  <section>
+    <h2 class="section-title">Bonus finding — policy-as-code is an out-of-band actor too</h2>
+    <div class="callout">
+      <h4>An Azure Policy in this subscription created drift before the app team did anything.</h4>
+      <p>
+        The subscription enforces keyless auth. Right after apply, a policy flipped
+        <code>disableLocalAuth → true</code> on the Foundry account and
+        <code>local_authentication_disabled → true</code> on Cosmos. Because those are
+        <b>Terraform-managed attributes</b>, the very first plan reported drift —
+        exactly the same rule as the app-team tag. We aligned the config to the policy
+        (the secure default) to get a clean baseline. Lesson: a Modify/DeployIfNotExists
+        policy lands on the <b>drift</b> side of the line, just like a human with the CLI.
+      </p>
+    </div>
+  </section>
+
+  <!-- CONCLUSION -->
+  <div class="conclusion">
+    <h2>So… where is the line?</h2>
+    <div class="rule">
+      <span class="hl-g">NO DRIFT</span> &nbsp;→&nbsp; create a <b>new, independent ARM resource</b> under a managed parent<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(blob container · cosmos database · foundry project)<br/><br/>
+      <span class="hl-a">DRIFT</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→&nbsp; <b>modify an attribute Terraform records</b> on a resource it manages<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(a tag · a SKU · a TLS setting · a network rule · a policy flip)
+    </div>
+    <p style="color:var(--muted);margin:0 0 4px">What this means for a platform / app-team split:</p>
+    <ul class="steps">
+      <li><b>Hand app teams child resources.</b> Databases, containers and Foundry projects never touch the platform state — no drift, no pipeline noise.</li>
+      <li><b>Keep account-level properties</b> (SKU, network, TLS, auth mode) as the platform team’s domain — drift there is exactly what you <em>want</em> the pipeline to catch.</li>
+      <li><b>Use <code style="font-family:var(--mono)">ignore_changes</code></b> to deliberately cede shared fields (usually <code style="font-family:var(--mono)">tags</code>) without generating false alarms.</li>
+      <li><b>Remember policy-as-code.</b> Modify/DeployIfNotExists effects change managed attributes and will show up as drift — align your config with the secure baseline.</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer class="wrap">
+  Generated from a real end-to-end deployment on Azure · Azure Scenario Hub ·
+  scenario <code>terraform-drift-detection-shared-platform</code>
+</footer>
+
+</body>
+</html>

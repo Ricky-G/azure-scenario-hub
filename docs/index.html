@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Azure Scenario Hub — ready-to-deploy Azure architecture scenarios</title>
+<meta name="description" content="A community library of complete, working Infrastructure-as-Code blueprints for common Azure patterns — built for rapid deployment, experimentation, and learning." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0e1c;
+    --bg-2: #0e1430;
+    --card: #141d39;
+    --card-2: #18224a;
+    --ink: #eaf0fb;
+    --muted: #97a4c6;
+    --faint: #6c7aa0;
+    --line: #25315a;
+    --blue: #4ea3ff;
+    --purple: #9b8cff;
+    --green: #34d399;
+    --amber: #f5b342;
+    --pink: #ff7ac6;
+    --cyan: #38d6d6;
+    --orange: #ff9a62;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    color: var(--ink);
+    background:
+      radial-gradient(1100px 720px at 85% -8%, rgba(78,163,255,.16), transparent 60%),
+      radial-gradient(1000px 700px at -8% 6%, rgba(155,140,255,.16), transparent 55%),
+      var(--bg);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 22px; }
+
+  /* ---------- nav ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px);
+    background: rgba(10,14,28,.72);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner { display: flex; align-items: center; gap: 18px; height: 62px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.2px; font-size: 16px; }
+  .brand .spark {
+    width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--blue), var(--purple)); color: #08122b; font-size: 16px;
+    box-shadow: 0 6px 18px rgba(78,163,255,.35);
+  }
+  .nav-links { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+  .nav-links a { padding: 8px 13px; border-radius: 9px; color: var(--muted); font-weight: 500; font-size: 14.5px; transition: .15s; }
+  .nav-links a:hover { color: var(--ink); background: rgba(255,255,255,.05); }
+  .nav-cta {
+    color: #08122b !important; font-weight: 700 !important;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    box-shadow: 0 6px 16px rgba(78,163,255,.3);
+  }
+  .nav-cta:hover { filter: brightness(1.06); background: linear-gradient(135deg, var(--blue), var(--purple)) !important; color: #08122b !important; }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 84px 0 44px; text-align: center; position: relative; }
+  .badge-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 12px; letter-spacing: .4px;
+    color: var(--blue); background: rgba(78,163,255,.1); border: 1px solid rgba(78,163,255,.28);
+    padding: 7px 14px; border-radius: 999px; margin-bottom: 24px;
+  }
+  .badge-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); }
+  .hero h1 {
+    font-size: clamp(34px, 6vw, 62px); line-height: 1.04; margin: 0 0 20px; letter-spacing: -1.5px; font-weight: 900;
+    background: linear-gradient(180deg, #ffffff 10%, #aebbe6); -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero h1 .grad { background: linear-gradient(110deg, var(--blue), var(--purple) 55%, var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p.lead { max-width: 700px; margin: 0 auto 30px; color: var(--muted); font-size: clamp(16px, 2.2vw, 19px); }
+  .hero-cta { display: flex; gap: 13px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px;
+    padding: 12px 22px; border-radius: 12px; border: 1px solid transparent; cursor: pointer; transition: .16s;
+  }
+  .btn.primary { color: #08122b; background: linear-gradient(135deg, var(--blue), var(--purple)); box-shadow: 0 10px 26px rgba(78,163,255,.32); }
+  .btn.primary:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(78,163,255,.42); }
+  .btn.ghost { color: var(--ink); background: rgba(255,255,255,.04); border-color: var(--line); }
+  .btn.ghost:hover { background: rgba(255,255,255,.09); transform: translateY(-2px); }
+
+  .stats { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 40px; }
+  .stat {
+    background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 14px;
+    padding: 16px 22px; min-width: 132px;
+  }
+  .stat .n { font-size: 26px; font-weight: 800; letter-spacing: -.5px; }
+  .stat .n.g { color: var(--green); } .stat .n.b { color: var(--blue); } .stat .n.p { color: var(--purple); } .stat .n.a { color: var(--amber); }
+  .stat .l { font-size: 12.5px; color: var(--faint); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+  /* ---------- section heading ---------- */
+  .sec { padding: 46px 0 8px; }
+  .sec-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+  .sec-head h2 { font-size: clamp(22px, 3vw, 30px); margin: 0; letter-spacing: -.6px; font-weight: 800; }
+  .sec-head p { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--purple); margin: 0 0 8px; }
+
+  /* ---------- featured ---------- */
+  .feature {
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #16224c, #0e1633);
+    border: 1px solid var(--line); border-radius: 22px;
+    display: grid; grid-template-columns: 1.05fr 1fr; gap: 8px;
+  }
+  .feature::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(600px 300px at 80% 0%, rgba(52,211,153,.12), transparent 60%);
+    pointer-events: none;
+  }
+  .feature-body { padding: 36px; position: relative; z-index: 1; }
+  .feature .tag-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .feature h3 { font-size: 27px; margin: 0 0 12px; letter-spacing: -.5px; line-height: 1.15; }
+  .feature p { color: var(--muted); font-size: 15.5px; margin: 0 0 16px; }
+  .feature .finding {
+    font-family: var(--mono); font-size: 13px; line-height: 1.7; color: #cdd7f0;
+    background: #0a0e1c; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 0 0 22px;
+  }
+  .feature .finding .g { color: var(--green); font-weight: 700; }
+  .feature .finding .a { color: var(--amber); font-weight: 700; }
+  .feature-cta { display: flex; gap: 11px; flex-wrap: wrap; }
+  .feature-media { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; padding: 22px; }
+  .feature-media a { display: block; width: 100%; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(0,0,0,.45); transition: .25s; }
+  .feature-media a:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 26px 60px rgba(0,0,0,.55); }
+  .feature-media img { display: block; width: 100%; height: auto; }
+
+  /* ---------- controls ---------- */
+  .controls { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; }
+  .search {
+    flex: 1; min-width: 220px; display: flex; align-items: center; gap: 10px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 11px 15px;
+  }
+  .search svg { flex: none; opacity: .6; }
+  .search input { flex: 1; background: none; border: none; outline: none; color: var(--ink); font-family: var(--sans); font-size: 15px; }
+  .search input::placeholder { color: var(--faint); }
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill {
+    font-size: 13.5px; font-weight: 600; color: var(--muted); cursor: pointer;
+    background: var(--card); border: 1px solid var(--line); padding: 9px 15px; border-radius: 999px; transition: .15s; user-select: none;
+  }
+  .pill:hover { color: var(--ink); border-color: #38477f; }
+  .pill.active { color: #08122b; background: linear-gradient(135deg, var(--blue), var(--purple)); border-color: transparent; }
+
+  /* ---------- grid ---------- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(326px, 1fr)); gap: 18px; }
+  .card {
+    background: linear-gradient(180deg, var(--card), var(--bg-2));
+    border: 1px solid var(--line); border-radius: 16px; padding: 22px;
+    display: flex; flex-direction: column; transition: .2s; position: relative;
+  }
+  .card:hover { transform: translateY(-4px); border-color: #38477f; box-shadow: 0 18px 40px rgba(0,0,0,.4); }
+  .card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .chip { font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; letter-spacing: .2px; white-space: nowrap; }
+  .chip.net { color: var(--blue); background: rgba(78,163,255,.13); }
+  .chip.integration { color: var(--purple); background: rgba(155,140,255,.14); }
+  .chip.data { color: var(--cyan); background: rgba(56,214,214,.13); }
+  .chip.ai { color: var(--pink); background: rgba(255,122,198,.13); }
+  .chip.hosting { color: var(--orange); background: rgba(255,154,98,.13); }
+  .chip.governance { color: var(--green); background: rgba(52,211,153,.14); }
+  .status { font-size: 11px; font-weight: 700; letter-spacing: .3px; display: inline-flex; align-items: center; gap: 6px; color: var(--faint); }
+  .status .d { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+  .status.ready { color: var(--green); } .status.ready .d { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .card h3 { font-size: 18px; margin: 0 0 8px; letter-spacing: -.3px; line-height: 1.25; }
+  .card p { color: var(--muted); font-size: 14px; margin: 0 0 18px; flex: 1; }
+  .card-links { display: flex; gap: 9px; flex-wrap: wrap; }
+  .lnk { font-size: 13.5px; font-weight: 600; padding: 8px 14px; border-radius: 10px; display: inline-flex; align-items: center; gap: 7px; transition: .15s; }
+  .lnk.code { color: var(--ink); background: rgba(255,255,255,.05); border: 1px solid var(--line); }
+  .lnk.code:hover { background: rgba(255,255,255,.1); }
+  .lnk.report { color: #08122b; background: linear-gradient(135deg, var(--green), #22b07d); }
+  .lnk.report:hover { filter: brightness(1.07); }
+  .feat-tag { font-size: 11px; font-weight: 700; color: var(--amber); background: rgba(245,179,66,.14); border: 1px solid rgba(245,179,66,.3); padding: 3px 9px; border-radius: 999px; }
+  .card-top .left { display: flex; align-items: center; gap: 7px; }
+  .card.feat { border-color: rgba(52,211,153,.4); box-shadow: 0 0 28px rgba(52,211,153,.09); }
+
+  .noresults { display: none; text-align: center; color: var(--muted); padding: 50px 0; font-size: 16px; }
+
+  /* reveal */
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity .5s ease, transform .5s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ---------- footer ---------- */
+  footer { margin-top: 60px; border-top: 1px solid var(--line); }
+  .foot { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 30px 0 44px; flex-wrap: wrap; }
+  .foot .l { color: var(--faint); font-size: 14px; }
+  .foot a { color: var(--muted); }
+  .foot a:hover { color: var(--ink); }
+  .foot .links { display: flex; gap: 18px; font-size: 14.5px; }
+
+  @media (max-width: 860px) {
+    .feature { grid-template-columns: 1fr; }
+    .feature-media { order: -1; padding: 22px 22px 0; }
+    .nav-links a:not(.nav-cta) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top"><span class="spark">⚡</span> Azure Scenario Hub</a>
+    <nav class="nav-links">
+      <a href="#featured">Featured</a>
+      <a href="#scenarios">Scenarios</a>
+      <a href="reports/terraform-drift-detection-shared-platform/">Drift Report</a>
+      <a class="nav-cta" href="https://github.com/Ricky-G/azure-scenario-hub" target="_blank" rel="noopener">★ GitHub</a>
+    </nav>
+  </div>
+</div>
+
+<!-- HERO -->
+<header class="hero" id="top">
+  <div class="wrap">
+    <span class="badge-pill"><span class="dot"></span> Infrastructure-as-Code · Bicep + Terraform</span>
+    <h1>Ready-to-deploy <span class="grad">Azure architecture</span> scenarios</h1>
+    <p class="lead">A community library of complete, working blueprints for common Azure patterns — built for rapid deployment, architecture validation, and hands-on learning. Pick a scenario, deploy in minutes.</p>
+    <div class="hero-cta">
+      <a class="btn primary" href="#scenarios">Browse scenarios →</a>
+      <a class="btn ghost" href="https://github.com/Ricky-G/azure-scenario-hub" target="_blank" rel="noopener">★ Star on GitHub</a>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n b">17</div><div class="l">Scenarios</div></div>
+      <div class="stat"><div class="n g">14</div><div class="l">Ready now</div></div>
+      <div class="stat"><div class="n p">2</div><div class="l">IaC languages</div></div>
+      <div class="stat"><div class="n a">1</div><div class="l">Live report</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- FEATURED -->
+<section class="sec" id="featured">
+  <div class="wrap">
+    <p class="eyebrow">★ Featured scenario</p>
+    <div class="feature reveal">
+      <div class="feature-body">
+        <div class="tag-row">
+          <span class="chip governance">Governance &amp; Ops</span>
+          <span class="status ready"><span class="d"></span>Ready · live-verified</span>
+        </div>
+        <h3>Terraform Drift Detection — Platform vs. App Team</h3>
+        <p>A platform team owns a Terraform landing zone (Storage, Cosmos DB, AI Foundry). An app team adds their own projects, databases and containers out-of-band with Bicep. <strong>Where exactly does that show up as “drift”?</strong> We deployed it for real and measured every run.</p>
+        <div class="finding">
+          <span class="g">NO DRIFT</span> → new child resources (container · database · Foundry project)<br/>
+          <span class="a">DRIFT</span> &nbsp;&nbsp;&nbsp;→ changing a Terraform-managed attribute (a tag)
+        </div>
+        <div class="feature-cta">
+          <a class="btn primary" href="reports/terraform-drift-detection-shared-platform/">📊 View the live report</a>
+          <a class="btn ghost" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/terraform-drift-detection-shared-platform" target="_blank" rel="noopener">&lt;/&gt; View the code</a>
+        </div>
+      </div>
+      <div class="feature-media">
+        <a href="reports/terraform-drift-detection-shared-platform/" title="Open the interactive drift report">
+          <img src="assets/drift-the-line.png" alt="The drift boundary: new child resources stay invisible to Terraform, while changing a managed attribute triggers drift" loading="lazy" />
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCENARIOS -->
+<section class="sec" id="scenarios">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">The library</p>
+        <h2>All scenarios</h2>
+        <p>Filter by category or search. Every scenario ships with a README, IaC, and deploy scripts.</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <label class="search">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="q" type="search" placeholder="Search scenarios — e.g. APIM, private endpoint, Foundry, drift…" />
+      </label>
+      <div class="pills" id="pills">
+        <span class="pill active" data-cat="all">All</span>
+        <span class="pill" data-cat="net">Networking &amp; Security</span>
+        <span class="pill" data-cat="integration">Integration &amp; Messaging</span>
+        <span class="pill" data-cat="data">Data</span>
+        <span class="pill" data-cat="ai">AI</span>
+        <span class="pill" data-cat="hosting">App Hosting</span>
+        <span class="pill" data-cat="governance">Governance &amp; Ops</span>
+      </div>
+    </div>
+
+    <div class="grid" id="grid">
+
+      <!-- Governance & Ops (highlight) -->
+      <article class="card feat reveal" data-cat="governance" data-text="terraform drift detection platform app team bicep foundry cosmos storage governance">
+        <div class="card-top"><span class="left"><span class="chip governance">Governance &amp; Ops</span><span class="feat-tag">★ Featured</span></span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>Terraform Drift Detection — Platform vs. App Team</h3>
+        <p>Pinpoints exactly where Terraform drift triggers between a platform team's Terraform and an app team's Bicep. Child resources = no drift; a changed managed attribute = drift. Live-verified, with an HTML report.</p>
+        <div class="card-links">
+          <a class="lnk report" href="reports/terraform-drift-detection-shared-platform/">📊 Report</a>
+          <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/terraform-drift-detection-shared-platform" target="_blank" rel="noopener">&lt;/&gt; Code</a>
+        </div>
+      </article>
+
+      <!-- Integration -->
+      <article class="card reveal" data-cat="integration" data-text="apim backend fan-out benchmark rewrite-uri premium k6 load test dotnet flex consumption">
+        <div class="card-top"><span class="chip integration">Integration &amp; Messaging</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>APIM Backend Fan-out Benchmark</h3>
+        <p>Head-to-head: shared-backend + <code style="font-family:var(--mono);font-size:12px">rewrite-uri</code> vs one-backend-per-API on APIM Premium. Result after 1.67M requests: no measurable difference.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/apim-backend-fanout-benchmark" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="integration" data-text="apim monitoring application insights log analytics azure workbook mock apis kql">
+        <div class="card-top"><span class="chip integration">Integration &amp; Messaging</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>APIM Monitoring</h3>
+        <p>APIM Developer SKU with 6 mock APIs, Application Insights, Log Analytics, and an Azure Workbook dashboard — full request/response capture, no backend needed.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/apim-monitoring-scenario" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="integration" data-text="azure integration services load test function apps service bus premium private endpoints microservices">
+        <div class="card-top"><span class="chip integration">Integration &amp; Messaging</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>Azure Integration Services Load Test</h3>
+        <p>Load-testing harness for a microservices architecture with Function Apps and Service Bus Premium — 5 independent functions, topics, and private endpoints.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/azure-integration-services-load-test" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <!-- Networking & Security -->
+      <article class="card reveal" data-cat="net" data-text="event grid private endpoints secure event-driven logic apps zero public exposure">
+        <div class="card-top"><span class="chip net">Networking &amp; Security</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>Event Grid with Private Endpoints</h3>
+        <p>Secure event-driven architecture with Event Grid behind private endpoints — zero public exposure, Logic Apps integration.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/eventgrid-private-endpoints-scenario" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="net" data-text="event grid confidential compute system topic hardware encryption preview">
+        <div class="card-top"><span class="chip net">Networking &amp; Security</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>Event Grid Confidential Compute</h3>
+        <p>Event Grid System Topic with Azure Confidential Compute enabled for hardware-based encryption and enhanced data protection.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/eventgrid-confidential-compute" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="net" data-text="function app key vault private endpoint managed identity vnet secrets no internet">
+        <div class="card-top"><span class="chip net">Networking &amp; Security</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>Function App + Key Vault Private Endpoint</h3>
+        <p>Serverless functions accessing secrets securely over a private network — managed identity, VNet integration, no internet traffic.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/function-app-private-endpoints-access-keyvault-scenario" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="net" data-text="aks static egress gateway unique ip per namespace kubernetes openshift egressip">
+        <div class="card-top"><span class="chip net">Networking &amp; Security</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>AKS Static Egress Gateway</h3>
+        <p>A unique static egress IP per Kubernetes namespace, replicating OpenShift's EgressIP — gateway node pool, per-namespace public/private IPs, live dashboard.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/aks-unique-egress-ip-per-namespace" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="net" data-text="app service easy auth query string round trip entra id oauth login_hint claims node">
+        <div class="card-top"><span class="chip net">Networking &amp; Security</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>App Service Easy Auth — Query String Round-Trip</h3>
+        <p>Proves Easy Auth preserves custom query-string params across the full Entra ID sign-in redirect — with zero auth code in the app.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/app-service-easy-auth" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="net" data-text="private container apps environment microservices network isolation internal load balancing">
+        <div class="card-top"><span class="chip net">Networking &amp; Security</span><span class="status"><span class="d"></span>Coming soon</span></div>
+        <h3>Private Container Apps Environment</h3>
+        <p>A microservices platform with complete network isolation — internal load balancing and private ingress.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/private-container-apps-environment-scenario" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="net" data-text="public container apps environment auto-scaling public endpoints container hosting">
+        <div class="card-top"><span class="chip net">Networking &amp; Security</span><span class="status"><span class="d"></span>Coming soon</span></div>
+        <h3>Public Container Apps Environment</h3>
+        <p>Container hosting with public accessibility — auto-scaling and public endpoints.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/public-container-apps-environment-scenario" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="net" data-text="aks namespace create terraform rbac scaffolding test manifests bootstrap">
+        <div class="card-top"><span class="chip net">Networking &amp; Security</span><span class="status"><span class="d"></span>Coming soon</span></div>
+        <h3>AKS Namespace Create</h3>
+        <p>Automated AKS namespace provisioning with Terraform — namespace bootstrap, RBAC scaffolding, and test workloads.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/aks-namespace-create" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <!-- Data -->
+      <article class="card reveal" data-cat="data" data-text="azure function unzip large files streaming password protected zip 10gb constant memory blob">
+        <div class="card-top"><span class="chip data">Data Processing</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>Azure Function — Unzip Large Files</h3>
+        <p>Stream-process large password-protected ZIP files (10GB+) in serverless Functions with constant memory usage — handles files larger than available RAM.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/azure-function-unzip-large-files" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <!-- AI -->
+      <article class="card reveal" data-cat="ai" data-text="azure communication services voice live api call automation openai phone real-time audio dotnet python">
+        <div class="card-top"><span class="chip ai">AI</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>ACS + Voice Live API</h3>
+        <p>Real-time conversational AI over phone calls with Azure Communication Services Call Automation and Azure OpenAI Voice Live — dual .NET &amp; Python implementations.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/azure-communication-services-integrate-voice-live-api" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="ai" data-text="ai gateway apim foundry token chargeback tpm throttling response cache managed identity notebook">
+        <div class="card-top"><span class="chip ai">AI</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>AI Gateway (APIM in front of Foundry)</h3>
+        <p>API Management as an AI Gateway fronting Azure AI Foundry — per-app token chargeback, per-product TPM throttling, response cache, and a runnable notebook.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/ai-gateway" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="ai" data-text="governed agents microsoft agent framework maf governance toolkit tool-call argument policy audit log python dotnet">
+        <div class="card-top"><span class="chip ai">AI</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>Governed Agents (MAF × Governance Toolkit)</h3>
+        <p>Wrap Microsoft Agent Framework agents with one policy that governs every prompt and tool call — including tool-call argument values — with a tamper-evident audit log. Runs fully offline.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/micrsoft-agent-framewokr-agt-integration" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <!-- App Hosting -->
+      <article class="card reveal" data-cat="hosting" data-text="simple app service sample app python configurable sku vnet integration">
+        <div class="card-top"><span class="chip hosting">App Hosting</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>Simple App Service with Sample App</h3>
+        <p>A lightweight App Service hosting a Python sample application — zero-to-deployed in minutes, configurable SKU, optional VNet integration.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/simple-app-service-with-sample-app" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+    </div>
+
+    <div class="noresults" id="noresults">No scenarios match your search. Try a different term or category.</div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap foot">
+    <div class="l">Built with ❤️ for the Azure community · Optimised for learning, not production (<a href="https://aka.ms/avm" target="_blank" rel="noopener">use AVM for prod</a>)</div>
+    <div class="links">
+      <a href="https://github.com/Ricky-G/azure-scenario-hub" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/Ricky-G/azure-scenario-hub/issues" target="_blank" rel="noopener">Suggest a scenario</a>
+      <a href="reports/terraform-drift-detection-shared-platform/">Drift report</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ---- filter + search ----
+  const grid = document.getElementById('grid');
+  const cards = Array.from(grid.querySelectorAll('.card'));
+  const q = document.getElementById('q');
+  const pills = document.getElementById('pills');
+  const noresults = document.getElementById('noresults');
+  let activeCat = 'all';
+
+  function apply() {
+    const term = q.value.trim().toLowerCase();
+    let shown = 0;
+    cards.forEach(card => {
+      const catOk = activeCat === 'all' || card.dataset.cat === activeCat;
+      const textOk = !term || card.dataset.text.includes(term) || card.textContent.toLowerCase().includes(term);
+      const show = catOk && textOk;
+      card.style.display = show ? '' : 'none';
+      if (show) shown++;
+    });
+    noresults.style.display = shown ? 'none' : 'block';
+  }
+
+  pills.addEventListener('click', e => {
+    const pill = e.target.closest('.pill');
+    if (!pill) return;
+    pills.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    activeCat = pill.dataset.cat;
+    apply();
+  });
+  q.addEventListener('input', apply);
+
+  // ---- reveal on scroll ----
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
