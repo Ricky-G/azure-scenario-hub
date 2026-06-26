@@ -16,6 +16,21 @@ how to apply it to real agent frameworks, with complete, runnable, **offline** d
 
 ---
 
+## Start here — live demos
+
+New to the toolkit? Two offline, presenter-ready notebooks introduce AGT and then walk the whole
+**OWASP Agentic Top 10**, plus a companion guide that explains the code — every notebook cell runs the real toolkit:
+
+| File | What it is |
+|---|---|
+| **[1 · AGT overview](./live-demos/1-agt-overview.ipynb)** | Notebook — what AGT is, the `agt doctor` health check, 10,000 live policy evaluations at sub-millisecond latency, and a zero-trust gate over every tool call |
+| **[2 · OWASP Agentic Top 10](./live-demos/2-owasp-agentic-top-10.ipynb)** | Notebook — all ten ASI risks attacked, and stopped by a real AGT control, inside a fictional bank |
+| **[Companion guide](./live-demos/2-owasp-agentic-top-10-companion-guide.md)** | Markdown — read beside notebook 2: what each control is, what the code does, out-of-the-box vs YAML config, and likely audience questions |
+
+See [`live-demos/`](./live-demos/README.md) for prerequisites and how to run them.
+
+---
+
 ## Integrations in this hub
 
 | Integration | Languages | Highlights | Status |

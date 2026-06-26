@@ -1,0 +1,9 @@
+# Agent Governance Toolkit live-demo notebooks — dependencies.
+# Install, then select this environment's Python as the notebook kernel.
+
+# The toolkit itself (provides the agent_os kernel + agent_compliance).
+agent-governance-toolkit>=4.1.0
+agent-os-kernel>=3.7.0
+
+# Jupyter kernel so the notebooks can run in VS Code / Jupyter.
+ipykernel>=6.29
