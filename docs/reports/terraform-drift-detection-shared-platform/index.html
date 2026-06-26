@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Terraform Drift Boundary — Live Test Results</title>
+<title>Terraform Drift Boundary: Live Test Results</title>
 <style>
   :root {
     --bg: #0b1020;
@@ -296,7 +296,7 @@
   <!-- PLAIN ENGLISH -->
   <div class="plain">
     <h2>In plain English 🗣️</h2>
-    <p class="sub">New to drift? Read this first — it clears up the most common mix-up.</p>
+    <p class="sub">New to drift? Read this first: it clears up the most common mix-up.</p>
     <div class="pe">
       <div class="row">
         <div class="ic no">✓</div>
@@ -304,15 +304,15 @@
       </div>
       <div class="row">
         <div class="ic no">✓</div>
-        <div class="tx">When the app team adds new things <b>inside</b> those accounts — a blob container, a Cosmos database, a Foundry project — Terraform never sees them, because they were never on its checklist. So it says <b>“nothing changed.”</b> <em>This is genuine blindness, not suppression — we did not hide anything.</em></div>
+        <div class="tx">When the app team adds new things <b>inside</b> those accounts (a blob container, a Cosmos database, a Foundry project), Terraform never sees them, because they were never on its checklist. So it says <b>“nothing changed.”</b> <em>This is genuine blindness, not suppression: we did not hide anything.</em></div>
       </div>
       <div class="row">
         <div class="ic yes">!</div>
-        <div class="tx">The <b>only</b> time Terraform reports drift is when someone edits a setting on one of those three accounts it created — like adding a <b>tag</b> to the storage account. Now reality no longer matches its notes, so it flags it.</div>
+        <div class="tx">The <b>only</b> time Terraform reports drift is when someone edits a setting on one of those three accounts it created, like adding a <b>tag</b> to the storage account. Now reality no longer matches its notes, so it flags it.</div>
       </div>
       <div class="row">
         <div class="ic opt">~</div>
-        <div class="tx"><code>ignore_changes</code> is an <b>optional mute button for that tag case only</b>. It tells Terraform “I'm fine with people editing the tags, stop reporting it.” <em>It has nothing to do with the container, database, or project — those were already invisible.</em></div>
+        <div class="tx"><code>ignore_changes</code> is an <b>optional mute button for that tag case only</b>. It tells Terraform “I'm fine with people editing the tags, stop reporting it.” <em>It has nothing to do with the container, database, or project: those were already invisible.</em></div>
       </div>
     </div>
   </div>
@@ -322,7 +322,7 @@
     <div class="verdict-grid">
       <div class="side safe">
         <h3>● Invisible to Terraform</h3>
-        <div class="what">App team created brand-new <b>child resources</b>. Platform <code style="font-family:var(--mono);font-size:12px">terraform plan</code> stayed silent — nothing was hidden, Terraform simply never tracked them.</div>
+        <div class="what">App team created brand-new <b>child resources</b>. Platform <code style="font-family:var(--mono);font-size:12px">terraform plan</code> stayed silent: nothing was hidden, Terraform simply never tracked them.</div>
         <ul>
           <li>blob container <small>appteam-data → in the platform storage account</small></li>
           <li>cosmos sql database + container <small>appteam-db / orders</small></li>
@@ -342,7 +342,7 @@
     </div>
     <div class="verdict-foot">
       <b>Bottom line:</b> new, independent ARM child resources are invisible to the platform state.
-      Drift only fires when an out-of-band change touches a property Terraform records for a resource it manages —
+      Drift only fires when an out-of-band change touches a property Terraform records for a resource it manages,
       and <code style="font-family:var(--mono);font-size:12px">ignore_changes</code> only mutes <em>that</em> second case.
     </div>
   </div>
@@ -352,7 +352,7 @@
     <h2 class="section-title">The setup we deployed</h2>
     <div class="ee" style="grid-template-columns:1fr 1fr;">
       <div class="box">
-        <div class="k">Platform team — Terraform</div>
+        <div class="k">Platform team: Terraform</div>
         <div class="v" style="font-family:var(--mono);font-size:13px;line-height:1.9">
           rg-drift-demo-•••<br/>
           ├─ azurerm_storage_account &nbsp;<span style="color:var(--muted)">stdrift•••</span><br/>
@@ -361,7 +361,7 @@
         </div>
       </div>
       <div class="box">
-        <div class="k">App team — Bicep (out-of-band)</div>
+        <div class="k">App team: Bicep (out-of-band)</div>
         <div class="v" style="font-family:var(--mono);font-size:13px;line-height:1.9">
           az deployment group create<br/>
           ├─ blobServices/containers <span style="color:var(--muted)">appteam-data</span><br/>
@@ -371,7 +371,7 @@
       </div>
     </div>
     <p class="what" style="margin-top:14px">
-      Drift was measured with <code style="font-family:var(--mono);font-size:12.5px">terraform plan</code> — the faithful local
+      Drift was measured with <code style="font-family:var(--mono);font-size:12.5px">terraform plan</code>: the faithful local
       equivalent of Terraform Cloud’s drift / health-assessment runs, which compare real infrastructure against the committed configuration.
     </p>
   </section>
@@ -385,12 +385,12 @@
       <div class="run">
         <div class="run-head">
           <div class="run-num">0</div>
-          <div class="run-title">Baseline — right after <code style="font-family:var(--mono);font-size:13px">terraform apply</code></div>
+          <div class="run-title">Baseline: right after <code style="font-family:var(--mono);font-size:13px">terraform apply</code></div>
           <span class="badge ok">AS EXPECTED</span>
         </div>
         <div class="run-body">
           <div class="ee">
-            <div class="box"><div class="k">Expected</div><div class="v">Clean — no changes</div></div>
+            <div class="box"><div class="k">Expected</div><div class="v">Clean: no changes</div></div>
             <div class="box match"><div class="k">Actual</div><div class="v">No changes ✓</div></div>
           </div>
           <div class="term">
@@ -410,7 +410,7 @@
         <div class="run-body">
           <div class="what">The app team’s Bicep deployment <b>succeeded</b> (<code style="font-family:var(--mono);font-size:12.5px">provisioningState: Succeeded</code>) and created three real child resources. Then we re-ran the platform plan:</div>
           <div class="ee">
-            <div class="box"><div class="k">Expected</div><div class="v">No drift — children aren’t in state</div></div>
+            <div class="box"><div class="k">Expected</div><div class="v">No drift: children aren’t in state</div></div>
             <div class="box match"><div class="k">Actual</div><div class="v">No changes ✓</div></div>
           </div>
           <div class="term">
@@ -418,7 +418,7 @@
 <pre><span class="c-mut"># app team deployed: appteam-data, appteam-db/orders, appteam-project</span>
 <span class="c-green">No changes.</span> Your infrastructure matches the configuration.</pre>
           </div>
-          <div class="what" style="font-size:13.5px">This is the headline result: <b>adding child resources caused zero drift</b> in the platform workspace — and we suppressed nothing here; they're simply not in Terraform's state.</div>
+          <div class="what" style="font-size:13.5px">This is the headline result: <b>adding child resources caused zero drift</b> in the platform workspace, and we suppressed nothing here; they're simply not in Terraform's state.</div>
         </div>
       </div>
 
@@ -432,8 +432,8 @@
         <div class="run-body">
           <div class="what">A tag is part of <code style="font-family:var(--mono);font-size:12.5px">azurerm_storage_account</code>’s managed schema. We added one out-of-band with <code style="font-family:var(--mono);font-size:12.5px">az resource tag</code>, then re-ran the plan:</div>
           <div class="ee">
-            <div class="box"><div class="k">Expected</div><div class="v">Drift — managed attribute changed</div></div>
-            <div class="box" style="border-color:var(--amber-d)"><div class="k">Actual</div><div class="v">1 to change — wants to remove the tag ⚠️</div></div>
+            <div class="box"><div class="k">Expected</div><div class="v">Drift: managed attribute changed</div></div>
+            <div class="box" style="border-color:var(--amber-d)"><div class="k">Actual</div><div class="v">1 to change: wants to remove the tag ⚠️</div></div>
           </div>
           <div class="term">
             <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="ttl">terraform plan &nbsp;(after out-of-band tag)</span></div>
@@ -447,7 +447,7 @@
 
 <span class="c-amber">Plan: 0 to add, 1 to change, 0 to destroy.</span></pre>
           </div>
-          <div class="what" style="font-size:13.5px">Terraform proposes to <b>revert</b> the tag — the unmistakable drift signal a platform pipeline would surface.</div>
+          <div class="what" style="font-size:13.5px">Terraform proposes to <b>revert</b> the tag: the unmistakable drift signal a platform pipeline would surface.</div>
         </div>
       </div>
 
@@ -461,14 +461,14 @@
         <div class="run-body">
           <div class="what">With the tag still present in Azure, we added <code style="font-family:var(--mono);font-size:12.5px">lifecycle { ignore_changes = [tags] }</code> and re-ran the same plan:</div>
           <div class="ee">
-            <div class="box"><div class="k">Expected</div><div class="v">No drift — tags intentionally ignored</div></div>
+            <div class="box"><div class="k">Expected</div><div class="v">No drift: tags intentionally ignored</div></div>
             <div class="box match"><div class="k">Actual</div><div class="v">No changes ✓</div></div>
           </div>
           <div class="term">
             <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="ttl">terraform plan &nbsp;(with ignore_changes = [tags])</span></div>
 <pre><span class="c-green">No changes.</span> Your infrastructure matches the configuration.</pre>
           </div>
-          <div class="what" style="font-size:13.5px">The deliberate escape hatch: the platform team hands the <code style="font-family:var(--mono);font-size:12.5px">tags</code> field to the app team and the noise disappears. <b>This step only affects the Run&nbsp;2 tag</b> — the container, database and project were never tracked, so it doesn't touch them.</div>
+          <div class="what" style="font-size:13.5px">The deliberate escape hatch: the platform team hands the <code style="font-family:var(--mono);font-size:12.5px">tags</code> field to the app team and the noise disappears. <b>This step only affects the Run&nbsp;2 tag</b>: the container, database and project were never tracked, so it doesn't touch them.</div>
         </div>
       </div>
 
@@ -477,7 +477,7 @@
 
   <!-- EVIDENCE -->
   <section>
-    <h2 class="section-title">Hard evidence — real in Azure, absent from state</h2>
+    <h2 class="section-title">Hard evidence: real in Azure, absent from state</h2>
     <table class="ev">
       <thead>
         <tr><th>App-team resource</th><th class="mono">Exists in Azure?</th><th class="mono">In Terraform state?</th><th>Caused drift?</th></tr>
@@ -504,14 +504,14 @@ random_string.suffix
 
   <!-- BONUS -->
   <section>
-    <h2 class="section-title">Bonus finding — policy-as-code is an out-of-band actor too</h2>
+    <h2 class="section-title">Bonus finding: policy-as-code is an out-of-band actor too</h2>
     <div class="callout">
       <h4>An Azure Policy in this subscription created drift before the app team did anything.</h4>
       <p>
         The subscription enforces keyless auth. Right after apply, a policy flipped
         <code>disableLocalAuth → true</code> on the Foundry account and
         <code>local_authentication_disabled → true</code> on Cosmos. Because those are
-        <b>Terraform-managed attributes</b>, the very first plan reported drift —
+        <b>Terraform-managed attributes</b>, the very first plan reported drift,
         exactly the same rule as the app-team tag. We aligned the config to the policy
         (the secure default) to get a clean baseline. Lesson: a Modify/DeployIfNotExists
         policy lands on the <b>drift</b> side of the line, just like a human with the CLI.
@@ -530,10 +530,10 @@ random_string.suffix
     </div>
     <p style="color:var(--muted);margin:0 0 4px">What this means for a platform / app-team split:</p>
     <ul class="steps">
-      <li><b>Hand app teams child resources.</b> Databases, containers and Foundry projects never touch the platform state — no drift, no pipeline noise.</li>
-      <li><b>Keep account-level properties</b> (SKU, network, TLS, auth mode) as the platform team’s domain — drift there is exactly what you <em>want</em> the pipeline to catch.</li>
+      <li><b>Hand app teams child resources.</b> Databases, containers and Foundry projects never touch the platform state: no drift, no pipeline noise.</li>
+      <li><b>Keep account-level properties</b> (SKU, network, TLS, auth mode) as the platform team’s domain: drift there is exactly what you <em>want</em> the pipeline to catch.</li>
       <li><b>Use <code style="font-family:var(--mono)">ignore_changes</code></b> to deliberately cede shared fields (usually <code style="font-family:var(--mono)">tags</code>) without generating false alarms.</li>
-      <li><b>Remember policy-as-code.</b> Modify/DeployIfNotExists effects change managed attributes and will show up as drift — align your config with the secure baseline.</li>
+      <li><b>Remember policy-as-code.</b> Modify/DeployIfNotExists effects change managed attributes and will show up as drift: align your config with the secure baseline.</li>
     </ul>
   </div>
 
