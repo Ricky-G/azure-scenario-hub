@@ -205,6 +205,20 @@
   .card-top .left { display: flex; align-items: center; gap: 7px; }
   .card.feat { border-color: rgba(52,211,153,.4); box-shadow: 0 0 28px rgba(52,211,153,.09); }
 
+  /* ---------- sub-scenarios (featured hub) ---------- */
+  .subscen-wrap { flex-direction: column; align-items: stretch; justify-content: center; gap: 11px; padding: 24px; }
+  .subscen-head { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+  .subscen-kicker { align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 1.8px; text-transform: uppercase; font-weight: 700; color: var(--purple); background: rgba(155,140,255,.12); border: 1px solid rgba(155,140,255,.32); padding: 5px 11px; border-radius: 999px; }
+  .subscen-title { font: 800 16px var(--sans); color: var(--ink); letter-spacing: -.3px; }
+  .subscen-title b { color: var(--blue); }
+  .subscen { position: relative; display: flex; gap: 14px; align-items: flex-start; text-decoration: none; background: #0a0e1c; border: 1px solid var(--line); border-radius: 14px; padding: 15px 16px; transition: .18s; }
+  .subscen:hover { border-color: var(--purple); transform: translateY(-2px); background: #0c1226; box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+  .subscen-num { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 9px; font: 800 15px var(--mono); color: #08122b; background: linear-gradient(135deg, var(--blue), var(--purple)); box-shadow: 0 4px 12px rgba(78,163,255,.28); }
+  .subscen-tx { display: flex; flex-direction: column; }
+  .subscen-t { font-size: 14.5px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+  .subscen-d { font-size: 12.6px; color: var(--muted); line-height: 1.5; }
+  .subscen-d b { color: #cdd7f0; font-weight: 700; }
+
   .noresults { display: none; text-align: center; color: var(--muted); padding: 50px 0; font-size: 16px; }
 
   /* reveal */
@@ -235,7 +249,6 @@
     <nav class="nav-links">
       <a href="#featured">Featured</a>
       <a href="#scenarios">Scenarios</a>
-      <a href="reports/terraform-drift-detection-shared-platform/">Drift Report</a>
       <a class="nav-cta" href="https://github.com/Ricky-G/azure-scenario-hub" target="_blank" rel="noopener">★ GitHub</a>
     </nav>
   </div>
@@ -275,26 +288,43 @@
 <section class="sec" id="featured">
   <div class="wrap">
     <p class="eyebrow">★ Featured scenario</p>
+
+    <!-- Featured: Agent Governance Toolkit (hub) -->
     <div class="feature reveal">
       <div class="feature-body">
         <div class="tag-row">
-          <span class="chip governance">Governance &amp; Ops</span>
-          <span class="status ready"><span class="d"></span>Ready · Azure-verified</span>
+          <span class="chip ai">AI · Agent Governance</span>
+          <span class="status ready"><span class="d"></span>Ready · 100% offline</span>
         </div>
-        <h3>Terraform Drift Detection — Platform vs. App Team</h3>
-        <p>A platform team owns a Terraform landing zone (Storage, Cosmos DB, AI Foundry). An app team adds their own projects, databases and containers out-of-band with Bicep. <strong>Where exactly does that show up as “drift”?</strong> We deployed it for real and measured every run.</p>
+        <h3>Agent Governance Toolkit</h3>
+        <p>A hub for wrapping AI agents in a <strong>deterministic policy layer</strong> with Microsoft's Agent Governance Toolkit — every prompt and tool call (including <strong>argument values</strong>) checked <em>before</em> it runs, with a tamper-evident audit trail. No API keys, no network.</p>
         <div class="finding">
-          <span class="g">NO DRIFT</span> → new child resources (container · database · Foundry project)<br/>
-          <span class="a">DRIFT</span> &nbsp;&nbsp;&nbsp;→ changing a Terraform-managed attribute (a tag)
+          <span class="g">10 / 10</span> OWASP Agentic Top&nbsp;10 risks defended — live, with real controls<br/>
+          <span class="g">2</span> sub-scenarios · Python &amp; .NET · runs fully offline
         </div>
         <div class="feature-cta">
-          <a class="btn primary" href="reports/terraform-drift-detection-shared-platform/">📊 View the report</a>
-          <a class="btn ghost" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/terraform-drift-detection-shared-platform" target="_blank" rel="noopener">&lt;/&gt; View the code</a>
+          <a class="btn primary" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit" target="_blank" rel="noopener">&lt;/&gt; Explore the hub</a>
+          <a class="btn ghost" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/live-demos" target="_blank" rel="noopener">▶ Live demos</a>
         </div>
       </div>
-      <div class="feature-media">
-        <a href="reports/terraform-drift-detection-shared-platform/" title="Open the interactive drift report">
-          <img src="assets/drift-the-line.png" alt="The drift boundary: new child resources stay invisible to Terraform, while changing a managed attribute triggers drift" loading="lazy" />
+      <div class="feature-media subscen-wrap">
+        <div class="subscen-head">
+          <span class="subscen-kicker">◆ Sub-scenario hub</span>
+          <span class="subscen-title"><b>2 sub-scenarios</b> &mdash; pick a path</span>
+        </div>
+        <a class="subscen" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/microsoft-agent-framework" target="_blank" rel="noopener">
+          <span class="subscen-num">1</span>
+          <span class="subscen-tx">
+            <span class="subscen-t">🧩 Microsoft Agent Framework</span>
+            <span class="subscen-d">Govern MAF agents &amp; workflows in <b>Python &amp; .NET</b> — prompt, tool-call &amp; argument-value governance with a hash-chained audit log.</span>
+          </span>
+        </a>
+        <a class="subscen" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/live-demos" target="_blank" rel="noopener">
+          <span class="subscen-num">2</span>
+          <span class="subscen-tx">
+            <span class="subscen-t">🛡️ OWASP Agentic Top 10 — live demos</span>
+            <span class="subscen-d">Two offline notebooks: an AGT overview + all ten ASI risks attacked and <b>stopped by a real control</b> at a fictional bank.</span>
+          </span>
         </a>
       </div>
     </div>
@@ -330,9 +360,9 @@
 
     <div class="grid" id="grid">
 
-      <!-- Governance & Ops (highlight) -->
-      <article class="card feat reveal" data-cat="governance" data-text="terraform drift detection platform app team bicep foundry cosmos storage governance">
-        <div class="card-top"><span class="left"><span class="chip governance">Governance &amp; Ops</span><span class="feat-tag">★ Featured</span></span><span class="status ready"><span class="d"></span>Ready</span></div>
+      <!-- Governance & Ops -->
+      <article class="card reveal" data-cat="governance" data-text="terraform drift detection platform app team bicep foundry cosmos storage governance">
+        <div class="card-top"><span class="chip governance">Governance &amp; Ops</span><span class="status ready"><span class="d"></span>Ready</span></div>
         <h3>Terraform Drift Detection — Platform vs. App Team</h3>
         <p>Pinpoints exactly where Terraform drift triggers between a platform team's Terraform and an app team's Bicep. Child resources = no drift; a changed managed attribute = drift. Azure-verified, with an HTML report.</p>
         <div class="card-links">
@@ -443,11 +473,15 @@
         <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/ai-gateway" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
       </article>
 
-      <article class="card reveal" data-cat="ai" data-text="agent governance toolkit hub governed agents microsoft agent framework maf tool-call argument policy audit log python dotnet">
-        <div class="card-top"><span class="chip ai">AI</span><span class="status ready"><span class="d"></span>Ready</span></div>
-        <h3>Agent Governance Toolkit — Governed Agents</h3>
-        <p>A hub for governing AI agents with the Microsoft Agent Governance Toolkit. First integration: Microsoft Agent Framework (Python &amp; .NET) — one policy governs every prompt and tool call, including tool-call argument values, with a tamper-evident audit log. Runs fully offline.</p>
-        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      <article class="card feat reveal" data-cat="ai" data-text="agent governance toolkit hub governed agents owasp agentic top 10 asi microsoft agent framework maf prompt injection tool-call argument policy audit log python dotnet notebooks sub-scenarios">
+        <div class="card-top"><span class="left"><span class="chip ai">AI</span><span class="feat-tag">★ Featured</span></span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>Agent Governance Toolkit</h3>
+        <p>A hub for governing AI agents with Microsoft's Agent Governance Toolkit. <strong>Two sub-scenarios:</strong> the <b>Microsoft Agent Framework</b> integration (Python &amp; .NET) and the <b>OWASP Agentic Top&nbsp;10</b> live demos — every prompt &amp; tool call governed, including argument values, fully offline.</p>
+        <div class="card-links">
+          <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit" target="_blank" rel="noopener">&lt;/&gt; Hub</a>
+          <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/microsoft-agent-framework" target="_blank" rel="noopener">🧩 MAF</a>
+          <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/live-demos" target="_blank" rel="noopener">🛡️ OWASP Top 10</a>
+        </div>
       </article>
 
       <!-- App Hosting -->
@@ -471,7 +505,6 @@
     <div class="links">
       <a href="https://github.com/Ricky-G/azure-scenario-hub" target="_blank" rel="noopener">GitHub</a>
       <a href="https://github.com/Ricky-G/azure-scenario-hub/issues" target="_blank" rel="noopener">Suggest a scenario</a>
-      <a href="reports/terraform-drift-detection-shared-platform/">Drift report</a>
     </div>
   </div>
 </footer>
