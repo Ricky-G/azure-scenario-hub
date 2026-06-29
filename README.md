@@ -2,7 +2,7 @@
 
 A collection of ready-to-deploy Azure architecture scenarios. Infrastructure-as-code templates for common patterns, designed for rapid deployment and learning.
 
-[![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-17-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) ![IaC](https://img.shields.io/badge/IaC-Bicep%20%2B%20Terraform-9b8cff?style=for-the-badge)
+[![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-18-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) ![IaC](https://img.shields.io/badge/IaC-Bicep%20%2B%20Terraform-9b8cff?style=for-the-badge)
 
 > 🌐 **Browse every scenario in the interactive gallery → [clouddev.blog/azure-scenario-hub](https://clouddev.blog/azure-scenario-hub/)** — featuring the styled [Terraform drift report](https://clouddev.blog/azure-scenario-hub/reports/terraform-drift-detection-shared-platform/).
 
@@ -66,6 +66,7 @@ Head-to-head benchmark of **shared-`Backend` + `rewrite-uri`** vs **one-`Backend
 |----------|-------------|--------|--------------|
 | [APIM Backend Fan-out Benchmark](./src/apim-backend-fanout-benchmark/) | Head-to-head benchmark of **shared-backend + `rewrite-uri`** vs **one-backend-per-API** on APIM Premium. **Result: no measurable difference** — 882 vs 874 req/s, 146 vs 153 ms p95 over 1.67M requests | ✅ Ready | 2× APIM Premium, .NET 10 mock backend on Flex Consumption FC1, k6 stepped load (50→100→200 VUs), interactive HTML dashboard, App Insights `BackendTime`/`ClientTime` KQL, auto-generated Markdown report |
 | [APIM Monitoring](./src/apim-monitoring-scenario/) | APIM Developer SKU with 6 mock APIs, Application Insights, Log Analytics, and an Azure Workbook dashboard — no backend services required | ✅ Ready | Full request/response capture, 6 mock APIs (caching, rate limiting, JWT, etc.), KQL queries, Azure Workbook |
+| [App Gateway + APIM Diagnostics](./src/app-gateway-apim-diagnostics/) | Application Gateway (WAF_v2) fronting APIM with **every diagnostic setting enabled** on both resources, streaming to one Log Analytics Workspace. Includes a self-contained Hello World API routed end-to-end through the gateway | ✅ Ready | Full App Gateway + APIM diagnostic categories, WAF firewall logs, mock Hello World API (no backend), public route through App Gateway → APIM, ready-to-run KQL queries |
 | [Azure Integration Services Load Test](./src/azure-integration-services-load-test/) | Load testing scenario for microservices architecture with Function Apps and Service Bus Premium | ✅ Ready | 5 independent functions, Service Bus topics, private endpoints, comprehensive load testing tools |
 
 ### Data Processing
