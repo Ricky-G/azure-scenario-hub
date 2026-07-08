@@ -59,6 +59,7 @@ azure-scenario-hub/
 | Operations | `apim-monitoring-scenario` | Bicep | — |
 | Operations | `aks-namespace-create` | Bicep | — |
 | Networking & Security | `aks-unique-egress-ip-per-namespace` | Bicep | Python |
+| Networking & Security | `app-gateway-mtls-passthrough-apim-validation` | Bicep | — |
 
 When adding or modifying a scenario, check this table and update `README.md` accordingly.
 

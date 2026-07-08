@@ -265,10 +265,10 @@
       <a class="btn ghost" href="https://github.com/Ricky-G/azure-scenario-hub" target="_blank" rel="noopener">★ Star on GitHub</a>
     </div>
     <div class="stats">
-      <div class="stat"><div class="n b">17</div><div class="l">Scenarios</div></div>
-      <div class="stat"><div class="n g">14</div><div class="l">Ready now</div></div>
+      <div class="stat"><div class="n b">19</div><div class="l">Scenarios</div></div>
+      <div class="stat"><div class="n g">16</div><div class="l">Ready now</div></div>
       <div class="stat"><div class="n p">2</div><div class="l">IaC languages</div></div>
-      <div class="stat"><div class="n a">1</div><div class="l">Visual report</div></div>
+      <div class="stat"><div class="n a">2</div><div class="l">Visual reports</div></div>
     </div>
   </div>
 </header>
@@ -394,6 +394,16 @@
       </article>
 
       <!-- Networking & Security -->
+      <article class="card reveal" data-cat="net" data-text="application gateway mtls passthrough client certificate apim api management proof of possession header rewrite server variables key vault trust anchor waf internal vnet">
+        <div class="card-top"><span class="chip net">Networking &amp; Security</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>App Gateway PASSTHROUGH mTLS &rarr; APIM</h3>
+        <p>How to do <b>true client-certificate (mTLS) validation in API Management</b> when App Gateway (WAF_v2) sits in front in <b>passthrough</b> mode: the gateway forwards the cert, APIM validates it as a real credential (possession + trust + per-client authz), not a spoofable header. Azure-verified, with an HTML report.</p>
+        <div class="card-links">
+          <a class="lnk report" href="reports/app-gateway-mtls-passthrough-apim-validation/">📊 Report</a>
+          <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/app-gateway-mtls-passthrough-apim-validation" target="_blank" rel="noopener">&lt;/&gt; Code</a>
+        </div>
+      </article>
+
       <article class="card reveal" data-cat="net" data-text="event grid private endpoints secure event-driven logic apps zero public exposure">
         <div class="card-top"><span class="chip net">Networking &amp; Security</span><span class="status ready"><span class="d"></span>Ready</span></div>
         <h3>Event Grid with Private Endpoints</h3>

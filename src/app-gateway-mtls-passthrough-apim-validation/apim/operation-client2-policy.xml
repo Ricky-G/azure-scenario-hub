@@ -1,0 +1,73 @@
+<!--
+  Operation policy: /client2  (path B).
+  Only the client that owns cert2 may use path B. Mirrors the client1
+  operation to model a multi-client API where each client maps to its own path.
+-->
+<policies>
+  <inbound>
+    <base />
+    <choose>
+      <when condition='@((string)((Newtonsoft.Json.Linq.JObject)context.Variables["auth"])["client"] != "client2")'>
+        <return-response>
+          <set-status code="403" reason="Not authorised for this resource" />
+          <set-header name="Content-Type" exists-action="override">
+            <value>application/json</value>
+          </set-header>
+          <set-header name="X-Evidence-Decision" exists-action="override">
+            <value>DENY_AUTHZ</value>
+          </set-header>
+          <set-header name="X-Evidence-Client" exists-action="override">
+            <value>@((string)((Newtonsoft.Json.Linq.JObject)context.Variables["auth"])["client"])</value>
+          </set-header>
+          <set-body>@{
+              var a = (Newtonsoft.Json.Linq.JObject)context.Variables["auth"];
+              var o = new Newtonsoft.Json.Linq.JObject();
+              o["decision"] = "DENY_AUTHZ";
+              o["reason"] = "Authenticated client is not authorised for path B (client2)";
+              o["authenticatedClient"] = (string)a["client"];
+              o["requiredClient"] = "client2";
+              o["presentedThumbprint"] = (string)a["thumbprint"];
+              return o.ToString();
+          }</set-body>
+        </return-response>
+      </when>
+    </choose>
+    <return-response>
+      <set-status code="200" reason="OK" />
+      <set-header name="Content-Type" exists-action="override">
+        <value>application/json</value>
+      </set-header>
+      <set-header name="X-Evidence-Decision" exists-action="override">
+        <value>ALLOW</value>
+      </set-header>
+      <set-header name="X-Evidence-Client" exists-action="override">
+        <value>client2</value>
+      </set-header>
+      <set-header name="X-Evidence-AppGw-Verify" exists-action="override">
+        <value>@((string)((Newtonsoft.Json.Linq.JObject)context.Variables["auth"])["appGwVerify"])</value>
+      </set-header>
+      <set-body>@{
+          var a = (Newtonsoft.Json.Linq.JObject)context.Variables["auth"];
+          var o = new Newtonsoft.Json.Linq.JObject();
+          o["decision"] = "ALLOW";
+          o["client"] = "client2";
+          o["path"] = "B";
+          o["message"] = "Hello client2 - authenticated by client certificate and authorised for path B";
+          o["presentedThumbprint"] = (string)a["thumbprint"];
+          o["mode"] = (string)a["mode"];
+          o["appGwVerify"] = (string)a["appGwVerify"];
+          o["chainOk"] = (bool)a["chainOk"];
+          return o.ToString();
+      }</set-body>
+    </return-response>
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>

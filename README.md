@@ -2,9 +2,9 @@
 
 A collection of ready-to-deploy Azure architecture scenarios. Infrastructure-as-code templates for common patterns, designed for rapid deployment and learning.
 
-[![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-18-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) ![IaC](https://img.shields.io/badge/IaC-Bicep%20%2B%20Terraform-9b8cff?style=for-the-badge)
+[![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-19-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) ![IaC](https://img.shields.io/badge/IaC-Bicep%20%2B%20Terraform-9b8cff?style=for-the-badge)
 
-> 🌐 **Browse every scenario in the interactive gallery → [clouddev.blog/azure-scenario-hub](https://clouddev.blog/azure-scenario-hub/)** — featuring the styled [Terraform drift report](https://clouddev.blog/azure-scenario-hub/reports/terraform-drift-detection-shared-platform/).
+> 🌐 **Browse every scenario in the interactive gallery → [clouddev.blog/azure-scenario-hub](https://clouddev.blog/azure-scenario-hub/)** — featuring the styled [mTLS passthrough → APIM report](https://clouddev.blog/azure-scenario-hub/reports/app-gateway-mtls-passthrough-apim-validation/) and the [Terraform drift report](https://clouddev.blog/azure-scenario-hub/reports/terraform-drift-detection-shared-platform/).
 
 > [!IMPORTANT]
 > **These scenarios are built for experimentation, learning, and lab environments — not production.**
@@ -51,6 +51,7 @@ Head-to-head benchmark of **shared-`Backend` + `rewrite-uri`** vs **one-`Backend
 
 | Scenario | Description | Status | Key Features |
 |----------|-------------|--------|--------------|
+| [App Gateway PASSTHROUGH mTLS &rarr; APIM](./src/app-gateway-mtls-passthrough-apim-validation/) | How to do **true client-certificate (mTLS) validation in API Management** when App Gateway (WAF_v2) sits in front in **passthrough** mode: the gateway forwards the cert, **APIM validates it as a real credential** (possession + trust + per-client authorization), not a spoofable header. Includes the proof-of-possession analysis and an HTML report | ✅ Ready | mTLS passthrough (`verifyClientAuthMode`), server-variable header rewrite, APIM internal-VNet validation in policy, Key Vault-sourced Root CA + pinned allow list, WAF_v2 retained, evidence suite + styled report |
 | [Event Grid with Private Endpoints](./src/eventgrid-private-endpoints-scenario/) | Secure event-driven architecture with Event Grid behind private endpoints | ✅ Ready | Zero public exposure, Logic Apps integration |
 | [Event Grid Confidential Compute](./src/eventgrid-confidential-compute/) | Event Grid System Topic with Azure Confidential Compute enabled for enhanced data protection | ✅ Ready | Hardware-based encryption, preview feature, Korea Central & UAE North only |
 | [Function App with Key Vault Private Endpoint](./src/function-app-private-endpoints-access-keyvault-scenario/) | Serverless functions accessing secrets securely via private network | ✅ Ready | Managed Identity, VNet integration, no internet traffic |

@@ -1,0 +1,258 @@
+<!--
+  API-scope inbound policy: APIM as the certificate TRUST ANCHOR, with TWO
+  selectable validation models (chosen by the {{cert-validation-mode}} named
+  value: "pinned" or "chain").
+
+  Application Gateway runs in mTLS PASSTHROUGH mode, so it does NOT validate the
+  client certificate - it only forwards it. The cert is NOT available at the
+  APIM TLS layer, so this policy reads the App Gateway mutual-auth server
+  variable that was SET (overwritten) into the X-Client-Cert request header,
+  reconstructs an X509Certificate2 from the forwarded PEM, and validates it.
+
+  Two models, both implemented here (see README for pros/cons):
+
+    * MODEL A - PINNED THUMBPRINT ALLOW-LIST ("pinned", default)
+        Accept only certificates whose SHA-1 thumbprint is on a Key Vault-
+        sourced allow list. A thumbprint is a hash of the whole certificate,
+        so it cannot be forged. Most restrictive; per-cert maintenance.
+
+    * MODEL B - CHAIN OF TRUST ("chain")
+        Accept any certificate the trusted Root CA actually signed. We verify
+        the CA's RSA signature over the leaf's TBSCertificate with the Root CA
+        public key (Key Vault-sourced) - a genuine cryptographic check, not a
+        spoofable issuer-name string compare. No per-cert allow list.
+
+  Sandbox note: the APIM policy validator blocks X509Chain and
+  DateTime.ToUniversalTime(), but ALLOWS GetRSAPublicKey() + RSA.VerifyData(),
+  so the chain model is implemented by parsing the leaf DER (TBS + signature)
+  and verifying with the CA public key.
+
+  Expression attributes are single-quote delimited so C# string literals can
+  use double quotes; XML markup chars (< > &) are entity-escaped.
+-->
+<policies>
+  <inbound>
+    <base />
+
+    <!-- What the passthrough gateway forwarded. -->
+    <set-variable name="fwdCertPem" value="@(context.Request.Headers.GetValueOrDefault(&quot;X-Client-Cert&quot;, &quot;&quot;))" />
+    <set-variable name="appGwVerify" value="@(context.Request.Headers.GetValueOrDefault(&quot;X-Client-Cert-Verify&quot;, &quot;NONE&quot;))" />
+
+    <!-- Parse the forwarded cert, evaluate BOTH models, decide by mode. -->
+    <set-variable name="authJson" value='@{
+        string raw = (string)context.Variables["fwdCertPem"];
+        string mode = "{{cert-validation-mode}}";
+        if (mode != "chain") { mode = "pinned"; }
+        var r = new Newtonsoft.Json.Linq.JObject();
+        r["mode"] = mode;
+        r["appGwVerify"] = (string)context.Variables["appGwVerify"];
+
+        System.Security.Cryptography.X509Certificates.X509Certificate2 cert = null;
+        if (!string.IsNullOrWhiteSpace(raw)) {
+            try {
+                string pem = System.Uri.UnescapeDataString(raw);
+                var m = System.Text.RegularExpressions.Regex.Match(pem, "-----BEGIN CERTIFICATE-----([\\s\\S]*?)-----END CERTIFICATE-----");
+                string body = m.Success ? m.Groups[1].Value : pem;
+                body = System.Text.RegularExpressions.Regex.Replace(body, "\\s+", "");
+                byte[] der = System.Convert.FromBase64String(body);
+                cert = new System.Security.Cryptography.X509Certificates.X509Certificate2(der);
+            } catch (System.Exception) { cert = null; }
+        }
+
+        if (cert == null) {
+            r["ok"] = false; r["client"] = ""; r["reason"] = "NO_CERT_FORWARDED";
+            r["thumbprint"] = ""; r["subject"] = ""; r["issuer"] = "";
+            r["issuerDnMatch"] = false; r["chainOk"] = false; r["pinnedMatch"] = false;
+            return r.ToString(Newtonsoft.Json.Formatting.None);
+        }
+
+        string tp = cert.Thumbprint == null ? "" : cert.Thumbprint;
+        r["thumbprint"] = tp;
+        r["subject"] = cert.Subject;
+        r["issuer"] = cert.Issuer;
+
+        var now = System.DateTime.Now;
+        bool timeOk = (now &gt;= cert.NotBefore) &amp;&amp; (now &lt;= cert.NotAfter);
+
+        // Load the Key Vault-sourced trusted Root CA.
+        System.Security.Cryptography.X509Certificates.X509Certificate2 root = null;
+        bool issuerDnMatch = false;
+        try {
+            byte[] rootDer = System.Convert.FromBase64String("{{trusted-root-ca-der-b64}}");
+            root = new System.Security.Cryptography.X509Certificates.X509Certificate2(rootDer);
+            issuerDnMatch = string.Equals(cert.Issuer, root.Subject, System.StringComparison.OrdinalIgnoreCase);
+        } catch (System.Exception) { issuerDnMatch = false; }
+        r["issuerDnMatch"] = issuerDnMatch;
+
+        // ---- MODEL B: cryptographic chain of trust (RSA signature verify) ----
+        // Parse the leaf DER, extract the TBSCertificate bytes and the signature,
+        // then verify the Root CA actually signed it via root.GetRSAPublicKey().
+        bool chainOk = false;
+        try {
+            if (root != null) {
+                // Manual DER walk (the APIM sandbox blocks X509Chain and System.Func,
+                // so no helper lambdas: every TLV length is decoded inline).
+                //   Certificate ::= SEQUENCE { tbsCertificate, signatureAlgorithm, signatureValue }
+                byte[] der = cert.RawData;
+                int pos = 0;
+                if (der[pos] == 0x30) {                       // outer SEQUENCE
+                    pos++;
+                    int lo = der[pos];                        // skip the outer length
+                    if (lo &lt; 0x80) { pos += 1; } else { pos += 1 + (lo &amp; 0x7F); }
+                    int tbsStart = pos;
+                    if (der[tbsStart] == 0x30) {              // TBSCertificate SEQUENCE
+                        int tp0 = tbsStart + 1;
+                        int tlb = der[tp0];
+                        int tbsLen; int tbsHdr;
+                        if (tlb &lt; 0x80) { tbsLen = tlb; tbsHdr = 2; }
+                        else {
+                            int tn = tlb &amp; 0x7F; tbsLen = 0;
+                            for (int j = 0; j &lt; tn; j++) { tbsLen = (tbsLen &lt;&lt; 8) | der[tp0 + 1 + j]; }
+                            tbsHdr = 2 + tn;
+                        }
+                        int tbsTotal = tbsHdr + tbsLen;       // the exact bytes the CA signed
+                        byte[] tbs = new byte[tbsTotal];
+                        for (int k = 0; k &lt; tbsTotal; k++) { tbs[k] = der[tbsStart + k]; }
+                        pos = tbsStart + tbsTotal;            // at signatureAlgorithm
+                        // Pick the digest from the RSA OID 2A 86 48 86 F7 0D 01 01 XX.
+                        System.Security.Cryptography.HashAlgorithmName hn = System.Security.Cryptography.HashAlgorithmName.SHA256;
+                        for (int i = pos; i &lt; der.Length - 9; i++) {
+                            if (der[i]==0x2A &amp;&amp; der[i+1]==0x86 &amp;&amp; der[i+2]==0x48 &amp;&amp; der[i+3]==0x86 &amp;&amp; der[i+4]==0xF7 &amp;&amp; der[i+5]==0x0D &amp;&amp; der[i+6]==0x01 &amp;&amp; der[i+7]==0x01) {
+                                int h = der[i+8];
+                                if (h==0x0C) { hn = System.Security.Cryptography.HashAlgorithmName.SHA384; }
+                                else if (h==0x0D) { hn = System.Security.Cryptography.HashAlgorithmName.SHA512; }
+                                else { hn = System.Security.Cryptography.HashAlgorithmName.SHA256; }
+                                break;
+                            }
+                        }
+                        if (der[pos] == 0x30) {               // skip signatureAlgorithm SEQUENCE
+                            int ap0 = pos + 1;
+                            int alb = der[ap0];
+                            int algLen; int algHdr;
+                            if (alb &lt; 0x80) { algLen = alb; algHdr = 2; }
+                            else {
+                                int an = alb &amp; 0x7F; algLen = 0;
+                                for (int j = 0; j &lt; an; j++) { algLen = (algLen &lt;&lt; 8) | der[ap0 + 1 + j]; }
+                                algHdr = 2 + an;
+                            }
+                            pos = pos + algHdr + algLen;      // at signatureValue BIT STRING
+                        }
+                        if (der[pos] == 0x03) {               // signatureValue BIT STRING
+                            int sp0 = pos + 1;
+                            int slb = der[sp0];
+                            int sigLen; int sigHdr;
+                            if (slb &lt; 0x80) { sigLen = slb; sigHdr = 2; }
+                            else {
+                                int sn = slb &amp; 0x7F; sigLen = 0;
+                                for (int j = 0; j &lt; sn; j++) { sigLen = (sigLen &lt;&lt; 8) | der[sp0 + 1 + j]; }
+                                sigHdr = 2 + sn;
+                            }
+                            int sigStart = pos + sigHdr + 1;  // +1 skips the unused-bits byte (0x00)
+                            int sigActual = sigLen - 1;
+                            byte[] sig = new byte[sigActual];
+                            for (int k = 0; k &lt; sigActual; k++) { sig[k] = der[sigStart + k]; }
+                            // The real cryptographic check: did THIS Root CA key sign this leaf?
+                            var rsa = root.GetRSAPublicKey();
+                            if (rsa != null) {
+                                chainOk = rsa.VerifyData(tbs, sig, hn, System.Security.Cryptography.RSASignaturePadding.Pkcs1);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (System.Exception) { chainOk = false; }
+        r["chainOk"] = chainOk;
+
+        // ---- MODEL A: pinned per-client thumbprint allow list (KV-sourced) ----
+        string pinnedClient = "";
+        string allow = "{{client-cert-allowlist}}";
+        foreach (string entry in allow.Split(new string[]{"|"}, System.StringSplitOptions.RemoveEmptyEntries)) {
+            var kv = entry.Split(new string[]{":"}, System.StringSplitOptions.None);
+            if (kv.Length == 2 &amp;&amp; string.Equals(kv[1].Trim(), tp, System.StringComparison.OrdinalIgnoreCase)) {
+                pinnedClient = kv[0].Trim();
+            }
+        }
+        bool pinnedMatch = pinnedClient != "";
+        r["pinnedMatch"] = pinnedMatch;
+
+        // Client identity for chain mode: leading label of the subject CN
+        // (e.g. "client1" from "CN=client1.mtls-poc.local").
+        string chainClient = "";
+        var cnm = System.Text.RegularExpressions.Regex.Match(cert.Subject, "CN=([^,]+)");
+        if (cnm.Success) {
+            string full = cnm.Groups[1].Value.Trim();
+            int dot = full.IndexOf(".");
+            chainClient = dot &gt; 0 ? full.Substring(0, dot) : full;
+        }
+
+        // ---- Decision by mode ----
+        bool ok; string client; string reason;
+        if (mode == "chain") {
+            ok = timeOk &amp;&amp; chainOk;
+            client = ok ? chainClient : "";
+            reason = ok ? "CHAIN_OK" : (!timeOk ? "OUTSIDE_VALIDITY_WINDOW" : "NOT_CA_SIGNED");
+        } else {
+            ok = timeOk &amp;&amp; issuerDnMatch &amp;&amp; pinnedMatch;
+            client = ok ? pinnedClient : "";
+            reason = ok ? "PINNED_OK" : (!timeOk ? "OUTSIDE_VALIDITY_WINDOW" : (!issuerDnMatch ? "UNTRUSTED_ISSUER" : "NOT_IN_ALLOWLIST"));
+        }
+        r["ok"] = ok; r["client"] = client; r["reason"] = reason;
+        return r.ToString(Newtonsoft.Json.Formatting.None);
+    }' />
+
+    <set-variable name="auth" value="@(Newtonsoft.Json.Linq.JObject.Parse((string)context.Variables[&quot;authJson&quot;]))" />
+
+    <!-- Reject anything not trusted BY APIM under the active model. -->
+    <choose>
+      <when condition="@(!(bool)((Newtonsoft.Json.Linq.JObject)context.Variables[&quot;auth&quot;])[&quot;ok&quot;])">
+        <return-response>
+          <set-status code="403" reason="Client certificate rejected by APIM" />
+          <set-header name="Content-Type" exists-action="override">
+            <value>application/json</value>
+          </set-header>
+          <set-header name="X-Evidence-Decision" exists-action="override">
+            <value>DENY</value>
+          </set-header>
+          <set-header name="X-Evidence-Mode" exists-action="override">
+            <value>@((string)((Newtonsoft.Json.Linq.JObject)context.Variables["auth"])["mode"])</value>
+          </set-header>
+          <set-header name="X-Evidence-ChainOk" exists-action="override">
+            <value>@(((Newtonsoft.Json.Linq.JObject)context.Variables["auth"])["chainOk"].ToString())</value>
+          </set-header>
+          <set-header name="X-Evidence-PinnedMatch" exists-action="override">
+            <value>@(((Newtonsoft.Json.Linq.JObject)context.Variables["auth"])["pinnedMatch"].ToString())</value>
+          </set-header>
+          <set-header name="X-Evidence-AppGw-Verify" exists-action="override">
+            <value>@((string)((Newtonsoft.Json.Linq.JObject)context.Variables["auth"])["appGwVerify"])</value>
+          </set-header>
+          <set-body>@{
+              var a = (Newtonsoft.Json.Linq.JObject)context.Variables["auth"];
+              var o = new Newtonsoft.Json.Linq.JObject();
+              o["decision"] = "DENY";
+              o["mode"] = (string)a["mode"];
+              o["reason"] = (string)a["reason"];
+              o["appGwVerify"] = (string)a["appGwVerify"];
+              o["presentedThumbprint"] = (string)a["thumbprint"];
+              o["presentedSubject"] = (string)a["subject"];
+              o["presentedIssuer"] = (string)a["issuer"];
+              o["issuerDnMatch"] = (bool)a["issuerDnMatch"];
+              o["chainOk"] = (bool)a["chainOk"];
+              o["pinnedMatch"] = (bool)a["pinnedMatch"];
+              o["note"] = "Trust is enforced by APIM. The passthrough gateway does not validate the certificate.";
+              return o.ToString();
+          }</set-body>
+        </return-response>
+      </when>
+    </choose>
+    <!-- Trusted: fall through to the operation policy for per-client authz. -->
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>
