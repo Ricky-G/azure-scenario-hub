@@ -249,6 +249,28 @@ The gateway itself performs no certificate validation in passthrough, so treat i
 - Pinned mode decides trust by an **issuer-DN comparison against the Key Vault Root CA** plus a **pinned-thumbprint allow list** (also Key Vault-sourced).
 - Trust material is delivered via **APIM named values bound to Key Vault secrets** (system-assigned managed identity, `Key Vault Secrets User`), so the policy never embeds the trust anchor.
 
+## Also verified on API Management v2
+
+The API Management **v2** tiers carry a documented limitation: `context.Request.Certificate` and TLS renegotiation are **not supported**. That only matters if trust is established at APIM's own TLS layer — which this scenario never does. Trust is decided entirely from the **forwarded `X-Client-Cert` header**, so the limitation does not apply.
+
+To prove it, the identical dual-model policy, named values, and certificates were deployed to a standalone **API Management v2** instance (public gateway) and the same matrix was run directly against its gateway. **11/11 checks passed** — behaviour is identical to the **v1** deployment, including the real RSA chain-of-trust check that rejects the forged-issuer spoofed certificate.
+
+| Model | Check | Observed on API Management v2 | Result |
+|---|---|---|---|
+| pinned | Allow-listed client1 -> 200 | `HTTP 200 decision=ALLOW chainOk=True pinnedMatch=True` | PASS ✅ |
+| pinned | CA-signed but NOT allow-listed client3 -> 403 | `HTTP 403 decision=DENY reason=NOT_IN_ALLOWLIST chainOk=True pinnedMatch=False` | PASS ✅ |
+| pinned | Forged-signature cert (same issuer DN) -> 403 | `HTTP 403 decision=DENY reason=NOT_IN_ALLOWLIST chainOk=False pinnedMatch=False` | PASS ✅ |
+| pinned | Untrusted issuer -> 403 | `HTTP 403 decision=DENY reason=UNTRUSTED_ISSUER chainOk=False pinnedMatch=False` | PASS ✅ |
+| pinned | No certificate -> 403 | `HTTP 403 decision=DENY reason=NO_CERT_FORWARDED chainOk=False pinnedMatch=False` | PASS ✅ |
+| pinned | client1 -> client2 path B -> 403 | `HTTP 403 decision=DENY_AUTHZ reason=Authenticated client is not authorised for path B (client2)` | PASS ✅ |
+| chain | CA-signed client1 -> 200 | `HTTP 200 decision=ALLOW chainOk=True pinnedMatch=True` | PASS ✅ |
+| chain | CA-signed client3 (no allow list needed) -> 200 | `HTTP 200 decision=ALLOW chainOk=True pinnedMatch=False` | PASS ✅ |
+| chain | Forged signature, identical issuer DN -> 403 | `HTTP 403 decision=DENY reason=NOT_CA_SIGNED chainOk=False pinnedMatch=False` | PASS ✅ |
+| chain | Untrusted issuer -> 403 | `HTTP 403 decision=DENY reason=NOT_CA_SIGNED chainOk=False pinnedMatch=False` | PASS ✅ |
+| chain | No certificate -> 403 | `HTTP 403 decision=DENY reason=NO_CERT_FORWARDED chainOk=False pinnedMatch=False` | PASS ✅ |
+
+> **Takeaway:** the certificate-validation pattern is **tier-agnostic**. Because it operates on the forwarded header rather than APIM's TLS layer, it works unchanged on API Management **v1** and **v2** — the v2 renegotiation limitation simply is not in the path. The v2 proof instance is torn down with `./teardown-apim-v2.ps1` after capturing this evidence.
+
 ## Cost & teardown
 
 Roughly **$0.50–0.90/hr** in eastus2 (App Gateway WAF_v2 + APIM Developer dominate). **Tear down when finished:**

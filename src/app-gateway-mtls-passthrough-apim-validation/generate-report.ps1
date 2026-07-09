@@ -23,6 +23,10 @@ $certDir = Join-Path $scriptDir 'certs'
 $resultsPath = Join-Path $certDir 'results.json'
 if (-not (Test-Path $resultsPath)) { throw "results.json not found. Run ./run-tests.ps1 first." }
 
+# Optional API Management v2 tier-parity evidence (from validate-apim-v2.ps1).
+$resultsV2Path = Join-Path $certDir 'results-v2.json'
+if (-not (Test-Path $resultsV2Path)) { $resultsV2Path = $null }
+
 $data = Get-Content $resultsPath -Raw | ConvertFrom-Json
 $repoRoot = (Resolve-Path (Join-Path $scriptDir '../..')).Path
 $reportDir = Join-Path $repoRoot 'docs/reports/app-gateway-mtls-passthrough-apim-validation'
@@ -163,6 +167,27 @@ else {
 [void]$md.AppendLine('- Pinned mode decides trust by an **issuer-DN comparison against the Key Vault Root CA** plus a **pinned-thumbprint allow list** (also Key Vault-sourced).')
 [void]$md.AppendLine('- Trust material is delivered via **APIM named values bound to Key Vault secrets** (system-assigned managed identity, `Key Vault Secrets User`), so the policy never embeds the trust anchor.')
 [void]$md.AppendLine('')
+
+# Optional: API Management v2 tier-parity findings.
+if ($resultsV2Path) {
+    $v2 = Get-Content $resultsV2Path -Raw | ConvertFrom-Json
+    [void]$md.AppendLine('## Also verified on API Management v2')
+    [void]$md.AppendLine('')
+    [void]$md.AppendLine('The API Management **v2** tiers carry a documented limitation: `context.Request.Certificate` and TLS renegotiation are **not supported**. That only matters if trust is established at APIM''s own TLS layer — which this scenario never does. Trust is decided entirely from the **forwarded `X-Client-Cert` header**, so the limitation does not apply.')
+    [void]$md.AppendLine('')
+    [void]$md.AppendLine("To prove it, the identical dual-model policy, named values, and certificates were deployed to a standalone **API Management v2** instance (public gateway) and the same matrix was run directly against its gateway. **$($v2.passed)/$($v2.total) checks passed** — behaviour is identical to the **v1** deployment, including the real RSA chain-of-trust check that rejects the forged-issuer `spoofed` certificate.")
+    [void]$md.AppendLine('')
+    [void]$md.AppendLine('| Model | Check | Observed on API Management v2 | Result |')
+    [void]$md.AppendLine('|---|---|---|---|')
+    foreach ($vr in $v2.results) {
+        $rv = if ($vr.pass) { 'PASS ✅' } else { 'FAIL ❌' }
+        [void]$md.AppendLine("| $($vr.mode) | $($vr.name) | ``$($vr.observed)`` | $rv |")
+    }
+    [void]$md.AppendLine('')
+    [void]$md.AppendLine('> **Takeaway:** the certificate-validation pattern is **tier-agnostic**. Because it operates on the forwarded header rather than APIM''s TLS layer, it works unchanged on API Management **v1** and **v2** — the v2 renegotiation limitation simply is not in the path. The v2 proof instance is torn down with `./teardown-apim-v2.ps1` after capturing this evidence.')
+    [void]$md.AppendLine('')
+}
+
 [void]$md.AppendLine('## Cost & teardown')
 [void]$md.AppendLine('')
 [void]$md.AppendLine('Roughly **$0.50–0.90/hr** in eastus2 (App Gateway WAF_v2 + APIM Developer dominate). **Tear down when finished:**')
@@ -183,7 +208,9 @@ Write-Host "==> Wrote $mdPath" -ForegroundColor Green
 #    report/ copy inside the scenario so it opens straight from the repo)
 # ---------------------------------------------------------------------
 $docsReport = Join-Path $reportDir 'index.html'
-& (Join-Path $scriptDir 'build-report-html.ps1') -ResultsPath $resultsPath -OutputPath $docsReport -PossessionVerdict $PossessionVerdict
+$buildArgs = @{ ResultsPath = $resultsPath; OutputPath = $docsReport; PossessionVerdict = $PossessionVerdict }
+if ($resultsV2Path) { $buildArgs['ResultsV2Path'] = $resultsV2Path }
+& (Join-Path $scriptDir 'build-report-html.ps1') @buildArgs
 Write-Host "==> Wrote $docsReport" -ForegroundColor Green
 
 $localReportDir = Join-Path $scriptDir 'report'

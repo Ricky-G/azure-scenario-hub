@@ -8,11 +8,16 @@
 param(
     [Parameter(Mandatory)][string]$ResultsPath,
     [Parameter(Mandatory)][string]$OutputPath,
-    [string]$PossessionVerdict = 'ENFORCED'
+    [string]$PossessionVerdict = 'ENFORCED',
+    [string]$ResultsV2Path
 )
 
 $ErrorActionPreference = 'Stop'
 $data = Get-Content $ResultsPath -Raw | ConvertFrom-Json
+$dataV2 = $null
+if ($ResultsV2Path -and (Test-Path $ResultsV2Path)) {
+    $dataV2 = Get-Content $ResultsV2Path -Raw | ConvertFrom-Json
+}
 
 function E([string]$s) {
     if ($null -eq $s) { return '' }
@@ -277,6 +282,38 @@ else {
 }
 $possessionClass = if ($PossessionVerdict -eq 'ENFORCED') { 'safe' } else { 'drift' }
 
+# --- Optional "also verified on APIM v2" section --------------------------
+$v2Section = ''
+if ($dataV2) {
+    $v2Rows = ''
+    foreach ($vr in $dataV2.results) {
+        $vb = if ($vr.pass) { 'ok' } else { 'fail' }
+        $vt = if ($vr.pass) { 'PASS' } else { 'FAIL' }
+        $mtag = switch ($vr.mode) { 'pinned' { 'pinned' } 'chain' { 'chain' } default { 'both' } }
+        $v2Rows += "<tr><td><span class='mpill $mtag'>$($vr.mode.ToUpper())</span></td><td>$(E($vr.name))</td><td class='mono'>$(E($vr.observed))</td><td><span class='badge $vb' style='font-size:10.5px'>$vt</span></td></tr>"
+    }
+    $v2Date = ([datetime]$dataV2.generatedUtc).ToString('yyyy-MM-dd HH:mm')
+    $v2Section = @"
+  <section>
+    <h2 class="section-title">Also verified on API Management v2</h2>
+    <div class="callout" style="border-left-color:var(--green); margin-bottom:16px">
+      <h4 style="color:var(--green)">&#9679; Same policy, same certs, same results &mdash; on API Management v2.</h4>
+      <p>The API Management <b>v2</b> tiers carry a documented limitation: <code>context.Request.Certificate</code> and TLS renegotiation are <b>not supported</b>. That would matter if trust were established at APIM&rsquo;s own TLS layer &mdash; but this scenario never does that. Trust is decided entirely from the <b>forwarded <code>X-Client-Cert</code> header</b>, so the limitation does not apply.</p>
+      <p>To prove it, the identical dual-model policy, named values, and certificates were deployed to a standalone <b>API Management v2</b> instance (public gateway) and the same matrix was run directly against its gateway. <b>$($dataV2.passed)/$($dataV2.total) checks passed</b> &mdash; behaviour is identical to the <b>v1</b> deployment, including the real RSA chain-of-trust signature check that rejects the forged-issuer <code>spoofed</code> certificate. The certificate-validation pattern is <b>tier-agnostic</b>: it works the same on API Management v1 and v2.</p>
+    </div>
+    <div class="scorebar" style="margin-top:0">
+      <div><div class="big" style="color:$(if($dataV2.passed -eq $dataV2.total){'var(--green)'}else{'var(--amber)'})">$($dataV2.passed)/$($dataV2.total)</div><div class="lbl">v2 checks passed</div></div>
+      <div class="track"><div class="fill" style="width:$(if($dataV2.total -gt 0){[math]::Round(($dataV2.passed/$dataV2.total)*100)}else{0})%"></div></div>
+    </div>
+    <table class="v2-table">
+      <thead><tr><th>Model</th><th>Check</th><th>Observed on API Management v2</th><th>Result</th></tr></thead>
+      <tbody>$v2Rows</tbody>
+    </table>
+    <p style="color:var(--muted); font-size:13px; margin-top:10px">API Management v2 run &middot; $v2Date UTC</p>
+  </section>
+"@
+}
+
 $passPct = if ($data.total -gt 0) { [math]::Round(($data.passed / $data.total) * 100) } else { 0 }
 $genDate = ([datetime]$data.generatedUtc).ToString('yyyy-MM-dd HH:mm')
 
@@ -426,6 +463,18 @@ $html = @"
   .cmp-table td.pin { color: #ffe6b0; } .cmp-table td.chn { color: #c9c1ff; }
   .cmp-table .mono { font-family: var(--mono); font-size: 12.5px; }
 
+  /* v2 tier-parity table */
+  .v2-table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13.5px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .v2-table th, .v2-table td { text-align: left; padding: 10px 13px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .v2-table thead th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; background: #0e1530; }
+  .v2-table tbody tr:last-child td { border-bottom: none; }
+  .v2-table td.mono { font-family: var(--mono); font-size: 12px; color: #cdd7f0; }
+  .mpill { font-family: var(--mono); font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+  .mpill.pinned { color: #ffe6b0; background: rgba(245,166,35,.14); border: 1px solid var(--amber-d); }
+  .mpill.chain  { color: #c9c1ff; background: rgba(155,140,255,.16); border: 1px solid #4a3fa0; }
+  .mpill.both   { color: #cdd7f0; background: rgba(154,167,199,.14); border: 1px solid var(--line); }
+
   @media (max-width: 760px) { .ee, .grid2, .models { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -443,7 +492,7 @@ $html = @"
     <div class="meta-row">
       <span class="chip"><b>Region</b> eastus2</span>
       <span class="chip"><b>App Gateway</b> WAF_v2 passthrough</span>
-      <span class="chip"><b>APIM</b> Developer, internal VNet</span>
+      <span class="chip"><b>APIM</b> v1, internal VNet</span>
       <span class="chip"><b>Generated</b> $genDate UTC</span>
     </div>
 
@@ -563,7 +612,7 @@ sequenceDiagram
 $($runCards.ToString())
     </div>
   </section>
-
+$v2Section
   <section>
     <h2 class="section-title">How we validated the forwarded certificate in the APIM sandbox</h2>
     <div class="callout">

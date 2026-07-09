@@ -7,9 +7,9 @@ It ships **two interchangeable validation models** — a **pinned‑thumbprint a
 > **Scenario category:** Networking & Security
 > **IaC:** Bicep · **Test clients:** OpenSSL / curl / PowerShell
 
-> ✅ **Verified end‑to‑end on Azure.** We deployed this start‑to‑finish and validated every link, under **both** validation models.
+> ✅ **Verified end‑to‑end on Azure.** We deployed this start‑to‑finish and validated every link, under **both** validation models — and re‑ran the whole matrix on an **API Management v2** tier to prove the pattern is tier‑agnostic.
 > **Open the visual results report → [report/index.html](report/index.html)** (open it in a browser), or the [live GitHub Pages version](https://ricky-g.github.io/azure-scenario-hub/reports/app-gateway-mtls-passthrough-apim-validation/).
-> Headline: App Gateway forwards the client certificate to APIM, and **APIM validates it against Key Vault‑sourced trust material** under whichever model you choose. A trusted client returns `200`; a certificate from an untrusted issuer returns `403`; a forged‑signature certificate that merely *copies* the Root CA's name is rejected by real cryptography; a client hitting another client's path returns `403 DENY_AUTHZ`. **16/16 checks passed across both models.**
+> Headline: App Gateway forwards the client certificate to APIM, and **APIM validates it against Key Vault‑sourced trust material** under whichever model you choose. A trusted client returns `200`; a certificate from an untrusted issuer returns `403`; a forged‑signature certificate that merely *copies* the Root CA's name is rejected by real cryptography; a client hitting another client's path returns `403 DENY_AUTHZ`. **16/16 checks passed across both models on API Management v1, and 11/11 on API Management v2.**
 
 > 📊 **[Open the full interactive report → report/index.html](report/index.html)** — a styled walkthrough with a side‑by‑side of the two models, architecture + sequence diagrams, every scenario's expected‑vs‑actual, and the security verdict. (Clone and open it in a browser, or view it on GitHub Pages.)
 
@@ -53,6 +53,27 @@ There are two legitimate ways to answer "*is this forwarded certificate one we t
 > Chain mode performs a **genuine RSA signature verification** with the Key Vault Root CA's public key. The **`spoofed`** certificate is the proof: its issuer Distinguished Name is **byte‑for‑byte identical** to the real Root CA (`CN=mTLS POC Root CA`), yet it is rejected with `NOT_CA_SIGNED` and `chainOk=false` — because the Root CA's key never signed it. A string comparison would have been fooled; `RSA.VerifyData` is not. That is the difference between a certificate that *looks* trusted and one that provably *is*.
 >
 > **Sandbox note:** the APIM policy‑expression validator blocks both `X509Chain` and `System.Func` (both confirmed at deploy time), so chain mode parses the leaf DER **inline** to recover the `TBSCertificate` bytes and the signature, then verifies them with `rootCa.GetRSAPublicKey().VerifyData(...)`. See [`apim/api-policy.xml`](apim/api-policy.xml).
+
+## Does this work on API Management **v2**? Yes — verified.
+
+The main scenario deploys APIM on a **v1** tier (used because it supports **Internal VNet** mode). A fair question is whether the same pattern holds on the newer **v2** tiers, which carry a documented limitation:
+
+> *"Certificate renegotiation isn't supported in the API Management v2 tiers … `context.Request.Certificate` only requests the certificate when `negotiateClientCertificate` is `True`."*
+
+**That limitation does not apply here** — and we proved it on a real v2 instance. The reason is architectural: this scenario **never** reads `context.Request.Certificate` and never asks APIM to negotiate a client certificate at its own TLS layer. Application Gateway terminates the caller's TLS and **forwards the certificate in the `X-Client-Cert` header**; the policy validates *that*. The forwarded‑header path is identical on every APIM tier.
+
+To demonstrate it rather than assert it, the repo includes a **standalone v2 proof** ([`validate-apim-v2.ps1`](validate-apim-v2.ps1) + [`bicep/apim-v2-proof.bicep`](bicep/apim-v2-proof.bicep)) that deploys a **public API Management v2** instance, points it at the **same Key Vault** trust material, applies the **same dual‑model policies**, and runs the **same certificate matrix** directly against the v2 gateway:
+
+```powershell
+# Deploys an API Management v2 instance, runs the dual-mode matrix against it,
+# writes certs/results-v2.json, then:
+./validate-apim-v2.ps1
+./teardown-apim-v2.ps1   # removes ONLY the v2 proof instance
+```
+
+**Result: 11/11 checks passed on API Management v2 — behaviour is identical to the v1 deployment**, including the real RSA chain‑of‑trust check that rejects the forged‑issuer `spoofed` certificate (`chainOk=false`) and the `client3` flip (pinned `403` → chain `200`).
+
+> ✅ **Tier‑agnostic:** the certificate‑validation pattern works unchanged on API Management **v1** and **v2**, because it operates on the forwarded `X-Client-Cert` header rather than APIM's own TLS layer — so the v2 renegotiation limitation is simply not in the path. Full v2 evidence is in the [report](report/index.html) and [RESULTS.md](RESULTS.md).
 
 ## The key question this answers
 
