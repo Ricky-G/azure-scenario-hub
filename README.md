@@ -1,24 +1,25 @@
 # Azure Scenario Hub 🚀
 
-A collection of ready-to-deploy Azure architecture scenarios. Infrastructure-as-code templates for common patterns, designed for rapid deployment and learning.
+A collection of tested Azure cloud and Microsoft AI engineering scenarios: deployable architectures, runnable demos, and evidence-backed experiments.
 
-[![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-19-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) ![IaC](https://img.shields.io/badge/IaC-Bicep%20%2B%20Terraform-9b8cff?style=for-the-badge)
+[![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-23-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) ![Formats](https://img.shields.io/badge/Formats-IaC%20%2B%20Demos%20%2B%20Reports-9b8cff?style=for-the-badge)
 
 > 🌐 **Browse every scenario in the interactive gallery → [clouddev.blog/azure-scenario-hub](https://clouddev.blog/azure-scenario-hub/)** — featuring the styled [mTLS passthrough → APIM report](https://clouddev.blog/azure-scenario-hub/reports/app-gateway-mtls-passthrough-apim-validation/) and the [Terraform drift report](https://clouddev.blog/azure-scenario-hub/reports/terraform-drift-detection-shared-platform/).
 
 > [!IMPORTANT]
 > **These scenarios are built for experimentation, learning, and lab environments — not production.**
-> For production deployments, use [Azure Verified Modules](https://aka.ms/avm) and follow your organization's security and compliance requirements.
+> For production infrastructure, use [Azure Verified Modules](https://aka.ms/avm). Before adapting any application or AI demo for production, apply your organization's security, identity, reliability, and compliance requirements.
 
 ## 🎯 What is this?
 
-A collection of Azure infrastructure templates for experimentation and learning. Each scenario provides complete working code for common architectural patterns, eliminating the need to build from scratch.
+A focused catalog of reproducible Azure and Microsoft AI engineering work. Each entry provides working code, tested commands, and the evidence or documentation needed to understand what it proves.
 
 ### Use cases:
-- **Application Development** - Deploy infrastructure quickly to focus on application logic
-- **Architecture Validation** - Test designs with working reference implementations  
-- **Learning Azure** - Hands-on examples of Azure service integrations
-- **Rapid Prototyping** - Pre-built infrastructure for PoCs and experiments
+- **Deployable Architecture** - Provision Azure patterns with Bicep or Terraform
+- **AI Engineering** - Run focused Azure AI and Microsoft agent framework examples
+- **Architecture Validation** - Test designs with working reference implementations
+- **Evidence-Based Research** - Reproduce benchmarks, diagnostics, and platform behavior
+- **Hands-On Learning** - Start from complete examples instead of empty projects
 
 ## ⭐ Featured Scenario
 
@@ -82,7 +83,11 @@ Head-to-head benchmark of **shared-`Backend` + `rewrite-uri`** vs **one-`Backend
 |----------|-------------|--------|--------------|
 | [Azure Communication Services with Voice Live API](./src/azure-communication-services-integrate-voice-live-api/) | Real-time conversational AI over phone calls with ACS Call Automation and Azure OpenAI Voice Live API | ✅ Ready | Phone call automation, real-time audio streaming, voice AI interactions, dual implementation ([.NET](./src/azure-communication-services-integrate-voice-live-api/dotnet/README.md) & [Python](./src/azure-communication-services-integrate-voice-live-api/python/README.md)) |
 | [AI Gateway (APIM in front of Foundry)](./src/ai-gateway/) | API Management as an AI Gateway fronting an existing Azure AI Foundry account. Two customer-facing regional APIs (`/aue`, `/global`) over a shared backend pool, per-app token chargeback, per-product TPM throttling, response cache, and a runnable Polyglot Notebook walkthrough | ✅ Ready | Two regional APIs over one backend pool with circuit breakers, managed-identity backend auth, per-product TPM throttling, response cache, edge request validation, mock fallback, structured tracing, `azure-openai-emit-token-metric` chargeback, KQL queries, demo notebook |
-| [Agent Governance Toolkit — Governed Agents](./src/agent-governance-toolkit/) | A hub of ready-to-run examples that wrap agent frameworks with the **Microsoft Agent Governance Toolkit** so one agent-level policy intercepts every outbound prompt and tool call — including **governing tool-call argument values** (numeric ceilings, forbidden values, data-residency sets) with no per-tool code. Runs fully offline (no API keys). First integration: **[Microsoft Agent Framework](./src/agent-governance-toolkit/microsoft-agent-framework/README.md)** in [Python](./src/agent-governance-toolkit/microsoft-agent-framework/python/README.md) (notebook + 7 demo scripts) and [.NET/C#](./src/agent-governance-toolkit/microsoft-agent-framework/dotnet/README.md) (class library + console app) | ✅ Ready | Agent-level tool-**argument** boundary governance, prompt + tool-call middleware, default-deny capability sandbox, governed multi-agent workflow, prompt-hardening audit, tamper-evident hash-chained audit log, deterministic scripted model |
+| [Azure OpenAI Realtime Transcription](./src/azure-openai-realtime-transcription/) | **Runnable demo.** Streams 24 kHz microphone audio to a deployed `gpt-realtime-whisper` model over the GA Realtime API | ✅ Runnable | Entra ID with API-key fallback, async WebSockets, PCM16 capture, transcript events, language and delay controls |
+| [Azure OpenAI Realtime Text to Speech](./src/azure-openai-realtime-text-to-speech/) | **Runnable demo.** Sends terminal text to a GA realtime model and plays its native audio response while streaming the transcript | ✅ Runnable | Current OpenAI realtime client, Entra ID with API-key fallback, direct PCM speaker output, explicit deployment and voice selection |
+| [Azure Speech SSML Voice Consistency](./src/azure-speech-ssml-voice-consistency/) | **Runnable demo.** Applies one escaped, reusable SSML voice profile to every Azure Speech synthesis request | ✅ Runnable | Structured XML generation, consistent voice/rate/pitch/volume, WAV output, cancellation diagnostics |
+| [Semantic Kernel Agent Retry Limit](./src/semantic-kernel-agent-retry-limit/) | **Runnable demo.** Wraps specialized Semantic Kernel agents in a deterministic retry state machine with a terminal lockout | ✅ Runnable | Current `ChatCompletionAgent` API, Entra ID with API-key fallback, deterministic verification, offline orchestration tests |
+| [Agent Governance Toolkit ΓÇö Governed Agents](./src/agent-governance-toolkit/) | A hub of ready-to-run examples that wrap agent frameworks with the **Microsoft Agent Governance Toolkit** so one agent-level policy intercepts every outbound prompt and tool call ΓÇö including **governing tool-call argument values** (numeric ceilings, forbidden values, data-residency sets) with no per-tool code. Runs fully offline (no API keys). First integration: **[Microsoft Agent Framework](./src/agent-governance-toolkit/microsoft-agent-framework/README.md)** in [Python](./src/agent-governance-toolkit/microsoft-agent-framework/python/README.md) (notebook + 7 demo scripts) and [.NET/C#](./src/agent-governance-toolkit/microsoft-agent-framework/dotnet/README.md) (class library + console app) | Γ£à Ready | Agent-level tool-**argument** boundary governance, prompt + tool-call middleware, default-deny capability sandbox, governed multi-agent workflow, prompt-hardening audit, tamper-evident hash-chained audit log, deterministic scripted model |
 
 ### App Hosting
 
@@ -96,7 +101,7 @@ Head-to-head benchmark of **shared-`Backend` + `rewrite-uri`** vs **one-`Backend
 |----------|-------------|--------|--------------|
 | [Terraform Drift Detection — Shared Platform vs. App Team](./src/terraform-drift-detection-shared-platform/) | Pinpoints **exactly where Terraform drift triggers** between a platform team's Terraform landing zone and an app team's Bicep additions. **Result from a real run:** adding child resources (Foundry projects, Cosmos databases, blob containers) causes **zero drift** — only changing a *managed attribute* (e.g. a tag) crosses the line. Includes a styled HTML report of every run | ✅ Ready | Platform Terraform (azurerm + azapi) vs app-team Bicep, serverless Cosmos + project-capable Foundry, full-`plan` drift checks, child-resource vs managed-attribute boundary, `ignore_changes` escape hatch, Azure Policy drift finding, HTML report + raw run captures |
 
-### More scenarios coming soon! 
+### More scenarios coming soon!
 Have a specific scenario request? [Open an issue](https://github.com/Ricky-G/azure-scenario-hub/issues) to suggest it.
 
 ## 🚀 Get Started in 3 Steps
@@ -108,42 +113,44 @@ cd azure-scenario-hub
 ```
 
 ### 2. Pick a scenario
-Browse the `src/` directory and choose the architecture you need.
+Browse the `src/` directory and choose the architecture, demo, benchmark, or investigation you need.
 
-### 3. Deploy!
-Each scenario includes deployment instructions with tested commands. Most deployments complete in under 5 minutes.
+### 3. Deploy or run
+Follow that scenario's README. Infrastructure scenarios provide deployment commands; application demos provide isolated setup and run commands.
 
 ## 📋 What You'll Need
 
-- **Azure Subscription** - [Get a free one here](https://azure.microsoft.com/free/)
-- **Azure CLI** - [Install guide](https://learn.microsoft.com/cli/azure/install-azure-cli)
-- **5 minutes** - Standard deployment time
+- **Azure Subscription** - Required by scenarios that call or deploy Azure services; [create one here](https://azure.microsoft.com/free/)
+- **Azure CLI** - Used for deployments and recommended keyless authentication; [installation guide](https://learn.microsoft.com/cli/azure/install-azure-cli)
+- **Scenario Runtime** - Check the selected README for Python, .NET, PowerShell, Bash, notebook, or load-testing prerequisites
 
 ## 🛠️ Tech Stack
 
-All scenarios are built with Infrastructure as Code:
-- **Bicep** - Azure's native IaC language (primary)
-- **Terraform** - Multi-cloud IaC (coming to more scenarios)
-- **ARM Templates** - Available for all Bicep scenarios
+The catalog uses the tool that best fits the scenario:
+- **Bicep and Terraform** - Reproducible Azure infrastructure
+- **Python and .NET** - Runnable applications, AI integrations, and test harnesses
+- **PowerShell and Bash** - Deployment, validation, and cleanup automation
+- **Jupyter and Verso** - Executable walkthroughs and offline demos
+- **KQL and HTML reports** - Diagnostics, benchmarks, and captured evidence
 
 ## 📂 What's in Each Scenario?
 
 ```
 scenario-name/
 ├── README.md              # Quick start guide
-├── bicep/                 # Infrastructure code
-│   ├── main.bicep        # One-click deployment
-│   └── modules/          # Reusable components
-├── terraform/            # Alternative IaC option
-└── docs/                 # Architecture diagrams
+├── bicep/                 # Optional infrastructure code
+├── terraform/             # Optional Terraform alternative
+├── app/ or app.py         # Optional runnable implementation
+├── tests/                 # Optional validation or load harness
+└── docs/ or report/       # Optional diagrams and evidence
 ```
 
 ## 💡 Pro Tips
 
-- **Development First** - These scenarios prioritize ease of use and learning
+- **Choose the Scenario Type** - Deployable, runnable, benchmark, and investigation entries have different prerequisites
 - **Customize Freely** - Use these as starting templates for your needs
 - **Cost Conscious** - Each scenario notes estimated costs
-- **Clean Up** - Every scenario includes cleanup commands to avoid charges
+- **Clean Up** - Follow each README to stop local processes and remove billable Azure resources
 
 ## 🤝 Contributing
 
@@ -151,7 +158,7 @@ To contribute a new Azure scenario:
 
 1. Fork this repository
 2. Create your scenario following the established structure
-3. Test deployment in a clean Azure subscription
+3. Test the deployment or runnable demo in a clean environment
 4. Submit a pull request
 
 Check the [Contributing Guide](CONTRIBUTING.md) for detailed requirements.

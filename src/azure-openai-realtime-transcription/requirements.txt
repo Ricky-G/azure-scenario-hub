@@ -1,0 +1,4 @@
+azure-identity==1.25.3
+python-dotenv==1.2.2
+sounddevice==0.5.5
+websockets==16.1

@@ -306,6 +306,10 @@ paket-files/
 __pycache__/
 *.pyc
 
+# Generated audio from local AI demos
+*.pcm
+*.wav
+
 # Cake - Uncomment if you are using it
 # tools/**
 # !tools/packages.config

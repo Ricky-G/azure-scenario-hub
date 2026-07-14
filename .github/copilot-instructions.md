@@ -2,9 +2,9 @@
 
 ## 🎯 Repository Overview
 
-Azure Scenario Hub is a community library of ready-to-deploy Azure architecture scenarios. Each scenario provides complete, working Infrastructure-as-Code templates for common Azure patterns, optimised for rapid deployment, experimentation, and learning — **not** production use.
+Azure Scenario Hub is a community library of tested Azure cloud and Microsoft AI engineering scenarios. It includes deployable architectures, runnable demos, benchmarks, and evidence-backed investigations for experimentation and learning — **not** production use.
 
-> These scenarios target learners, architects validating designs, and developers who need infrastructure fast. For production, direct users to [Azure Verified Modules](https://aka.ms/avm).
+> Infrastructure scenarios should direct production users to [Azure Verified Modules](https://aka.ms/avm). Application and AI scenarios must identify the additional security, identity, reliability, and compliance work required before production use.
 
 ---
 
@@ -18,16 +18,17 @@ azure-scenario-hub/
 │   └── ISSUE_TEMPLATE/
 ├── src/
 │   └── <scenario-name>/       # One directory per scenario
-│       ├── README.md          # Quick-start deployment guide
-│       ├── bicep/             # Bicep templates (primary IaC)
+│       ├── README.md          # Quick-start deployment or run guide
+│       ├── bicep/             # Bicep templates where applicable
 │       │   ├── main.bicep     # Single-file deployment entry point
 │       │   └── modules/       # Reusable Bicep modules
 │       ├── terraform/         # Terraform alternative (where present)
-│       ├── <lang>/            # App code sub-dirs for multi-language scenarios
+│       ├── app/ or app.py     # Runnable implementation where applicable
+│       ├── <lang>/            # Language sub-dirs for multi-language scenarios
 │       │   └── README.md      #   e.g. dotnet/, python/
-│       ├── deploy-infra.ps1   # PowerShell deployment helper
-│       ├── deploy-infra.sh    # Bash deployment helper
-│       └── docs/              # Architecture diagrams (.drawio, images)
+│       ├── tests/              # Validation, integration, or load tests
+│       ├── deploy-infra.*      # Deployment helpers where applicable
+│       └── docs/ or report/    # Architecture diagrams and evidence
 └── README.md
 ```
 
@@ -42,33 +43,21 @@ azure-scenario-hub/
 
 ---
 
-## 📦 Existing Scenarios
+## 📦 Scenario Types
 
-| Category | Scenario | IaC | App Code |
-|---|---|---|---|
-| Networking & Security | `eventgrid-private-endpoints-scenario` | Bicep | — |
-| Networking & Security | `eventgrid-confidential-compute` | Bicep | — |
-| Networking & Security | `function-app-private-endpoints-access-keyvault-scenario` | Bicep | — |
-| Networking & Security | `private-container-apps-environment-scenario` | — | — |
-| Networking & Security | `public-container-apps-environment-scenario` | — | — |
-| Integration & Messaging | `azure-integration-services-load-test` | Bicep | C# Functions |
-| Data Processing | `azure-function-unzip-large-files` | Bicep + Terraform | — |
-| AI | `azure-communication-services-integrate-voice-live-api` | — | .NET & Python |
-| App Hosting | `simple-app-service-with-sample-app` | Bicep | — |
-| App Hosting | `azure-app-service-python-app-deploy` | Bicep | Python |
-| Operations | `apim-monitoring-scenario` | Bicep | — |
-| Operations | `aks-namespace-create` | Bicep | — |
-| Networking & Security | `aks-unique-egress-ip-per-namespace` | Bicep | Python |
-| Networking & Security | `app-gateway-mtls-passthrough-apim-validation` | Bicep | — |
+- **Deployable** — reproducible Azure infrastructure, normally Bicep-first with deployment and cleanup scripts
+- **Runnable Demo** — focused application or SDK example with isolated dependencies and tested run commands
+- **Benchmark** — repeatable workload, methodology, raw evidence, and summarized results
+- **Investigation** — reproducible diagnostic or platform-behavior proof with captured evidence
 
-When adding or modifying a scenario, check this table and update `README.md` accordingly.
+The root `README.md` and `docs/index.html` are the source of truth for the current scenario inventory. Update both whenever adding, removing, or renaming a scenario.
 
 ---
 
 ## 🛠️ Technology Stack
 
 ### In Use Today
-- **Bicep** — primary IaC language for all Azure deployments
+- **Bicep** — primary IaC language for Azure deployments
 - **Terraform** — alternative IaC, present in select scenarios (e.g., `azure-function-unzip-large-files`)
 - **Azure CLI** — used in deployment scripts and GitHub Actions
 - **PowerShell** — Windows deployment scripts (`.ps1`)
@@ -76,6 +65,8 @@ When adding or modifying a scenario, check this table and update `README.md` acc
 - **GitHub Actions** — CI validation workflows (`.github/workflows/`)
 - **C# / .NET** — application code in integration scenarios
 - **Python** — application code in AI and app service scenarios
+- **Jupyter / Verso** — executable AI and governance walkthroughs
+- **KQL / HTML** — diagnostics, benchmarks, and evidence reports
 
 ### Coming Soon
 - Terraform coverage for more scenarios
@@ -149,14 +140,13 @@ These are non-negotiable regardless of the learning-focused nature of the repo:
 
 ### Step-by-Step Checklist
 
-1. **Create the directory**: `src/<scenario-name>/` using kebab-case
-2. **Write `main.bicep`** — single entry point, parameterised, tagged
-3. **Extract modules** — one module per logical resource group (`modules/network.bicep`, `modules/compute.bicep`, etc.)
-4. **Add deployment scripts** — both `deploy-infra.ps1` (PowerShell) and `deploy-infra.sh` (Bash)
-5. **Write `README.md`** — follow the README template below
-6. **Add cleanup instructions** — every scenario must document how to delete all resources
-7. **Test in a clean resource group** — run `az bicep build` and a full `az deployment group create`
-8. **Update root `README.md`** — add a row to the correct category table
+1. **Choose one scenario type** — deployable, runnable demo, benchmark, or investigation
+2. **Create the directory** — `src/<scenario-name>/` using kebab-case
+3. **Add the smallest complete implementation** — use Bicep for Azure infrastructure and the appropriate SDK/runtime for application behavior
+4. **Add automation where applicable** — deployment, run, validation, and cleanup commands must be copy-paste ready
+5. **Write `README.md`** — follow the README requirements below
+6. **Test in a clean environment** — compile IaC, install exact dependencies, and run focused validation
+7. **Update both catalogs** — add the scenario to root `README.md` and `docs/index.html`
 
 ### Scenario Categories
 - **Networking & Security** — private endpoints, VNet, NSGs, Firewall, Private DNS
@@ -171,10 +161,10 @@ Every scenario README must contain:
 1. **Title + one-sentence description**
 2. **Architecture diagram** (image or link to `.drawio`)
 3. **Prerequisites** — explicit list (Azure CLI version, permissions, quotas)
-4. **Quick Start** — copy-paste commands to deploy in ≤5 minutes
-5. **Parameters** — table of all Bicep parameters with types, defaults, descriptions
-6. **What Gets Deployed** — bullet list of Azure resources created
-7. **Post-Deployment Steps** — anything the user must do after `az deployment group create`
+4. **Quick Start** — copy-paste commands to deploy or run
+5. **Configuration** — parameters or environment variables, with secrets clearly identified
+6. **What It Deploys or Demonstrates** — explicit resources, behavior, and limits
+7. **Post-Deployment or Run Steps** — anything required to exercise the scenario
 8. **Estimated Cost** — rough Azure consumption estimate
 9. **Cleanup** — single command or script to delete all resources
 10. **Troubleshooting** — common errors and fixes
@@ -208,9 +198,15 @@ When adding workflow files:
 ### Documentation
 - [ ] README follows the template structure above
 - [ ] Prerequisites are explicit (no assumptions)
-- [ ] Deployment commands are copy-paste ready
+- [ ] Deployment or run commands are copy-paste ready
 - [ ] Cleanup section is present and tested
-- [ ] Root `README.md` scenario table is updated
+- [ ] Root `README.md` and `docs/index.html` are updated
+
+### Runnable Demos
+- [ ] Dependencies are pinned and install in a clean environment
+- [ ] Secrets use environment variables or managed identity, never source code
+- [ ] Focused offline tests or contract checks pass
+- [ ] The README distinguishes demo code from production guidance
 
 ### Scripts
 - [ ] Both `.ps1` and `.sh` versions provided

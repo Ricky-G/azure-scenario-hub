@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Azure Scenario Hub: ready-to-deploy Azure architecture scenarios</title>
-<meta name="description" content="A community library of complete, working Infrastructure-as-Code blueprints for common Azure patterns, built for rapid deployment, experimentation, and learning." />
+<title>Azure Scenario Hub: tested Azure cloud and AI engineering scenarios</title>
+<meta name="description" content="Deployable Azure architectures, runnable Microsoft AI demos, and evidence-backed engineering experiments with complete code and tested commands." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
@@ -47,6 +47,7 @@
   /* ---------- nav ---------- */
   .nav {
     position: sticky; top: 0; z-index: 50;
+    -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
     background: rgba(10,14,28,.72);
     border-bottom: 1px solid var(--line);
@@ -169,6 +170,7 @@
   .pills { display: flex; gap: 8px; flex-wrap: wrap; }
   .pill {
     font-size: 13.5px; font-weight: 600; color: var(--muted); cursor: pointer;
+    -webkit-user-select: none;
     background: var(--card); border: 1px solid var(--line); padding: 9px 15px; border-radius: 999px; transition: .15s; user-select: none;
   }
   .pill:hover { color: var(--ink); border-color: #38477f; }
@@ -257,16 +259,16 @@
 <!-- HERO -->
 <header class="hero" id="top">
   <div class="wrap">
-    <span class="badge-pill"><span class="dot"></span> Infrastructure-as-Code · Bicep + Terraform</span>
-    <h1>Ready-to-deploy <span class="grad">Azure architecture</span> scenarios</h1>
-    <p class="lead">A community library of complete, working blueprints for common Azure patterns, built for rapid deployment, architecture validation, and hands-on learning. Pick a scenario, deploy in minutes.</p>
+    <span class="badge-pill"><span class="dot"></span> Deployable architectures · runnable AI demos · captured evidence</span>
+    <h1>Tested <span class="grad">Azure cloud &amp; AI</span> engineering scenarios</h1>
+    <p class="lead">Complete, working scenarios for Azure infrastructure, Microsoft AI integration, architecture validation, and reproducible engineering research. Pick one, then deploy it, run it, or reproduce the result.</p>
     <div class="hero-cta">
       <a class="btn primary" href="#scenarios">Browse scenarios →</a>
       <a class="btn ghost" href="https://github.com/Ricky-G/azure-scenario-hub" target="_blank" rel="noopener">★ Star on GitHub</a>
     </div>
     <div class="stats">
-      <div class="stat"><div class="n b">19</div><div class="l">Scenarios</div></div>
-      <div class="stat"><div class="n g">16</div><div class="l">Ready now</div></div>
+      <div class="stat"><div class="n b">23</div><div class="l">Scenarios</div></div>
+      <div class="stat"><div class="n g">20</div><div class="l">Ready now</div></div>
       <div class="stat"><div class="n p">2</div><div class="l">IaC languages</div></div>
       <div class="stat"><div class="n a">2</div><div class="l">Visual reports</div></div>
     </div>
@@ -278,7 +280,7 @@
   <div class="wrap">
     <div class="notice reveal">
       <div class="ic">⚠️</div>
-      <div class="tx"><strong>Built for experimentation, learning &amp; lab environments, not production.</strong> These scenarios prioritise clarity and speed over hardening. For production deployments, use <a href="https://aka.ms/avm" target="_blank" rel="noopener">Azure Verified Modules</a> and follow your organization's security and compliance requirements.</div>
+      <div class="tx"><strong>Built for experimentation, learning &amp; lab environments, not production.</strong> For production infrastructure, use <a href="https://aka.ms/avm" target="_blank" rel="noopener">Azure Verified Modules</a>. Before adapting application or AI demos, apply your organization's security, identity, reliability, and compliance requirements.</div>
       <a class="cta" href="https://aka.ms/avm" target="_blank" rel="noopener">Azure Verified Modules →</a>
     </div>
   </div>
@@ -338,7 +340,7 @@
       <div>
         <p class="eyebrow">The library</p>
         <h2>All scenarios</h2>
-        <p>Filter by category or search. Every scenario ships with a README, IaC, and deploy scripts.</p>
+        <p>Filter by category or search. Every scenario ships with a README, tested commands, and reproducible code or evidence.</p>
       </div>
     </div>
 
@@ -375,7 +377,7 @@
       <article class="card reveal" data-cat="integration" data-text="apim backend fan-out benchmark rewrite-uri premium k6 load test dotnet flex consumption">
         <div class="card-top"><span class="chip integration">Integration &amp; Messaging</span><span class="status ready"><span class="d"></span>Ready</span></div>
         <h3>APIM Backend Fan-out Benchmark</h3>
-        <p>Head-to-head: shared-backend + <code style="font-family:var(--mono);font-size:12px">rewrite-uri</code> vs one-backend-per-API on APIM Premium. Result after 1.67M requests: no measurable difference.</p>
+        <p>Head-to-head: shared-backend + <code>rewrite-uri</code> vs one-backend-per-API on APIM Premium. Result after 1.67M requests: no measurable difference.</p>
         <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/apim-backend-fanout-benchmark" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
       </article>
 
@@ -384,6 +386,13 @@
         <h3>APIM Monitoring</h3>
         <p>APIM Developer SKU with 6 mock APIs, Application Insights, Log Analytics, and an Azure Workbook dashboard: full request/response capture, no backend needed.</p>
         <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/apim-monitoring-scenario" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="integration" data-text="application gateway apim diagnostics monitoring log analytics waf kql mock api">
+        <div class="card-top"><span class="chip integration">Integration &amp; Messaging</span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>App Gateway + APIM Diagnostics</h3>
+        <p>Application Gateway WAF_v2 fronting APIM with complete diagnostic settings on both resources, one Log Analytics workspace, a mock API, and ready-to-run KQL.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/app-gateway-apim-diagnostics" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
       </article>
 
       <article class="card reveal" data-cat="integration" data-text="azure integration services load test function apps service bus premium private endpoints microservices">
@@ -481,6 +490,34 @@
         <h3>AI Gateway (APIM in front of Foundry)</h3>
         <p>API Management as an AI Gateway fronting Azure AI Foundry: per-app token chargeback, per-product TPM throttling, response cache, and a runnable notebook.</p>
         <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/ai-gateway" target="_blank" rel="noopener">&lt;/&gt; Code</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="ai" data-text="azure openai realtime transcription gpt realtime whisper microphone speech to text websocket entra python">
+        <div class="card-top"><span class="chip ai">AI</span><span class="status ready"><span class="d"></span>Runnable</span></div>
+        <h3>Azure OpenAI Realtime Transcription</h3>
+        <p>Streams 24 kHz microphone audio to a deployed <b>gpt-realtime-whisper</b> model over the GA Realtime API, with Entra ID and API-key authentication paths.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/azure-openai-realtime-transcription" target="_blank" rel="noopener">&lt;/&gt; Run demo</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="ai" data-text="azure openai realtime text to speech audio pcm speaker gpt realtime entra python">
+        <div class="card-top"><span class="chip ai">AI</span><span class="status ready"><span class="d"></span>Runnable</span></div>
+        <h3>Azure OpenAI Realtime Text to Speech</h3>
+        <p>Sends terminal text to a GA realtime model, plays its native PCM audio response, and streams the matching transcript.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/azure-openai-realtime-text-to-speech" target="_blank" rel="noopener">&lt;/&gt; Run demo</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="ai" data-text="azure speech ssml text to speech voice consistency prosody rate pitch volume wav python">
+        <div class="card-top"><span class="chip ai">AI</span><span class="status ready"><span class="d"></span>Runnable</span></div>
+        <h3>Azure Speech SSML Voice Consistency</h3>
+        <p>Applies one escaped, reusable SSML voice profile to every Azure Speech synthesis request, with WAV output and cancellation diagnostics.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/azure-speech-ssml-voice-consistency" target="_blank" rel="noopener">&lt;/&gt; Run demo</a></div>
+      </article>
+
+      <article class="card reveal" data-cat="ai" data-text="semantic kernel agent retry limit orchestration state machine lockout chat completion entra python">
+        <div class="card-top"><span class="chip ai">AI</span><span class="status ready"><span class="d"></span>Runnable</span></div>
+        <h3>Semantic Kernel Agent Retry Limit</h3>
+        <p>Wraps specialized Semantic Kernel agents in a deterministic retry state machine with per-step counters, reset behavior, offline tests, and terminal lockout.</p>
+        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/semantic-kernel-agent-retry-limit" target="_blank" rel="noopener">&lt;/&gt; Run demo</a></div>
       </article>
 
       <article class="card feat reveal" data-cat="ai" data-text="agent governance toolkit hub governed agents owasp agentic top 10 asi microsoft agent framework maf prompt injection tool-call argument policy audit log python dotnet notebooks sub-scenarios">

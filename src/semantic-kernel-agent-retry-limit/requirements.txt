@@ -1,0 +1,3 @@
+azure-identity==1.25.3
+python-dotenv==1.2.2
+semantic-kernel==1.44.0
