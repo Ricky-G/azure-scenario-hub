@@ -18,3 +18,10 @@ updates:
     directory: "src/**/terraform"
     schedule:
       interval: "weekly"
+  # Keep the AKS egress applications on patched Python dependencies
+  - package-ecosystem: "pip"
+    directories:
+      - "/src/aks-unique-egress-ip-per-namespace/app/dashboard"
+      - "/src/aks-unique-egress-ip-per-namespace/app/egress-checker"
+    schedule:
+      interval: "weekly"
