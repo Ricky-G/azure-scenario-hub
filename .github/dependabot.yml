@@ -8,11 +8,7 @@ version: 2
 
 # Define the updates to run
 updates:
-  # Update Bicep packages in all directories that contain Bicep files
-  - package-ecosystem: "bicep"
-    directory: "src/**/bicep"
-    schedule:
-      interval: "weekly"
+  # Dependabot does not support Bicep; validate Bicep modules through CI.
   # Update Terraform packages in all directories that contain Terraform files
   - package-ecosystem: "terraform"
     directory: "src/**/terraform"
