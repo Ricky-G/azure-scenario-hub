@@ -16,18 +16,18 @@ how to apply it to real agent frameworks, with complete, runnable, **offline** d
 
 ---
 
-## Start here — live demos
+## Start here - live demos
 
-New to the toolkit? Two offline, presenter-ready notebooks introduce AGT and then walk the whole
-**OWASP Agentic Top 10**, plus a companion guide that explains the code — every notebook cell runs the real toolkit:
+New to the toolkit? Start with the offline, presenter-ready notebook pair in your preferred language.
+Both editions introduce AGT and then walk the complete **OWASP Top 10 for Agentic Applications 2026**.
 
-| File | What it is |
-|---|---|
-| **[1 · AGT overview](./live-demos/1-agt-overview.ipynb)** | Notebook — what AGT is, the `agt doctor` health check, 10,000 live policy evaluations at sub-millisecond latency, and a zero-trust gate over every tool call |
-| **[2 · OWASP Agentic Top 10](./live-demos/2-owasp-agentic-top-10.ipynb)** | Notebook — all ten ASI risks attacked, and stopped by a real AGT control, inside a fictional bank |
-| **[Companion guide](./live-demos/2-owasp-agentic-top-10-companion-guide.md)** | Markdown — read beside notebook 2: what each control is, what the code does, out-of-the-box vs YAML config, and likely audience questions |
+| Language | AGT overview | OWASP Agentic Top 10 | Run guide |
+|---|---|---|---|
+| **.NET / C# (Verso)** | [`1-agt-overview.verso`](./dotnet-demos/1-agt-overview.verso) | [`2-owasp-agentic-top-10.verso`](./dotnet-demos/2-owasp-agentic-top-10.verso) | [`dotnet-demos/README.md`](./dotnet-demos/README.md) |
+| **Python (Jupyter)** | [`1-agt-overview.ipynb`](./python-demos/1-agt-overview.ipynb) | [`2-owasp-agentic-top-10.ipynb`](./python-demos/2-owasp-agentic-top-10.ipynb) | [`python-demos/README.md`](./python-demos/README.md) |
 
-See [`live-demos/`](./live-demos/README.md) for prerequisites and how to run them.
+The Python edition also includes an
+[`OWASP companion guide`](./python-demos/2-owasp-agentic-top-10-companion-guide.md).
 
 ---
 
@@ -35,7 +35,7 @@ See [`live-demos/`](./live-demos/README.md) for prerequisites and how to run the
 
 | Integration | Languages | Highlights | Status |
 |---|---|---|---|
-| **[Microsoft Agent Framework (MAF)](./microsoft-agent-framework/README.md)** | Python · .NET/C# | Agent-level **tool-call argument** governance, prompt + tool middleware, default-deny capability sandbox, governed multi-agent workflow, tamper-evident audit log | ✅ Ready |
+| **[Microsoft Agent Framework (MAF)](./microsoft-agent-framework-demos/README.md)** | Python - .NET/C# | Agent-level **tool-call argument** governance, prompt + tool middleware, default-deny capability sandbox, governed multi-agent workflow, tamper-evident audit log | Ready |
 
 > More agent-framework and governance-pattern integrations will be added here over time. Each
 > integration is self-contained and independently runnable.
@@ -61,7 +61,7 @@ Pick an integration and follow its README:
 
 ```bash
 # Microsoft Agent Framework integration
-cd microsoft-agent-framework
+cd microsoft-agent-framework-demos
 
 #   Python
 cd python && python -m venv .venv && .\.venv\Scripts\Activate.ps1 && pip install -r requirements.txt && python demos/run_all.py
