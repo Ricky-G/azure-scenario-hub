@@ -195,6 +195,7 @@
   .status { font-size: 11px; font-weight: 700; letter-spacing: .3px; display: inline-flex; align-items: center; gap: 6px; color: var(--faint); }
   .status .d { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
   .status.ready { color: var(--green); } .status.ready .d { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .status.legacy { color: var(--amber); } .status.legacy .d { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
   .card h3 { font-size: 18px; margin: 0 0 8px; letter-spacing: -.3px; line-height: 1.25; }
   .card p { color: var(--muted); font-size: 14px; margin: 0 0 18px; flex: 1; }
   .card-links { display: flex; gap: 9px; flex-wrap: wrap; }
@@ -206,6 +207,8 @@
   .feat-tag { font-size: 11px; font-weight: 700; color: var(--amber); background: rgba(245,179,66,.14); border: 1px solid rgba(245,179,66,.3); padding: 3px 9px; border-radius: 999px; }
   .card-top .left { display: flex; align-items: center; gap: 7px; }
   .card.feat { border-color: rgba(52,211,153,.4); box-shadow: 0 0 28px rgba(52,211,153,.09); }
+  .card.legacy { border-color: rgba(245,179,66,.55); background: linear-gradient(180deg, rgba(63,45,24,.92), var(--bg-2)); box-shadow: inset 4px 0 0 var(--amber), 0 0 28px rgba(245,179,66,.08); }
+  .card.legacy h3 { color: #ffd98a; }
 
   /* ---------- sub-scenarios (featured hub) ---------- */
   .subscen-wrap { flex-direction: column; align-items: stretch; justify-content: center; gap: 11px; padding: 24px; }
@@ -513,11 +516,14 @@
         <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/azure-speech-ssml-voice-consistency" target="_blank" rel="noopener">&lt;/&gt; Run demo</a></div>
       </article>
 
-      <article class="card reveal" data-cat="ai" data-text="semantic kernel agent retry limit orchestration state machine lockout chat completion entra python">
-        <div class="card-top"><span class="chip ai">AI</span><span class="status ready"><span class="d"></span>Runnable</span></div>
+      <article class="card legacy reveal" data-cat="ai" data-text="semantic kernel legacy support microsoft agent framework successor migration retry limit orchestration state machine lockout chat completion entra python">
+        <div class="card-top"><span class="chip ai">AI · Legacy</span><span class="status ready legacy"><span class="d"></span>Legacy support</span></div>
         <h3>Semantic Kernel Agent Retry Limit</h3>
-        <p>Wraps specialized Semantic Kernel agents in a deterministic retry state machine with per-step counters, reset behavior, offline tests, and terminal lockout.</p>
-        <div class="card-links"><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/semantic-kernel-agent-retry-limit" target="_blank" rel="noopener">&lt;/&gt; Run demo</a></div>
+        <p>Retained for existing Semantic Kernel applications and migration reference. <strong>Microsoft Agent Framework is the direct successor</strong> and the recommended path for new agent development.</p>
+        <div class="card-links">
+          <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/semantic-kernel-agent-retry-limit" target="_blank" rel="noopener">&lt;/&gt; Legacy demo</a>
+          <a class="lnk code" href="https://learn.microsoft.com/agent-framework/migration-guide/from-semantic-kernel/" target="_blank" rel="noopener">Migration guide</a>
+        </div>
       </article>
 
       <article class="card feat reveal" data-cat="ai" data-text="agent governance toolkit hub governed agents owasp agentic top 10 asi microsoft agent framework maf prompt injection tool-call argument policy audit log python dotnet notebooks sub-scenarios">

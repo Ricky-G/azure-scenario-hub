@@ -1,6 +1,9 @@
-# Semantic Kernel Agent Retry Limit
+# Semantic Kernel Agent Retry Limit (Legacy Support)
 
-A runnable Python example showing how an orchestrator can enforce deterministic retry limits around specialized Semantic Kernel `ChatCompletionAgent` decisions.
+A runnable legacy-support example showing how an orchestrator can enforce deterministic retry limits around Semantic Kernel `ChatCompletionAgent` decisions.
+
+> [!IMPORTANT]
+> **Microsoft Agent Framework is the direct successor to Semantic Kernel's agent framework and is the recommended path for new agent development.** This scenario is retained for teams that support existing Semantic Kernel applications or need a concrete reference while migrating. Start new implementations with [Microsoft Agent Framework](https://learn.microsoft.com/agent-framework/overview/) and use Microsoft's [Semantic Kernel migration guide](https://learn.microsoft.com/agent-framework/migration-guide/from-semantic-kernel/).
 
 > The arithmetic questions are deliberately simple placeholders. Do not use knowledge questions or an LLM as an authentication mechanism in a real application.
 
@@ -48,11 +51,12 @@ Set the resource endpoint, deployment name, and API version in `.env`. Leave `AZ
 
 ## What It Demonstrates
 
-- Current Semantic Kernel `ChatCompletionAgent` construction
+- Legacy Semantic Kernel `ChatCompletionAgent` construction
 - Specialized intent-routing and topic-guard agents
 - A deterministic state machine around probabilistic classifications
 - Per-step retry counters, reset behavior, and a terminal state
 - Unit testing the orchestration without an Azure connection
+- Concepts that can be mapped to Microsoft Agent Framework during migration
 
 Run the offline retry tests with:
 
@@ -76,6 +80,8 @@ Exit the demo, deactivate the virtual environment, and remove `.venv`. Delete th
 
 ## Related Documentation
 
+- [Microsoft Agent Framework overview](https://learn.microsoft.com/agent-framework/overview/)
+- [Migrate from Semantic Kernel to Microsoft Agent Framework](https://learn.microsoft.com/agent-framework/migration-guide/from-semantic-kernel/)
 - [Semantic Kernel ChatCompletionAgent](https://learn.microsoft.com/semantic-kernel/frameworks/agent/agent-types/chat-completion-agent)
 - [Semantic Kernel agent orchestration](https://learn.microsoft.com/semantic-kernel/frameworks/agent/agent-orchestration/)
 - [Azure OpenAI authentication](https://learn.microsoft.com/azure/ai-services/openai/how-to/managed-identity)
