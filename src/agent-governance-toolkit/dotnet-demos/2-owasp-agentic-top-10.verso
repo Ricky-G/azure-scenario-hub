@@ -378,7 +378,7 @@
         },
         {
           "mimeType": "text/plain",
-          "content": "\n[The decision path for loan L-7791]\r\n  loan-officer       intake L-7791 amount=250000 -\u003E received | hash 89dfa9029938...\r\n  credit-checker     score_lookup L-7791 score=612 -\u003E completed | hash a75bed9a9512...\r\n  policy-engine      rule_eval minimum-score=660 actual=612 -\u003E DENY | hash e417b6539cb3...\r\n  loan-officer       notify L-7791 reason=score-below-threshold -\u003E DECLINED | hash 8f276b5f66aa...\r\n  AGT evidence       native chain verifies: True\r\n\n[An insider changes the serialized third decision but keeps the old hash]\r\n  Insider            flips DENY to APPROVED\r\n  Evidence check     tampered chain verifies: False\r\n"
+          "content": "\n[The decision path for loan L-7791]\r\n  loan-officer       intake L-7791 amount=250000 -\u003E received | hash 678046f84865...\r\n  credit-checker     score_lookup L-7791 score=612 -\u003E completed | hash 96b082f10452...\r\n  policy-engine      rule_eval minimum-score=660 actual=612 -\u003E DENY | hash e3cf7a7c4743...\r\n  loan-officer       notify L-7791 reason=score-below-threshold -\u003E DECLINED | hash 17f0a0e1d968...\r\n  AGT evidence       native chain verifies: True\r\n\n[An insider changes the serialized third decision but keeps the old hash]\r\n  Insider            flips DENY to APPROVED\r\n  Evidence check     tampered chain verifies: False\r\n"
         }
       ],
       "metadata": {

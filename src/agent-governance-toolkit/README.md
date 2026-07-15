@@ -1,82 +1,121 @@
-# Agent Governance Toolkit — Governed Agent Scenarios
+# Learn the Agent Governance Toolkit with Runnable Demos
 
-A hub of ready-to-run examples that wrap AI agent frameworks with the **Microsoft Agent Governance
-Toolkit (AGT)** — so that **every prompt and every tool call an agent makes is intercepted and
-evaluated by a real, deterministic policy** before it reaches a model or executes a tool.
+A hands-on learning scenario for exploring the
+[Microsoft Agent Governance Toolkit (AGT)](https://github.com/microsoft/agent-governance-toolkit)
+in **.NET/C# and Python**. If you are new to agent governance, this folder takes you from the core
+mental model to live security controls and then to a real agent-framework integration.
 
-The [Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit) is
-Microsoft's open-source toolkit for governing autonomous agents: a deterministic policy engine,
-prompt static-analysis, capability sandboxing, and tamper-evident audit primitives. This hub shows
-how to apply it to real agent frameworks, with complete, runnable, **offline** demos.
+AGT places a deterministic control point between an agent's proposed action and its execution:
 
-> **Why governance, not just prompting?** Prompt-level safety ("please follow the rules") is a
-> *request* to a stochastic system. AGT instead intercepts each action in deterministic
-> application code — actions the policy denies are not "unlikely", they are **structurally
-> impossible**.
-
----
-
-## Start here - live demos
-
-New to the toolkit? Start with the offline, presenter-ready notebook pair in your preferred language.
-Both editions introduce AGT and then walk the complete **OWASP Top 10 for Agentic Applications 2026**.
-
-| Language | AGT overview | OWASP Agentic Top 10 | Run guide |
-|---|---|---|---|
-| **.NET / C# (Verso)** | [`1-agt-overview.verso`](./dotnet-demos/1-agt-overview.verso) | [`2-owasp-agentic-top-10.verso`](./dotnet-demos/2-owasp-agentic-top-10.verso) | [`dotnet-demos/README.md`](./dotnet-demos/README.md) |
-| **Python (Jupyter)** | [`1-agt-overview.ipynb`](./python-demos/1-agt-overview.ipynb) | [`2-owasp-agentic-top-10.ipynb`](./python-demos/2-owasp-agentic-top-10.ipynb) | [`python-demos/README.md`](./python-demos/README.md) |
-
-The Python edition also includes an
-[`OWASP companion guide`](./python-demos/2-owasp-agentic-top-10-companion-guide.md).
-
----
-
-## Integrations in this hub
-
-| Integration | Languages | Highlights | Status |
-|---|---|---|---|
-| **[Microsoft Agent Framework (MAF)](./microsoft-agent-framework-demos/README.md)** | Python - .NET/C# | Agent-level **tool-call argument** governance, prompt + tool middleware, default-deny capability sandbox, governed multi-agent workflow, tamper-evident audit log | Ready |
-
-> More agent-framework and governance-pattern integrations will be added here over time. Each
-> integration is self-contained and independently runnable.
-
----
-
-## What every integration demonstrates
-
-- **Prompt governance** — deterministic block of PII / secrets / prompt-injection before the model runs.
-- **Tool capability sandbox** — a default-deny allowlist over *which* tools may run.
-- **Argument-boundary governance** — one agent-level policy that inspects tool-call *argument values* (numeric ceilings, forbidden values, data-residency sets) with no per-tool code.
-- **Governed multi-agent workflows** — one governance layer + one audit chain across multiple agents.
-- **Tamper-evident audit trail** — a hash-chained log where editing any record breaks the chain.
-
-All demos run with a deterministic scripted model (no API keys, no network), so results are
-identical for everyone — and the same governance layer works unchanged in front of a live model.
-
----
-
-## Quick start
-
-Pick an integration and follow its README:
-
-```bash
-# Microsoft Agent Framework integration
-cd microsoft-agent-framework-demos
-
-#   Python
-cd python && python -m venv .venv && .\.venv\Scripts\Activate.ps1 && pip install -r requirements.txt && python demos/run_all.py
-
-#   .NET / C#
-cd dotnet && dotnet run --project AgtMaf.Demos -- all
+```text
+Model proposes a tool call -> AGT evaluates policy -> allow, deny, or escalate -> execute and audit
 ```
 
----
+> The key idea: prompt instructions ask a stochastic model to follow the rules. AGT enforces the
+> rules in application code before a prompt reaches a model or a tool creates a side effect.
+
+## What's included
+
+| Asset | Purpose | Start here |
+|---|---|---|
+| **Presentation deck** | Explains agents, tool calling, the governance gap, AGT architecture, and the OWASP Top 10 for Agentic Applications 2026 | [Download the PowerPoint](./Agent-Governance-Toolkit_v5.pptx) |
+| **C# learning demos** | Two [Verso](https://github.com/DataficationSDK/Verso) notebooks: an AGT overview and all ten OWASP agentic risks demonstrated inside Contoso Bank | [C# / Verso guide](./dotnet-demos/README.md) |
+| **Python learning demos** | Equivalent Jupyter notebooks using the real `agent_os` APIs, plus an OWASP companion guide that explains each control | [Python / Jupyter guide](./python-demos/README.md) |
+| **Microsoft Agent Framework integration** | Complete Python and .NET implementations with prompt middleware, tool and argument governance, workflows, and audit evidence | [MAF integration guide](./microsoft-agent-framework-demos/README.md) |
+
+All runnable demos are deterministic and require no model endpoint, API key, or Azure deployment.
+Install or restore dependencies once, then the demonstrations run offline.
+
+## Suggested learning path
+
+1. **Understand the problem.** Read the opening sections of [the presentation deck](./Agent-Governance-Toolkit_v5.pptx) to learn how agents request tools, where execution happens, and why prompt-only safety is insufficient.
+2. **Learn the AGT fundamentals.** Run the overview notebook in [C#](./dotnet-demos/1-agt-overview.verso) or [Python](./python-demos/1-agt-overview.ipynb). You will see policy evaluation, enforcement latency, and a zero-trust tool gate.
+3. **Apply the controls to real risks.** Work through the OWASP notebook in [C#](./dotnet-demos/2-owasp-agentic-top-10.verso) or [Python](./python-demos/2-owasp-agentic-top-10.ipynb).
+4. **Study a framework integration.** Explore the [Microsoft Agent Framework demos](./microsoft-agent-framework-demos/README.md) to see where governance middleware belongs in a real agent runtime.
+5. **Experiment.** Change a policy rule, tool argument, trust level, or attack input and rerun the relevant scenario to observe the new deterministic decision.
+
+You can follow the whole path or start directly in the runtime you already know.
+
+## Hands-on notebooks
+
+| Runtime | Start with the overview | Continue with OWASP 2026 | Guide |
+|---|---|---|---|
+| **.NET / C#** | [`1-agt-overview.verso`](./dotnet-demos/1-agt-overview.verso) | [`2-owasp-agentic-top-10.verso`](./dotnet-demos/2-owasp-agentic-top-10.verso) | [Verso run guide](./dotnet-demos/README.md) |
+| **Python** | [`1-agt-overview.ipynb`](./python-demos/1-agt-overview.ipynb) | [`2-owasp-agentic-top-10.ipynb`](./python-demos/2-owasp-agentic-top-10.ipynb) | [Companion guide](./python-demos/2-owasp-agentic-top-10-companion-guide.md) |
+
+### Verify the C# notebooks
+
+Install the optional Verso CLI, then execute both notebooks headlessly from the repository root:
+
+```powershell
+dotnet tool install -g Verso.Cli
+verso run .\src\agent-governance-toolkit\dotnet-demos\1-agt-overview.verso --fail-fast
+verso run .\src\agent-governance-toolkit\dotnet-demos\2-owasp-agentic-top-10.verso --fail-fast
+```
+
+For an interactive learning experience, install the **Verso Notebook** VS Code extension, open a
+`.verso` file, and choose **Run All**. See the [C# guide](./dotnet-demos/README.md) for the tested
+cell counts and implementation notes.
+
+### Run the Python notebooks
+
+```powershell
+cd .\src\agent-governance-toolkit\python-demos
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+Open either `.ipynb` file, select the new environment as the kernel, and choose **Run All**.
+
+## Learn from the Microsoft Agent Framework integration
+
+The MAF integration demonstrates the production-shaped boundary around a real agent runtime:
+
+- deterministic prompt governance before the model call;
+- default-deny tool capability policy;
+- one agent-level middleware that inspects **tool-call argument values**;
+- allow, deny, and human-approval escalation paths;
+- governed multi-agent workflows; and
+- tamper-evident audit evidence.
+
+Choose an implementation:
+
+- [Python MAF demo](./microsoft-agent-framework-demos/python/README.md) - package, notebook, seven focused scripts, and offline verification.
+- [.NET MAF demo](./microsoft-agent-framework-demos/dotnet/README.md) - class library, console application, policy files, and offline verification.
+
+## Repository map
+
+```text
+agent-governance-toolkit/
+|-- Agent-Governance-Toolkit_v5.pptx    # Presentation deck
+|-- dotnet-demos/                       # C# Verso notebooks
+|-- python-demos/                       # Python Jupyter notebooks + companion guide
+|-- microsoft-agent-framework-demos/
+|   |-- dotnet/                         # .NET MAF integration
+|   `-- python/                         # Python MAF integration
+`-- README.md
+```
+
+## What you will learn
+
+- **The model proposes; the governed runtime disposes.** The model does not execute tools itself.
+- **Policy is deterministic and explainable.** The same action and context produce the same decision.
+- **Governance applies to arguments, not only tool names.** Amounts, targets, regions, and other values can be bounded centrally.
+- **Controls compose.** Identity, MCP scanning, execution boundaries, circuit breakers, lifecycle controls, and auditing reinforce the policy gate.
+- **Evidence matters.** Decisions can be inspected and tampering can be detected after the fact.
+
+## Production note
+
+These assets are optimized for learning and experimentation. A production
+implementation must additionally address durable audit storage, identity and key management,
+approval workflows, observability, availability, data protection, and organization-specific
+security and compliance requirements.
 
 ## Learn more
 
-- [Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit) — the toolkit this hub is built on.
-- [Microsoft Agent Framework](https://github.com/microsoft/agent-framework) — agents, tools, middleware, multi-agent workflows.
-- [Back to the Azure Scenario Hub](../../README.md).
-
-> These templates are optimised for learning and experimentation, **not** production. For
-> production-grade Azure infrastructure, see [Azure Verified Modules](https://aka.ms/avm).
+- [Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit)
+- [Microsoft Agent Framework](https://github.com/microsoft/agent-framework)
+- [OWASP Top 10 for Agentic Applications 2026](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)
+- [Verso](https://github.com/DataficationSDK/Verso)
+- [Back to Azure Scenario Hub](../../README.md)
