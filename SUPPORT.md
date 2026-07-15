@@ -1,131 +1,108 @@
 # Support
 
-Welcome to Azure Scenario Hub! We're here to help you successfully deploy and use the Azure architecture scenarios in this repository.
+Azure Scenario Hub is a community-maintained learning and experimentation repository. Support covers the documented deployment, run, validation, and cleanup paths for scenarios in this repository.
 
-## 🆘 Getting Help
+> [!IMPORTANT]
+> Support is provided on a best-effort basis with no service-level agreement. This repository is not an official Microsoft support channel and its scenarios are not production support commitments.
 
-### 📋 Before You Ask
+## Getting Help
 
-1. **Check the Documentation**: Review the scenario-specific README files
-2. **Search Existing Issues**: Look through [existing issues](../../issues) for similar problems
-3. **Review Prerequisites**: Ensure you meet all the requirements listed in each scenario
-4. **Check Azure Status**: Verify [Azure Service Health](https://status.azure.com/) for any ongoing issues
+### Before You Ask
 
-### 🐛 Reporting Issues
+1. Read the scenario README, including prerequisites, permissions, regional availability, cost, and cleanup.
+2. Search [existing issues](https://github.com/Ricky-G/azure-scenario-hub/issues) and [discussions](https://github.com/Ricky-G/azure-scenario-hub/discussions).
+3. Reproduce the problem from a clean environment using the documented commands.
+4. Confirm your Azure subscription, tenant, selected region, quotas, and active CLI context.
+5. Check [Azure Status](https://azure.status.microsoft/) and your subscription's Resource Health or Service Health blade.
+6. Remove secrets, tokens, tenant data, subscription IDs, certificates, and personal information from all logs and screenshots.
 
-For bugs, problems, or unexpected behavior:
+### Choose the Right Channel
 
-1. **Create a GitHub Issue**: Use our [issue templates](../../issues/new/choose)
-2. **Provide Details**: Include the information requested in the template
-3. **Be Specific**: Describe what you expected vs. what actually happened
+| Need | Channel |
+|---|---|
+| Reproducible scenario bug | [Bug report](https://github.com/Ricky-G/azure-scenario-hub/issues/new/choose) |
+| New scenario or enhancement | [Feature request](https://github.com/Ricky-G/azure-scenario-hub/issues/new/choose) |
+| Design question or community discussion | [GitHub Discussions](https://github.com/Ricky-G/azure-scenario-hub/discussions) |
+| Security vulnerability | Follow [SECURITY.md](SECURITY.md) and report privately |
+| Azure platform, billing, quota, or account incident | [Azure Support](https://azure.microsoft.com/support/create-ticket/) |
 
-### 💡 Feature Requests
+Do not use a public issue or discussion for security vulnerabilities or exposed credentials.
 
-Have an idea for a new scenario or enhancement?
+## What to Include
 
-1. **Check Existing Requests**: Review [existing feature requests](../../issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
-2. **Create a Feature Request**: Use the feature request template
-3. **Explain the Use Case**: Help us understand why this would be valuable
+Every support request should include:
 
-### 🤔 Questions and Discussions
+- Scenario name and link
+- Scenario type: Deployable, Runnable Demo, Benchmark, Investigation, or Legacy Support
+- Expected behavior and actual behavior
+- Exact reproduction commands, with secrets redacted
+- Complete error text and relevant logs
+- Operating system and runtime/tool versions
+- Azure region, service tier, deployment type, and authentication method when applicable
+- Whether the failure occurs in a clean environment
+- Validation or troubleshooting already attempted
 
-For general questions, best practices, or discussions:
+### Deployable Scenarios
 
-1. **GitHub Discussions**: Use [Discussions](../../discussions) for community Q&A
-2. **Scenario-Specific Questions**: Comment on the relevant scenario's documentation
+Also include the Azure CLI, Bicep, Terraform, PowerShell, or Bash version; deployment scope; resource provider registration state; quota information; and the failing deployment operation ID when available.
 
-## 📞 Support Channels
+### Runnable AI and Agent Demos
 
-| Type | Channel | Response Time |
-|------|---------|---------------|
-| 🐛 Bugs | [GitHub Issues](../../issues) | 1-3 business days |
-| 💡 Features | [GitHub Issues](../../issues) | 1 week |
-| ❓ Questions | [GitHub Discussions](../../discussions) | Best effort |
-| 🔒 Security | See [SECURITY.md](SECURITY.md) | 48 hours |
+Also include the Python or .NET version, dependency installation command, Azure endpoint type, model/deployment name without credentials, authentication method, and relevant device permissions. Confirm that your account has the documented Azure RBAC role.
 
-## 📋 When Creating Issues
+For new agent development, use [Microsoft Agent Framework](https://learn.microsoft.com/agent-framework/overview/). The Semantic Kernel scenario is retained only for legacy support and migration reference.
 
-Please include:
+### Benchmarks and Investigations
 
-### For Bug Reports
-- **Scenario Name**: Which scenario you're working with
-- **Azure Region**: Where you're deploying
-- **Error Messages**: Complete error text and stack traces
-- **Steps to Reproduce**: Detailed steps that led to the issue
-- **Environment**: OS, Azure CLI version, Bicep version
-- **Expected Behavior**: What should have happened
-- **Actual Behavior**: What actually happened
+Also include the test location, timestamp, service tier, workload parameters, raw result path, and any deviation from the documented methodology. Performance results are not comparable when the environment or workload differs materially.
 
-### For Feature Requests
-- **Scenario Type**: What kind of Azure architecture
-- **Use Case**: Why this scenario would be useful
-- **Acceptance Criteria**: What would make this complete
-- **Priority**: How important this is to you
+## Common Troubleshooting
 
-## 🔧 Self-Help Resources
+### Authentication and Authorization
 
-### Documentation
-- [Azure Documentation](https://learn.microsoft.com/azure/)
-- [Bicep Documentation](https://learn.microsoft.com/azure/azure-resource-manager/bicep/)
-- [Azure CLI Reference](https://learn.microsoft.com/cli/azure/)
+- Run `az account show` and confirm the tenant and subscription.
+- Prefer Microsoft Entra ID or managed identity over access keys.
+- Verify the documented RBAC role at the documented scope.
+- With `DefaultAzureCredential`, remove conflicting environment credentials and run `az login` again.
+- Never paste a credential into an issue. Revoke exposed credentials immediately.
 
-### Common Issues and Solutions
+### Deployment Failures
 
-#### Deployment Failures
-1. **Check Permissions**: Ensure you have Contributor access to the subscription/resource group
-2. **Verify Quotas**: Check if you've hit any Azure resource quotas
-3. **Review Names**: Ensure resource names are unique and follow Azure naming conventions
-4. **Check Regions**: Verify the Azure region supports all required services
+- Confirm required resource providers and preview features are registered.
+- Check regional service/model availability and subscription quota.
+- Inspect the Azure deployment operation details, not only the top-level error.
+- Remove partially deployed lab resources before retrying when the README requires a clean deployment.
+- Compile Bicep locally with `az bicep build` before deployment.
 
-#### Authentication Issues
-1. **Azure CLI Login**: Run `az login` and verify you're in the correct subscription
-2. **Permissions**: Ensure your account has the necessary RBAC permissions
-3. **Service Principal**: If using service principals, verify credentials are correct
+### Python and .NET Demos
 
-#### Resource Conflicts
-1. **Unique Names**: Many Azure resources require globally unique names
-2. **Existing Resources**: Check if resources already exist in your subscription
-3. **Cleanup**: Remove any partially deployed resources before retrying
+- Create the scenario's own virtual environment and install its pinned manifest.
+- Do not assume the repository-level environment contains every scenario dependency.
+- Run the scenario's offline tests or contract checks before making a live Azure call.
+- For audio demos, check microphone or speaker permission and the operating system's selected device.
 
-## 🎯 Best Practices for Getting Help
+### Cost and Cleanup
 
-1. **Be Patient**: Our maintainers are volunteers with day jobs
-2. **Be Respectful**: Follow our [Code of Conduct](CODE_OF_CONDUCT.md)
-3. **Be Detailed**: More information helps us help you faster
-4. **Follow Up**: Update your issues with additional information or resolution
-5. **Help Others**: Share your knowledge by answering questions from other users
+- Review the scenario's estimate before deployment.
+- Run cleanup as soon as testing is complete, especially for APIM Premium, AKS, Application Gateway, and other continuously billed resources.
+- Verify the resource group or individually scoped resources were actually deleted.
+- Billing disputes and subscription charges must go through [Azure Support](https://azure.microsoft.com/support/create-ticket/).
 
-## 🌟 Community Guidelines
+## Support Boundaries
 
-- **Be Kind**: Treat everyone with respect and kindness
-- **Be Constructive**: Provide helpful feedback and suggestions
-- **Be Patient**: Remember that everyone is learning
-- **Share Knowledge**: Help others who might have similar questions
-- **Follow Guidelines**: Adhere to our community standards
+Maintainers can help with repository code and documented scenario behavior. They cannot provide production architecture approval, operate your Azure environment, access your tenant, guarantee response times, resolve Azure service incidents, or accept liability for costs incurred while running a scenario.
 
-## 📚 Learning Resources
+For production architecture, review the [Azure Well-Architected Framework](https://learn.microsoft.com/azure/well-architected/) and use [Azure Verified Modules](https://aka.ms/avm) for infrastructure building blocks.
 
-### Azure Fundamentals
-- [Microsoft Learn - Azure Fundamentals](https://learn.microsoft.com/training/paths/azure-fundamentals/)
+## Useful Resources
+
+- [Azure documentation](https://learn.microsoft.com/azure/)
 - [Azure Architecture Center](https://learn.microsoft.com/azure/architecture/)
+- [Bicep documentation](https://learn.microsoft.com/azure/azure-resource-manager/bicep/)
+- [Azure CLI reference](https://learn.microsoft.com/cli/azure/)
+- [Microsoft Foundry documentation](https://learn.microsoft.com/azure/ai-foundry/)
+- [Microsoft Agent Framework](https://learn.microsoft.com/agent-framework/overview/)
 
-### Infrastructure as Code
-- [Bicep Learning Path](https://learn.microsoft.com/training/paths/bicep-deploy/)
-- [ARM Template Best Practices](https://learn.microsoft.com/azure/azure-resource-manager/templates/best-practices)
+## Contributing Back
 
-### DevOps and Automation
-- [Azure DevOps](https://learn.microsoft.com/azure/devops/)
-- [GitHub Actions for Azure](https://learn.microsoft.com/azure/developer/github/github-actions)
-
-## 🤝 Contributing Back
-
-Found a solution to a common problem? Consider:
-
-1. **Update Documentation**: Submit a PR to improve existing docs
-2. **Share Solutions**: Add your solution to discussions
-3. **Create Scenarios**: Contribute new scenarios that others might need
-4. **Review PRs**: Help review and test contributions from others
-
----
-
-**Remember**: This is a community-driven project. Your contributions, feedback, and participation make it better for everyone! 🚀
+If you resolve a repository issue, consider documenting the fix, improving a troubleshooting section, or contributing a focused regression test. See [CONTRIBUTING.md](CONTRIBUTING.md).

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and design discussions
+    url: https://github.com/Ricky-G/azure-scenario-hub/discussions
+    about: Ask usage questions, compare approaches, or discuss scenario ideas with the community.
+  - name: Report a security vulnerability privately
+    url: https://github.com/Ricky-G/azure-scenario-hub/security/advisories/new
+    about: Do not disclose vulnerabilities or exposed credentials in a public issue.
+  - name: Azure platform, billing, quota, or account support
+    url: https://azure.microsoft.com/support/create-ticket/
+    about: Use Azure Support for service incidents and subscription-specific problems.

@@ -1,32 +1,71 @@
 name: Bug Report
-description: File a bug report to help us improve
+description: Report a reproducible problem with a scenario, demo, benchmark, or investigation
 title: "[Bug]: "
 labels: ["bug", "triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        Thanks for helping improve Azure Scenario Hub. Do not include credentials, subscription IDs, private certificates, customer data, or other sensitive information. Report security vulnerabilities privately through the repository Security tab.
 
   - type: input
-    id: azure-region
+    id: scenario
     attributes:
-      label: Azure Region
-      description: Which Azure region were you deploying to?
-      placeholder: ex. australiaeast, eastus2, westeurope
+      label: Scenario
+      description: Which scenario or top-level repository feature is affected?
+      placeholder: ex. Azure OpenAI Realtime Transcription
     validations:
       required: true
 
   - type: dropdown
-    id: deployment-method
+    id: scenario-type
     attributes:
-      label: Deployment Method
-      description: How were you deploying the infrastructure?
+      label: Scenario Type
+      options:
+        - Deployable
+        - Runnable Demo
+        - Benchmark
+        - Investigation
+        - Legacy Support
+        - Repository documentation or website
+    validations:
+      required: true
+
+  - type: input
+    id: azure-region
+    attributes:
+      label: Azure Region or Offline
+      description: Which Azure region was used, or does the scenario run fully offline?
+      placeholder: ex. eastus2, swedencentral, or offline
+
+  - type: dropdown
+    id: execution-method
+    attributes:
+      label: Execution Method
+      description: How did you deploy or run the scenario?
       options:
         - Azure CLI
         - Azure PowerShell
         - Azure Developer CLI (azd)
+        - Terraform
+        - Python
+        - .NET
+        - Jupyter or Verso notebook
+        - Test or benchmark harness
         - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, relevant CLI/runtime/SDK versions, Azure service tier or model deployment, and authentication method. Do not include secrets.
+      placeholder: |
+        OS: Windows 11
+        Runtime: Python 3.11
+        Authentication: Azure CLI / Entra ID
+        Azure service/model: ...
     validations:
       required: true
 
@@ -34,8 +73,7 @@ body:
     id: what-happened
     attributes:
       label: What happened?
-      description: Describe the bug and what you expected to happen
-      placeholder: Tell us what you see!
+      description: Describe the actual behavior and the documented behavior you expected.
     validations:
       required: true
 
@@ -43,7 +81,7 @@ body:
     id: steps-to-reproduce
     attributes:
       label: Steps to Reproduce
-      description: What steps did you take that led to this issue?
+      description: Provide the smallest clean-environment reproduction you can.
       placeholder: |
         1. Run command '...'
         2. See error '...'
@@ -55,8 +93,14 @@ body:
     id: logs
     attributes:
       label: Relevant log output
-      description: Please copy and paste any relevant log output (remove any sensitive information)
+      description: Paste relevant output after removing all sensitive information.
       render: shell
+
+  - type: textarea
+    id: attempted
+    attributes:
+      label: Validation and Troubleshooting Attempted
+      description: Which documented checks, tests, cleanup/redeploy steps, or alternative environments have you tried?
 
   - type: checkboxes
     id: terms
@@ -67,4 +111,6 @@ body:
         - label: I have searched existing issues to ensure this is not a duplicate
           required: true
         - label: I have removed any sensitive information from logs/screenshots
+          required: true
+        - label: This is not a security vulnerability; security issues are reported privately
           required: true

@@ -1,33 +1,42 @@
 name: Feature Request
-description: Suggest an idea for this project
+description: Propose a new scenario or a focused improvement to an existing one
 title: "[Feature]: "
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting a new feature! We appreciate your input.
+        Thanks for suggesting an improvement. Search the current catalog and existing issues first. New contributions must have a clear Azure or Microsoft AI engineering connection.
 
-  - type: checkboxes
-    id: feature-type
+  - type: dropdown
+    id: scenario-type
     attributes:
-      label: Feature Type
-      description: What type of feature are you requesting?
+      label: Scenario or Change Type
       options:
-        - label: Infrastructure enhancement (Bicep templates)
-        - label: Function code improvement
-        - label: Security enhancement
-        - label: Documentation improvement
-        - label: New Azure service integration
-        - label: CI/CD pipeline addition
-        - label: Other
+        - New Deployable scenario
+        - New Runnable Demo
+        - New Benchmark
+        - New Investigation
+        - Existing scenario enhancement
+        - Documentation or website improvement
+        - CI, validation, or security improvement
+    validations:
+      required: true
+
+  - type: input
+    id: azure-connection
+    attributes:
+      label: Azure or Microsoft AI Connection
+      description: Which Azure service, Microsoft AI framework, or engineering behavior does this address?
+      placeholder: ex. Azure API Management, Microsoft Agent Framework, AKS networking
+    validations:
+      required: true
 
   - type: textarea
     id: problem-description
     attributes:
       label: Problem Description
-      description: What problem does this feature solve?
-      placeholder: Describe the problem you're trying to solve
+      description: What specific engineering question, failure mode, or learning gap should this solve?
     validations:
       required: true
 
@@ -35,20 +44,36 @@ body:
     id: proposed-solution
     attributes:
       label: Proposed Solution
-      description: Describe your proposed solution
-      placeholder: How would you like to see this problem solved?
+      description: Describe the smallest complete scenario or change that would solve the problem.
     validations:
       required: true
 
   - type: textarea
-    id: alternatives
+    id: validation
     attributes:
-      label: Alternatives Considered
-      description: What alternatives have you considered?
-      placeholder: Describe any alternative solutions you've thought about
+      label: Validation and Evidence
+      description: How should the result be tested or proven? Include expected evidence, thresholds, or success criteria.
+    validations:
+      required: true
+
+  - type: textarea
+    id: cost-and-limits
+    attributes:
+      label: Cost, Prerequisites, and Limitations
+      description: Identify expected Azure cost, required permissions/quotas, regional constraints, and known production-hardening gaps.
 
   - type: textarea
     id: additional-context
     attributes:
       label: Additional Context
       description: Add any other context, screenshots, or examples about the feature request
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched the current catalog and existing issues for duplicates
+          required: true
+        - label: The request is focused on one Azure or Microsoft AI engineering problem
+          required: true

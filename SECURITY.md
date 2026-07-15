@@ -1,99 +1,103 @@
 # Security Policy
 
-## 🔒 Reporting Security Vulnerabilities
+Azure Scenario Hub contains learning-oriented infrastructure, applications, scripts, notebooks, policies, benchmarks, and captured evidence. Security reports affecting any of these artifacts are welcome.
 
-We take the security of Azure Scenario Hub seriously. If you discover a security vulnerability in any of the scenarios, templates, or documentation, please report it to us responsibly.
+## Supported Versions
 
-### How to Report
+| Version | Security support |
+|---|---|
+| Default branch (`main`) and latest release | Reviewed and updated on a best-effort basis |
+| Older tags, branches, forks, or copied deployments | Not actively patched; reproduce against `main` before reporting |
 
-**Please do NOT report security vulnerabilities through public GitHub issues.**
+This repository is not a hosted service and does not provide a production security SLA.
 
-Instead, please report security vulnerabilities by:
+## Report a Vulnerability Privately
 
-1. **Email**: Send details to [security@yourorganization.com] (replace with actual contact)
-2. **GitHub Security Advisories**: Use the "Security" tab in this repository to report privately
-3. **Direct Message**: Contact repository maintainers directly for sensitive issues
+**Do not open a public issue or discussion for a suspected vulnerability.** Private vulnerability reporting is enabled for this repository.
+
+Use GitHub's **[Report a vulnerability](https://github.com/Ricky-G/azure-scenario-hub/security/advisories/new)** form. This creates a private advisory visible only to the reporter and repository maintainers while the issue is assessed.
+
+If a credential or secret has been exposed, revoke or rotate it immediately. Do not wait for maintainer acknowledgement and do not include the live value in the report.
 
 ### What to Include
 
-When reporting a security vulnerability, please include:
+Provide enough information to reproduce and assess the issue safely:
 
-- **Description**: Clear description of the vulnerability
-- **Impact**: Potential impact and attack scenarios
-- **Reproduction Steps**: Step-by-step instructions to reproduce the issue
-- **Affected Components**: Which scenarios, templates, or configurations are affected
-- **Suggested Fix**: If you have ideas for remediation
+- Affected scenario, file, branch, and commit
+- Vulnerability description and realistic impact
+- Required Azure configuration, permissions, and deployment scope
+- Minimal reproduction steps or proof of concept
+- Whether exploitation requires a secret, privileged identity, network position, or deployed resource
+- Suggested mitigation or fix, if known
+- Any disclosure deadline or existing public disclosure
 
-### Response Timeline
+Redact tenant data, subscription IDs, access tokens, private certificates, customer content, and personal information. Maintainers do not need access to your Azure environment.
 
-We aim to respond to security reports within:
-- **Initial Response**: 48 hours
-- **Status Update**: 7 days
-- **Resolution**: 30 days (depending on complexity)
+## In Scope
 
-## 🛡️ Security Best Practices
+- Insecure defaults or privilege escalation in Bicep or Terraform
+- Authentication, authorization, certificate, or managed-identity bypasses
+- Public exposure of resources that the scenario claims are private
+- Secret leakage through source, logs, reports, notebooks, workflows, or generated artifacts
+- Injection, unsafe deserialization, path traversal, request forgery, or code execution in runnable demos
+- Material dependency vulnerabilities in directly used code paths
+- Agent tool-call, argument, data-boundary, or audit-control bypasses where the scenario claims enforcement
+- Documentation that directs users to expose credentials or deploy an unsafe configuration
 
-### For Contributors
+General hardening suggestions, unsupported production adaptations, Azure platform incidents, quota problems, and ordinary deployment errors are not vulnerabilities in this repository. Use [SUPPORT.md](SUPPORT.md) or [Azure Support](https://azure.microsoft.com/support/create-ticket/) instead.
 
-When contributing scenarios or templates:
+## Handling and Disclosure
 
-1. **Review Dependencies**: Ensure all external dependencies are from trusted sources
-2. **Minimize Permissions**: Use least-privilege principles in IAM configurations
-3. **Secrets Management**: Never hardcode secrets, keys, or sensitive information
-4. **Network Security**: Implement proper network segmentation and access controls
-5. **Encryption**: Use encryption in transit and at rest where applicable
+Reports are handled on a best-effort basis. Maintainers will validate the issue against the default branch, assess impact, and coordinate a fix and disclosure when appropriate. Complex Azure or third-party behavior may require additional validation.
 
-### For Users
+Please allow maintainers a reasonable opportunity to investigate before public disclosure. Do not access data, identities, subscriptions, or resources that you do not own or have explicit permission to test.
 
-When deploying scenarios:
+## Security Baseline for Contributions
 
-1. **Review Templates**: Always review Bicep/ARM templates before deployment
-2. **Customize Security**: Adapt security configurations to your requirements
-3. **Monitor Resources**: Implement proper monitoring and alerting
-4. **Regular Updates**: Keep deployed resources and templates updated
-5. **Access Control**: Implement proper RBAC and conditional access policies
+All contributions must follow these minimum expectations:
 
-## 🔍 Security Considerations by Scenario
+- No hardcoded credentials, tokens, connection strings, private keys, subscription IDs, or populated `.env` files
+- Microsoft Entra ID or managed identity preferred over keys and service principals
+- Least-privilege RBAC scoped to the narrowest practical resource
+- Public network access disabled when the scenario claims private isolation
+- Encryption in transit and at rest using supported Azure controls
+- Dependency versions reviewed and patched when a known vulnerability affects the scenario
+- Diagnostic output and captured evidence scrubbed of sensitive data
+- AI inputs, outputs, tool arguments, and third-party data flows documented and bounded
+- Production-hardening gaps stated explicitly
 
-### Event Grid with Private Endpoints
-- ✅ Uses private endpoints for secure communication
-- ✅ Network isolation through VNet configuration
-- ⚠️ Review Logic Apps authentication settings
-- ⚠️ Ensure proper Event Grid access keys management
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete engineering and validation requirements.
 
-### Container Apps Environments
-- ✅ VNet integration for private scenarios
-- ✅ Built-in security features of Container Apps
-- ⚠️ Review ingress configurations
-- ⚠️ Implement proper image scanning in CI/CD
+## Responsibilities for Users
 
-## 📋 Security Checklist
+These scenarios are designed for experimentation, learning, and lab environments. Before adapting one for production:
 
-Before deploying any scenario to production:
+- Review every template, script, policy, dependency, and application code path.
+- Replace learning-oriented defaults with your organization's approved identity, network, logging, backup, availability, data-retention, and compliance controls.
+- Use [Azure Verified Modules](https://aka.ms/avm) for production infrastructure building blocks.
+- Run threat modeling, security testing, dependency scanning, and policy validation in your own environment.
+- For AI and agent scenarios, evaluate prompt injection, unsafe tool use, content safety, data residency, human oversight, auditability, and third-party model/tool boundaries.
+- Monitor costs and remove test resources promptly.
 
-- [ ] Review all security configurations
-- [ ] Update default passwords and keys
-- [ ] Configure proper network access controls
-- [ ] Enable Azure Security Center recommendations
-- [ ] Implement monitoring and alerting
-- [ ] Test backup and disaster recovery procedures
-- [ ] Validate compliance requirements
-- [ ] Document security procedures
+Microsoft Agent Framework is the recommended framework for new agent development. The Semantic Kernel example is retained only for legacy support and migration reference.
 
-## 🔗 Additional Resources
+## Pre-Deployment Security Checklist
 
-- [Azure Security Best Practices](https://learn.microsoft.com/azure/security/)
-- [Azure Security Center](https://learn.microsoft.com/azure/security-center/)
-- [Azure Well-Architected Framework - Security](https://learn.microsoft.com/azure/architecture/framework/security/)
+- [ ] Review the full implementation and its transitive dependencies
+- [ ] Replace access keys with managed identity where supported
+- [ ] Validate least-privilege RBAC and Conditional Access requirements
+- [ ] Restrict network access and verify private DNS behavior
+- [ ] Enable Microsoft Defender for Cloud recommendations, diagnostics, alerts, and audit retention
+- [ ] Define backup, recovery, availability, and incident-response requirements
+- [ ] Validate data classification, residency, retention, and compliance obligations
+- [ ] Test cleanup, credential rotation, and resource ownership boundaries
+- [ ] Document accepted risks and obtain the required production approvals
+
+## Additional Resources
+
+- [Azure security documentation](https://learn.microsoft.com/azure/security/)
+- [Azure Well-Architected Framework: Security](https://learn.microsoft.com/azure/well-architected/security/)
+- [Microsoft Defender for Cloud](https://learn.microsoft.com/azure/defender-for-cloud/)
+- [Azure Verified Modules](https://aka.ms/avm)
+- [Microsoft Agent Framework transparency FAQ](https://github.com/microsoft/agent-framework/blob/main/TRANSPARENCY_FAQS.md)
 - [Microsoft Security Response Center](https://www.microsoft.com/msrc)
-
-## 📜 Supported Versions
-
-| Version | Supported          |
-| ------- | ------------------ |
-| Latest  | ✅ Fully supported |
-| Previous| ⚠️ Security fixes only |
-
----
-
-**Disclaimer**: The scenarios in this repository are provided for educational and testing purposes. Always conduct thorough security reviews and testing before using any configurations in production environments.

@@ -1,52 +1,96 @@
 # Azure Scenario Hub 🚀
 
-A collection of tested Azure cloud and Microsoft AI engineering scenarios: deployable architectures, runnable demos, and evidence-backed experiments.
+**Tested Azure cloud and Microsoft AI engineering scenarios:** deployable architectures, runnable demos, benchmarks, and evidence-backed investigations.
 
-[![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-23-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) ![Formats](https://img.shields.io/badge/Formats-IaC%20%2B%20Demos%20%2B%20Reports-9b8cff?style=for-the-badge)
+[![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-23-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) [![Ready](https://img.shields.io/badge/Ready%20Now-20-34d399?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) [![Latest Release](https://img.shields.io/github/v/release/Ricky-G/azure-scenario-hub?style=for-the-badge&label=Release)](https://github.com/Ricky-G/azure-scenario-hub/releases/latest) [![License](https://img.shields.io/badge/License-MIT-f5b342?style=for-the-badge)](LICENSE)
 
 > 🌐 **Browse every scenario in the interactive gallery → [clouddev.blog/azure-scenario-hub](https://clouddev.blog/azure-scenario-hub/)** — featuring the styled [mTLS passthrough → APIM report](https://clouddev.blog/azure-scenario-hub/reports/app-gateway-mtls-passthrough-apim-validation/) and the [Terraform drift report](https://clouddev.blog/azure-scenario-hub/reports/terraform-drift-detection-shared-platform/).
 
 > [!IMPORTANT]
 > **These scenarios are built for experimentation, learning, and lab environments — not production.**
-> For production infrastructure, use [Azure Verified Modules](https://aka.ms/avm). Before adapting any application or AI demo for production, apply your organization's security, identity, reliability, and compliance requirements.
+> For production infrastructure, use [Azure Verified Modules](https://aka.ms/avm). Before adapting any application or AI demo, add the security, identity, reliability, observability, data-governance, and compliance controls required by your organization.
 
 ## 🎯 What is this?
 
-A focused catalog of reproducible Azure and Microsoft AI engineering work. Each entry provides working code, tested commands, and the evidence or documentation needed to understand what it proves.
+A focused catalog of reproducible Azure and Microsoft AI engineering work. Each scenario is independently documented and provides working code, tested commands, and the evidence needed to understand what it deploys, demonstrates, measures, or proves.
+
+| Scenario type | What to expect |
+|---|---|
+| **Deployable** | Azure infrastructure with Bicep or Terraform, deployment automation, cost guidance, and cleanup steps |
+| **Runnable Demo** | A focused application, SDK, notebook, or agent example with isolated dependencies and repeatable run commands |
+| **Benchmark** | A documented workload, methodology, raw evidence, thresholds, and summarized results |
+| **Investigation** | A reproducible diagnostic or platform-behavior proof backed by captured evidence |
 
 ### Use cases:
 - **Deployable Architecture** - Provision Azure patterns with Bicep or Terraform
-- **AI Engineering** - Run focused Azure AI and Microsoft agent framework examples
+- **AI Engineering** - Run focused Azure AI and Microsoft Agent Framework examples
 - **Architecture Validation** - Test designs with working reference implementations
 - **Evidence-Based Research** - Reproduce benchmarks, diagnostics, and platform behavior
 - **Hands-On Learning** - Start from complete examples instead of empty projects
 
-## ⭐ Featured Scenario
+## ⭐ Featured Work
 
 <table>
 <tr>
-<td width="55%" valign="top">
+<td width="50%" valign="top">
+
+### [Agent Governance Toolkit](./src/agent-governance-toolkit/)
+
+A presenter-ready and developer-ready hub for applying deterministic governance to AI agents.
+
+- C# Verso and Python Jupyter live demos
+- Complete OWASP Top 10 for Agentic Applications 2026 walkthrough
+- Microsoft Agent Framework integrations in Python and .NET
+- Prompt, tool, argument, workflow, and audit governance
+- Runs fully offline without a model endpoint or API key
+
+</td>
+<td width="50%" valign="top">
 
 ### [APIM Backend Fan-out Benchmark](./src/apim-backend-fanout-benchmark/)
 
 Head-to-head benchmark of **shared-`Backend` + `rewrite-uri`** vs **one-`Backend`-per-API** on APIM Premium.
 
-**Result after 1.67M requests:** No measurable difference. **882 vs 874 req/s, 146 vs 153 ms p95, 0 errors** on both sides. Pick the pattern based on operational simplicity, not performance.
+**Result after 1.67M requests:** no measurable difference. **882 vs 874 req/s, 146 vs 153 ms p95, and 0 errors** on both sides. Choose based on operational simplicity, not assumed performance.
 
-- 2× APIM Premium · .NET 10 mock backend on Flex Consumption FC1
-- k6 stepped load: 50 → 100 → 200 VUs over ~32 min
-- App Insights `BackendTime` / `ClientTime` KQL
-- Interactive HTML dashboard + auto-generated Markdown report
-- Includes the methodology trap that nearly made me publish the wrong answer
+- k6 stepped load from 50 to 200 virtual users
+- Application Insights and KQL evidence
+- Interactive dashboard and generated report
+- Includes the methodology trap that nearly produced the wrong conclusion
 
 </td>
-<td width="45%" valign="top">
-<a href="./src/apim-backend-fanout-benchmark/"><img src="./src/apim-backend-fanout-benchmark/docs/dashboard.png" alt="APIM Backend Fan-out Benchmark dashboard"></a>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### [App Gateway mTLS Passthrough to APIM](./src/app-gateway-mtls-passthrough-apim-validation/)
+
+An end-to-end proof that Application Gateway can forward a client certificate while API Management performs real possession, trust, and per-client authorization checks.
+
+- Validated on API Management v1 and v2
+- Rejects untrusted and forged-signature certificates
+- Key Vault-sourced trust material
+- Automated evidence suite and styled report
+
+</td>
+<td width="50%" valign="top">
+
+### [Terraform Drift: Platform vs. App Team](./src/terraform-drift-detection-shared-platform/)
+
+Measured evidence showing exactly when app-team Bicep additions do and do not create drift in a Terraform-managed shared platform.
+
+- Child resources produced zero drift
+- Managed-attribute changes crossed the ownership boundary
+- Includes raw plans, policy findings, and an HTML report
+- Documents the `ignore_changes` escape hatch and its tradeoffs
+
 </td>
 </tr>
 </table>
 
 ## 🏗️ Available Scenarios
+
+**Status guide:** ✅ **Ready** = deployable and documented · ✅ **Runnable** = application/demo run path validated · 🟠 **Legacy** = retained for support or migration reference · 🚧 **Coming Soon** = catalogued but not yet complete
 
 ### Networking & Security
 
@@ -145,6 +189,17 @@ scenario-name/
 └── docs/ or report/       # Optional diagrams and evidence
 ```
 
+The exact shape varies by scenario type. The scenario README is always the source of truth for prerequisites, permissions, cost, commands, validation evidence, and cleanup.
+
+## ✅ Validation Standard
+
+- Infrastructure templates are compiled and, where stated, exercised in a clean Azure environment.
+- Runnable demos use pinned dependencies and focused offline tests or contract checks whenever possible.
+- Benchmarks document workload shape, test location, thresholds, raw evidence, and limitations.
+- Investigations distinguish observed behavior from assumptions and retain the evidence needed to reproduce the result.
+- Secrets belong in environment variables, managed identity, or Key Vault — never in source control.
+- Every scenario must explain its production-hardening gap and how to remove billable resources.
+
 ## 💡 Pro Tips
 
 - **Choose the Scenario Type** - Deployable, runnable, benchmark, and investigation entries have different prerequisites
@@ -161,13 +216,14 @@ To contribute a new Azure scenario:
 3. Test the deployment or runnable demo in a clean environment
 4. Submit a pull request
 
-Check the [Contributing Guide](CONTRIBUTING.md) for detailed requirements.
+Check the [Contributing Guide](CONTRIBUTING.md) for detailed requirements and the [Community Code of Conduct](CODE_OF_CONDUCT.md) for participation expectations.
 
 ## 📞 Need Help?
 
-- **Questions?** [Open an issue](https://github.com/Ricky-G/azure-scenario-hub/issues)
-- **Bug reports** - Submit detailed reproduction steps
-- **General discussion** - Use [discussions](https://github.com/Ricky-G/azure-scenario-hub/discussions)
+- **Run or deployment help** - Start with the [Support Guide](SUPPORT.md)
+- **Bug reports and scenario requests** - Use [GitHub Issues](https://github.com/Ricky-G/azure-scenario-hub/issues/new/choose)
+- **Questions and design discussion** - Use [GitHub Discussions](https://github.com/Ricky-G/azure-scenario-hub/discussions)
+- **Security vulnerabilities** - Follow the private process in [SECURITY.md](SECURITY.md); do not open a public issue
 
 ## 📝 License
 
@@ -182,6 +238,6 @@ MIT License - feel free to use these scenarios however you like!
 ---
 
 <p align="center">
-  Made with ❤️ for the Azure community<br/>
+  Made with ❤️ for the Azure & AI community<br/>
   <strong>Star ⭐ this repo if you find it helpful!</strong>
 </p>
