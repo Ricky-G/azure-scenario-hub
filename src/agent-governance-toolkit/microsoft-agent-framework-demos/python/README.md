@@ -139,7 +139,7 @@ flowchart TD
 
 ## Quick start
 
-From this folder (`src/agent-governance-toolkit/microsoft-agent-framework/python`):
+From this folder (`src/agent-governance-toolkit/microsoft-agent-framework-demos/python`):
 
 ```powershell
 # 1) Create and activate an isolated environment

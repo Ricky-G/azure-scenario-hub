@@ -313,7 +313,7 @@ version: 1.0.0
 | Network egress | `agent_os.egress_policy.EgressPolicy().load_from_yaml(text)` | (egress control) |
 | Policy engine | `agent_os.policies.schema.PolicyDocument.from_yaml(path)` / `.to_yaml()` | the MAF integration's `*.yaml` policies |
 
-> The sibling **[Microsoft Agent Framework integration](../microsoft-agent-framework/python/policies)**
+> The sibling **[Microsoft Agent Framework integration](../microsoft-agent-framework-demos/python/policies)**
 > already ships hand-written YAML policy files for the `PolicyDocument` engine — a good example of the
 > YAML-first style.
 

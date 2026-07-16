@@ -124,7 +124,7 @@
   @media (max-width: 720px) { .notice { flex-wrap: wrap; } .notice .cta { width: 100%; text-align: center; } }
 
   /* ---------- section heading ---------- */
-  .sec { padding: 46px 0 8px; }
+  .sec { padding: 46px 0 8px; scroll-margin-top: 62px; }
   .sec-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
   .sec-head h2 { font-size: clamp(22px, 3vw, 30px); margin: 0; letter-spacing: -.6px; font-weight: 800; }
   .sec-head p { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
@@ -135,7 +135,7 @@
     position: relative; overflow: hidden;
     background: linear-gradient(135deg, #16224c, #0e1633);
     border: 1px solid var(--line); border-radius: 22px;
-    display: grid; grid-template-columns: 1.05fr 1fr; gap: 8px;
+    display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 8px;
   }
   .feature::before {
     content: ""; position: absolute; inset: 0;
@@ -153,9 +153,7 @@
   .feature .finding .g { color: var(--green); font-weight: 700; }
   .feature .finding .a { color: var(--amber); font-weight: 700; }
   .feature-cta { display: flex; gap: 11px; flex-wrap: wrap; }
-  .feature-media { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; padding: 22px; }
-  .feature-media a { display: block; width: 100%; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(0,0,0,.45); transition: .25s; }
-  .feature-media a:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 26px 60px rgba(0,0,0,.55); }
+  .feature-media { position: relative; z-index: 1; }
   .feature-media img { display: block; width: 100%; height: auto; }
 
   /* ---------- controls ---------- */
@@ -210,19 +208,25 @@
   .card.legacy { border-color: rgba(245,179,66,.55); background: linear-gradient(180deg, rgba(63,45,24,.92), var(--bg-2)); box-shadow: inset 4px 0 0 var(--amber), 0 0 28px rgba(245,179,66,.08); }
   .card.legacy h3 { color: #ffd98a; }
 
-  /* ---------- sub-scenarios (featured hub) ---------- */
-  .subscen-wrap { flex-direction: column; align-items: stretch; justify-content: center; gap: 11px; padding: 24px; }
-  .subscen-head { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
-  .subscen-kicker { align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 1.8px; text-transform: uppercase; font-weight: 700; color: var(--purple); background: rgba(155,140,255,.12); border: 1px solid rgba(155,140,255,.32); padding: 5px 11px; border-radius: 999px; }
-  .subscen-title { font: 800 16px var(--sans); color: var(--ink); letter-spacing: -.3px; }
-  .subscen-title b { color: var(--blue); }
-  .subscen { position: relative; display: flex; gap: 14px; align-items: flex-start; text-decoration: none; background: #0a0e1c; border: 1px solid var(--line); border-radius: 14px; padding: 15px 16px; transition: .18s; }
-  .subscen:hover { border-color: var(--purple); transform: translateY(-2px); background: #0c1226; box-shadow: 0 10px 26px rgba(0,0,0,.35); }
-  .subscen-num { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 9px; font: 800 15px var(--mono); color: #08122b; background: linear-gradient(135deg, var(--blue), var(--purple)); box-shadow: 0 4px 12px rgba(78,163,255,.28); }
-  .subscen-tx { display: flex; flex-direction: column; }
-  .subscen-t { font-size: 14.5px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
-  .subscen-d { font-size: 12.6px; color: var(--muted); line-height: 1.5; }
-  .subscen-d b { color: #cdd7f0; font-weight: 700; }
+  /* ---------- featured learning paths ---------- */
+  .learning-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; gap: 11px; padding: 24px; }
+  .learning-head { grid-column: 1 / -1; display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 2px; }
+  .learning-head-copy { display: flex; flex-direction: column; gap: 5px; }
+  .learning-kicker { align-self: flex-start; font-family: var(--mono); font-size: 10.5px; letter-spacing: 1.8px; text-transform: uppercase; font-weight: 700; color: var(--purple); background: rgba(155,140,255,.12); border: 1px solid rgba(155,140,255,.32); padding: 5px 11px; border-radius: 999px; }
+  .learning-title { font: 800 17px var(--sans); color: var(--ink); }
+  .learning-note { color: var(--green); font: 600 11px var(--mono); white-space: nowrap; }
+  .path-card { min-width: 0; min-height: 150px; display: flex; flex-direction: column; gap: 8px; background: rgba(7,11,20,.78); border: 1px solid var(--line); border-radius: 14px; padding: 15px; transition: transform .18s, border-color .18s, background .18s, box-shadow .18s; }
+  .path-card:hover { border-color: var(--purple); transform: translateY(-3px); background: #0c1226; box-shadow: 0 14px 30px rgba(0,0,0,.38); }
+  .path-card.deck { border-color: rgba(245,179,66,.42); background: linear-gradient(145deg, rgba(86,58,17,.52), rgba(7,11,20,.86)); }
+  .path-card.deck:hover { border-color: var(--amber); }
+  .path-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .path-icon { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 30px; padding: 0 8px; border-radius: 9px; font: 800 11px var(--mono); color: #08122b; background: linear-gradient(135deg, var(--blue), var(--purple)); box-shadow: 0 4px 12px rgba(78,163,255,.25); }
+  .deck .path-icon { background: linear-gradient(135deg, var(--amber), #ffce6a); }
+  .path-meta { color: var(--faint); font: 600 10.5px var(--mono); text-transform: uppercase; }
+  .path-title { color: var(--ink); font-size: 14.5px; font-weight: 800; line-height: 1.25; }
+  .path-desc { color: var(--muted); font-size: 12.4px; line-height: 1.48; }
+  .path-link { margin-top: auto; color: var(--blue); font-size: 12px; font-weight: 700; }
+  .deck .path-link { color: var(--amber); }
 
   .noresults { display: none; text-align: center; color: var(--muted); padding: 50px 0; font-size: 16px; }
 
@@ -240,8 +244,13 @@
 
   @media (max-width: 860px) {
     .feature { grid-template-columns: 1fr; }
-    .feature-media { order: -1; padding: 22px 22px 0; }
+    .learning-paths { padding: 0 22px 22px; }
     .nav-links a:not(.nav-cta) { display: none; }
+  }
+  @media (max-width: 600px) {
+    .learning-paths { grid-template-columns: 1fr; }
+    .learning-head { align-items: flex-start; flex-direction: column; gap: 6px; }
+    .path-card { min-height: 0; }
   }
 </style>
 </head>
@@ -292,7 +301,7 @@
 <!-- FEATURED -->
 <section class="sec" id="featured">
   <div class="wrap">
-    <p class="eyebrow">★ Featured scenario</p>
+    <p class="eyebrow">★ Featured learning hub</p>
 
     <!-- Featured: Agent Governance Toolkit (hub) -->
     <div class="feature reveal">
@@ -302,34 +311,48 @@
           <span class="status ready"><span class="d"></span>Ready · 100% offline</span>
         </div>
         <h3>Agent Governance Toolkit</h3>
-        <p>A hub for wrapping AI agents in a <strong>deterministic policy layer</strong> with Microsoft's Agent Governance Toolkit: every prompt and tool call (including <strong>argument values</strong>) checked <em>before</em> it runs, with a tamper-evident audit trail. No API keys, no network.</p>
+        <p>A guided, hands-on path for learning how Microsoft's Agent Governance Toolkit places a <strong>deterministic policy layer</strong> between an agent's proposed action and execution. Every prompt, tool call, and <strong>argument value</strong> can be checked before side effects occur.</p>
         <div class="finding">
-          <span class="g">10 / 10</span> OWASP Agentic Top&nbsp;10 risks defended (live, with real controls)<br/>
-          <span class="g">2</span> sub-scenarios · Python &amp; .NET · runs fully offline
+          <span class="g">28 slides</span> · visual briefing from fundamentals to OWASP 2026<br/>
+          <span class="g">4 paths</span> · deck, C# Verso, Python Jupyter, and MAF integrations<br/>
+          <span class="g">10 / 10</span> OWASP agentic risks demonstrated with real controls
         </div>
         <div class="feature-cta">
           <a class="btn primary" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit" target="_blank" rel="noopener">&lt;/&gt; Explore the hub</a>
-          <a class="btn ghost" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/live-demos" target="_blank" rel="noopener">▶ Live demos</a>
+          <a class="btn ghost" href="https://github.com/Ricky-G/azure-scenario-hub/raw/refs/heads/main/src/agent-governance-toolkit/Agent-Governance-Toolkit_v5.pptx" target="_blank" rel="noopener">↓ Download deck</a>
         </div>
       </div>
-      <div class="feature-media subscen-wrap">
-        <div class="subscen-head">
-          <span class="subscen-kicker">◆ Sub-scenario hub</span>
-          <span class="subscen-title"><b>2 sub-scenarios</b>: pick a path</span>
+      <div class="feature-media learning-paths">
+        <div class="learning-head">
+          <div class="learning-head-copy">
+            <span class="learning-kicker">◆ Choose a starting point</span>
+            <span class="learning-title">One topic, four ways in</span>
+          </div>
+          <span class="learning-note">No model · no API key</span>
         </div>
-        <a class="subscen" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/microsoft-agent-framework" target="_blank" rel="noopener">
-          <span class="subscen-num">1</span>
-          <span class="subscen-tx">
-            <span class="subscen-t">🧩 Microsoft Agent Framework</span>
-            <span class="subscen-d">Govern MAF agents &amp; workflows in <b>Python &amp; .NET</b>: prompt, tool-call &amp; argument-value governance with a hash-chained audit log.</span>
-          </span>
+        <a class="path-card deck" href="https://github.com/Ricky-G/azure-scenario-hub/raw/refs/heads/main/src/agent-governance-toolkit/Agent-Governance-Toolkit_v5.pptx" target="_blank" rel="noopener">
+          <span class="path-top"><span class="path-icon">PPTX</span><span class="path-meta">28 slides</span></span>
+          <span class="path-title">Presentation deck</span>
+          <span class="path-desc">Agents, tool calling, the governance gap, AGT architecture, and the complete OWASP 2026 story.</span>
+          <span class="path-link">Download PowerPoint ↓</span>
         </a>
-        <a class="subscen" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/live-demos" target="_blank" rel="noopener">
-          <span class="subscen-num">2</span>
-          <span class="subscen-tx">
-            <span class="subscen-t">🛡️ OWASP Agentic Top 10: live demos</span>
-            <span class="subscen-d">Two offline notebooks: an AGT overview + all ten ASI risks attacked and <b>stopped by a real control</b> at a fictional bank.</span>
-          </span>
+        <a class="path-card" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/dotnet-demos" target="_blank" rel="noopener">
+          <span class="path-top"><span class="path-icon">C#</span><span class="path-meta">2 Verso notebooks</span></span>
+          <span class="path-title">C# learning demos</span>
+          <span class="path-desc">Run the AGT overview and all ten OWASP risks interactively or headlessly with Verso.</span>
+          <span class="path-link">Open C# guide →</span>
+        </a>
+        <a class="path-card" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/python-demos" target="_blank" rel="noopener">
+          <span class="path-top"><span class="path-icon">PY</span><span class="path-meta">2 Jupyter notebooks</span></span>
+          <span class="path-title">Python learning demos</span>
+          <span class="path-desc">The same offline learning path with real AGT APIs and a detailed OWASP companion guide.</span>
+          <span class="path-link">Open Python guide →</span>
+        </a>
+        <a class="path-card" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/microsoft-agent-framework-demos" target="_blank" rel="noopener">
+          <span class="path-top"><span class="path-icon">MAF</span><span class="path-meta">Python + .NET</span></span>
+          <span class="path-title">Framework integrations</span>
+          <span class="path-desc">Production-shaped middleware, argument governance, workflows, and tamper-evident audit evidence.</span>
+          <span class="path-link">Explore MAF demos →</span>
         </a>
       </div>
     </div>
@@ -526,14 +549,16 @@
         </div>
       </article>
 
-      <article class="card feat reveal" data-cat="ai" data-text="agent governance toolkit hub governed agents owasp agentic top 10 asi microsoft agent framework maf prompt injection tool-call argument policy audit log python dotnet notebooks sub-scenarios">
+      <article class="card feat reveal" data-cat="ai" data-text="agent governance toolkit learning hub powerpoint presentation deck verso jupyter owasp agentic top 10 asi microsoft agent framework maf prompt injection tool-call argument policy audit log python dotnet notebooks">
         <div class="card-top"><span class="left"><span class="chip ai">AI</span><span class="feat-tag">★ Featured</span></span><span class="status ready"><span class="d"></span>Ready</span></div>
         <h3>Agent Governance Toolkit</h3>
-        <p>A hub for governing AI agents with Microsoft's Agent Governance Toolkit. <strong>Two sub-scenarios:</strong> the <b>Microsoft Agent Framework</b> integration (Python &amp; .NET) and the <b>OWASP Agentic Top&nbsp;10</b> live demos: every prompt &amp; tool call governed, including argument values, fully offline.</p>
+        <p>A four-path learning hub for governing AI agents: a <strong>28-slide deck</strong>, C# Verso notebooks, Python Jupyter notebooks, and Microsoft Agent Framework integrations in both languages. Fully offline, with real policy controls.</p>
         <div class="card-links">
           <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit" target="_blank" rel="noopener">&lt;/&gt; Hub</a>
-          <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/microsoft-agent-framework" target="_blank" rel="noopener">🧩 MAF</a>
-          <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/live-demos" target="_blank" rel="noopener">🛡️ OWASP Top 10</a>
+          <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/raw/refs/heads/main/src/agent-governance-toolkit/Agent-Governance-Toolkit_v5.pptx" target="_blank" rel="noopener">PPTX Deck</a>
+          <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/dotnet-demos" target="_blank" rel="noopener">C# Verso</a>
+          <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/python-demos" target="_blank" rel="noopener">Python</a>
+          <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/agent-governance-toolkit/microsoft-agent-framework-demos" target="_blank" rel="noopener">MAF</a>
         </div>
       </article>
 

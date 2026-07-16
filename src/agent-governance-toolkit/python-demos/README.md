@@ -40,9 +40,8 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-> A virtual environment with these packages already exists at
-> [`../microsoft-agent-framework/python/.venv`](../microsoft-agent-framework/python) — you can
-> select that one as the notebook kernel instead of creating a new environment.
+Use the dedicated environment above as the notebook kernel. Virtual environments are intentionally
+excluded from source control, so each clone should create its own from `requirements.txt`.
 
 ## Run it
 
