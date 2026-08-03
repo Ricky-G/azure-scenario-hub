@@ -2,13 +2,19 @@
 
 **Tested Azure cloud and Microsoft AI engineering scenarios:** deployable architectures, runnable demos, benchmarks, and evidence-backed investigations.
 
-[![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-23-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) [![Ready](https://img.shields.io/badge/Ready%20Now-20-34d399?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) [![Latest Release](https://img.shields.io/github/v/release/Ricky-G/azure-scenario-hub?style=for-the-badge&label=Release)](https://github.com/Ricky-G/azure-scenario-hub/releases/latest) [![License](https://img.shields.io/badge/License-MIT-f5b342?style=for-the-badge)](LICENSE)
+[![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-24-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) [![Ready](https://img.shields.io/badge/Ready%20Now-21-34d399?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) [![Latest Release](https://img.shields.io/github/v/release/Ricky-G/azure-scenario-hub?style=for-the-badge&label=Release)](https://github.com/Ricky-G/azure-scenario-hub/releases/latest) [![License](https://img.shields.io/badge/License-MIT-f5b342?style=for-the-badge)](LICENSE)
 
-> 🌐 **Browse every scenario in the interactive gallery → [clouddev.blog/azure-scenario-hub](https://clouddev.blog/azure-scenario-hub/)** — featuring the styled [mTLS passthrough → APIM report](https://clouddev.blog/azure-scenario-hub/reports/app-gateway-mtls-passthrough-apim-validation/) and the [Terraform drift report](https://clouddev.blog/azure-scenario-hub/reports/terraform-drift-detection-shared-platform/).
+> 🌐 **The GitHub Pages experience has been refreshed → [clouddev.blog/azure-scenario-hub](https://clouddev.blog/azure-scenario-hub/)** with faster scenario discovery, category filters, featured learning paths, and direct links to deployable code and evidence reports.
 
 > [!IMPORTANT]
 > **These scenarios are built for experimentation, learning, and lab environments — not production.**
 > For production infrastructure, use [Azure Verified Modules](https://aka.ms/avm). Before adapting any application or AI demo, add the security, identity, reliability, observability, data-governance, and compliance controls required by your organization.
+
+## ✨ What's New
+
+| APIM Federated Workspaces | Refreshed GitHub Pages Gallery |
+|---|---|
+| **[APIM Federated Workspaces](./src/apim-federated-workspaces/)** is a presenter-ready deployment for federated API management on Premium: two team workspaces, scoped RBAC, shared or dedicated workspace gateways, inherited policy governance, products, throttling, centralized logs, validation, and cleanup automation. | The **[interactive Scenario Hub gallery](https://clouddev.blog/azure-scenario-hub/)** now brings the repository into one searchable experience with category filters, readiness status, featured learning paths, visual reports, and direct links back to every scenario. |
 
 ## 🎯 What is this?
 
@@ -110,6 +116,7 @@ Measured evidence showing exactly when app-team Bicep additions do and do not cr
 
 | Scenario | Description | Status | Key Features |
 |----------|-------------|--------|--------------|
+| [APIM Federated Workspaces](./src/apim-federated-workspaces/) | Presenter-ready federated API management demo with Data Science and Website Experience teams operating independently inside one APIM Premium service | ✅ Ready | Two workspaces, dedicated or shared workspace gateways, scoped RBAC, inherited platform policy, team APIs/products/named values/policy fragments, federated Log Analytics, live validation, customer demo script |
 | [APIM Backend Fan-out Benchmark](./src/apim-backend-fanout-benchmark/) | Head-to-head benchmark of **shared-backend + `rewrite-uri`** vs **one-backend-per-API** on APIM Premium. **Result: no measurable difference** — 882 vs 874 req/s, 146 vs 153 ms p95 over 1.67M requests | ✅ Ready | 2× APIM Premium, .NET 10 mock backend on Flex Consumption FC1, k6 stepped load (50→100→200 VUs), interactive HTML dashboard, App Insights `BackendTime`/`ClientTime` KQL, auto-generated Markdown report |
 | [APIM Monitoring](./src/apim-monitoring-scenario/) | APIM Developer SKU with 6 mock APIs, Application Insights, Log Analytics, and an Azure Workbook dashboard — no backend services required | ✅ Ready | Full request/response capture, 6 mock APIs (caching, rate limiting, JWT, etc.), KQL queries, Azure Workbook |
 | [App Gateway + APIM Diagnostics](./src/app-gateway-apim-diagnostics/) | Application Gateway (WAF_v2) fronting APIM with **every diagnostic setting enabled** on both resources, streaming to one Log Analytics Workspace. Includes a self-contained Hello World API routed end-to-end through the gateway | ✅ Ready | Full App Gateway + APIM diagnostic categories, WAF firewall logs, mock Hello World API (no backend), public route through App Gateway → APIM, ready-to-run KQL queries |
