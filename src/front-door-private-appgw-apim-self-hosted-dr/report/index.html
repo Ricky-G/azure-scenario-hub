@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Azure-validated evidence report for Front Door routing through private Application Gateway and managed APIM, with an APIM self-hosted gateway DR path on AKS.">
+<title>Front Door + Private App Gateway + APIM Hybrid DR: Evidence Report</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --surface: #141c33;
+    --surface-2: #19223d;
+    --ink: #edf2ff;
+    --muted: #a7b2ce;
+    --line: #2c3658;
+    --green: #45d483;
+    --green-deep: #176c45;
+    --blue: #5bb8ff;
+    --cyan: #5ee4d7;
+    --amber: #ffc766;
+    --red: #ff7b86;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --sans: "Segoe UI", Aptos, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 82% 0%, rgba(29, 126, 176, .24), transparent 32rem),
+      linear-gradient(155deg, #0b1020 0%, #10182d 52%, #0b1223 100%);
+    font-family: var(--sans);
+    line-height: 1.6;
+  }
+  a { color: var(--blue); }
+  a:hover { color: var(--cyan); }
+  code { font-family: var(--mono); }
+  .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+  .hero { padding: 68px 0 40px; }
+  .kicker {
+    color: var(--cyan);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+  }
+  h1 {
+    max-width: 900px;
+    margin: 12px 0 16px;
+    font-size: clamp(34px, 6vw, 64px);
+    line-height: 1.06;
+    letter-spacing: 0;
+  }
+  .lead { max-width: 820px; margin: 0; color: var(--muted); font-size: 19px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 25px; }
+  .chip {
+    padding: 7px 11px;
+    color: var(--muted);
+    background: rgba(20, 28, 51, .9);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .chip strong { color: var(--ink); }
+  .score {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px;
+    align-items: center;
+    margin: 26px 0 12px;
+    padding: 22px 24px;
+    background: linear-gradient(125deg, rgba(19, 79, 59, .7), rgba(20, 28, 51, .94));
+    border: 1px solid var(--green-deep);
+    border-radius: 14px;
+  }
+  .score strong { color: var(--green); font-family: var(--mono); font-size: 37px; line-height: 1; }
+  .score .track { height: 10px; overflow: hidden; background: #0c1325; border-radius: 999px; }
+  .score .fill { width: 100%; height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); }
+  .score span { color: var(--muted); font-size: 13px; }
+  section { padding: 26px 0; }
+  .section-title {
+    margin: 0 0 17px;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+  }
+  .verdict {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    overflow: hidden;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+  .verdict article { padding: 24px; background: var(--surface); }
+  .verdict h2 { margin: 0 0 8px; font-size: 20px; }
+  .verdict p { margin: 0; color: var(--muted); }
+  .pass { color: var(--green); font-family: var(--mono); font-size: 12px; font-weight: 700; }
+  .architecture {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(100px, 1fr));
+    gap: 10px;
+    align-items: stretch;
+  }
+  .node {
+    min-height: 106px;
+    display: grid;
+    align-content: center;
+    padding: 14px 12px;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+  }
+  .node strong { font-size: 14px; }
+  .node small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; }
+  .node.edge { border-top: 3px solid var(--blue); }
+  .node.azure { border-top: 3px solid var(--cyan); }
+  .node.dr { border-top: 3px solid var(--amber); }
+  .arrow { display: grid; place-items: center; color: var(--muted); font-family: var(--mono); }
+  .route-label {
+    margin: 14px 0 8px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .route {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .hop {
+    position: relative;
+    min-height: 145px;
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--green-deep);
+    border-radius: 10px;
+  }
+  .hop::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -11px;
+    width: 10px;
+    height: 1px;
+    background: var(--green);
+  }
+  .hop:last-child::after { display: none; }
+  .hop .num { color: var(--green); font-family: var(--mono); font-size: 11px; font-weight: 700; }
+  .hop h3 { margin: 4px 0 7px; font-size: 16px; }
+  .hop p { margin: 0; color: var(--muted); font-size: 13px; }
+  .evidence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  figure {
+    margin: 0;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  figure img { display: block; width: 100%; height: auto; background: #fff; }
+  figcaption { padding: 13px 15px; color: var(--muted); font-size: 13px; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 14px; }
+  th, td { padding: 13px 15px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: none; }
+  th { color: var(--muted); font-size: 11px; letter-spacing: .8px; text-transform: uppercase; }
+  td code { color: var(--cyan); font-size: 12px; }
+  .finding-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .finding {
+    padding: 21px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--blue);
+    border-radius: 10px;
+  }
+  .finding h3 { margin: 0 0 8px; font-size: 16px; }
+  .finding p { margin: 0; color: var(--muted); font-size: 14px; }
+  .callout {
+    padding: 20px 22px;
+    background: rgba(255, 199, 102, .08);
+    border: 1px solid #765f31;
+    border-left: 4px solid var(--amber);
+    border-radius: 9px;
+  }
+  .callout h3 { margin: 0 0 6px; color: var(--amber); font-size: 16px; }
+  .callout p { margin: 0; color: var(--muted); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .list-panel { padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  .list-panel h3 { margin: 0 0 10px; font-size: 17px; }
+  .list-panel ul { margin: 0; padding-left: 20px; color: var(--muted); }
+  .list-panel li { margin: 7px 0; }
+  .intro-copy { margin: 0; color: var(--muted); }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 42px;
+    padding: 9px 15px;
+    color: #07121b;
+    background: var(--green);
+    border-radius: 7px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .button.secondary { color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); }
+  footer { padding: 30px 0 52px; color: var(--muted); font-size: 13px; text-align: center; }
+  @media (max-width: 900px) {
+    .architecture { grid-template-columns: 1fr; }
+    .arrow { min-height: 20px; transform: rotate(90deg); }
+    .route { grid-template-columns: 1fr 1fr; }
+    .hop:nth-child(2)::after { display: none; }
+    .finding-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 680px) {
+    .wrap { width: min(100% - 28px, 1120px); }
+    .hero { padding-top: 44px; }
+    .score { grid-template-columns: 1fr; gap: 11px; }
+    .score .track { width: 100%; }
+    .verdict, .route, .evidence-grid, .two-col { grid-template-columns: 1fr; }
+    .hop::after { display: none; }
+    h1 { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">Azure Scenario Hub · live evidence report</div>
+    <h1>One Front Door. Two governed API paths.</h1>
+    <p class="lead">A deployed proof that Azure Front Door Premium can reach a private Application Gateway and internal managed APIM for the normal route, while a separate route reaches an APIM self-hosted gateway on Kubernetes for disaster-recovery testing.</p>
+    <div class="meta">
+      <span class="chip"><strong>Status</strong> Azure validated</span>
+      <span class="chip"><strong>Workload region</strong> New Zealand North</span>
+      <span class="chip"><strong>Private Link region</strong> Australia East</span>
+      <span class="chip"><strong>Evidence captured</strong> August 4, 2026</span>
+    </div>
+    <div class="score" role="group" aria-label="Two of two routes passed with four verified evidence nodes each">
+      <strong>2 / 2</strong>
+      <div class="track"><div class="fill"></div></div>
+      <span>routes passed · 4 verified nodes per route</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section aria-labelledby="verdict-title">
+    <h2 class="section-title" id="verdict-title">The verdict</h2>
+    <div class="verdict">
+      <article>
+        <div class="pass">PASS · PRIVATE MANAGED PATH</div>
+        <h2><code>/happy/*</code> remained private after Front Door</h2>
+        <p>Front Door used Private Link to the Application Gateway private listener. Application Gateway then reached APIM Premium in internal VNet mode, and managed APIM reached the shared AKS backend through an internal load balancer.</p>
+      </article>
+      <article>
+        <div class="pass">PASS · SELF-HOSTED DR PATH</div>
+        <h2><code>/dr/*</code> reached the APIM self-hosted gateway</h2>
+        <p>Front Door selected the AKS public origin, the subnet NSG admitted only Front Door origin traffic and load-balancer probes, and the APIM self-hosted gateway routed to the same backend over cluster-local DNS.</p>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="architecture-title">
+    <h2 class="section-title" id="architecture-title">Architecture and trust boundaries</h2>
+    <div class="architecture" role="group" aria-label="High-level request architecture">
+      <div class="node edge"><strong>Client / tester</strong><small>Starts one correlated request</small></div>
+      <div class="arrow">-&gt;</div>
+      <div class="node edge"><strong>Azure Front Door Premium</strong><small>WAF and path-based origin selection</small></div>
+      <div class="arrow">-&gt;</div>
+      <div class="node azure"><strong>Managed Azure route</strong><small>Private Link → App Gateway → internal APIM</small></div>
+      <div class="arrow">or</div>
+      <div class="node dr"><strong>Hybrid DR route</strong><small>AKS ingress → APIM self-hosted gateway</small></div>
+    </div>
+    <p class="route-label">Both paths terminate at the same hardened Hello World deployment on AKS.</p>
+  </section>
+
+  <section aria-labelledby="routes-title">
+    <h2 class="section-title" id="routes-title">Request-correlated path proof</h2>
+    <p class="route-label">HAPPY PATH · <code>/happy/hello</code></p>
+    <div class="route">
+      <article class="hop"><div class="num">01 · VERIFIED</div><h3>Front Door</h3><p>Azure-generated <code>x-azure-ref</code> proves edge processing.</p></article>
+      <article class="hop"><div class="num">02 · VERIFIED</div><h3>Private App Gateway</h3><p>A response rewrite overwrites <code>X-AppGateway-Hop</code> with the expected marker.</p></article>
+      <article class="hop"><div class="num">03 · VERIFIED</div><h3>Managed APIM</h3><p>APIM identifies the managed gateway, happy route, and service gateway FQDN.</p></article>
+      <article class="hop"><div class="num">04 · VERIFIED</div><h3>AKS backend</h3><p>The pod returns its service marker and echoes the generated request ID.</p></article>
+    </div>
+    <p class="route-label">DR PATH · <code>/dr/hello</code></p>
+    <div class="route">
+      <article class="hop"><div class="num">01 · VERIFIED</div><h3>Front Door</h3><p>Azure-generated <code>x-azure-ref</code> proves edge processing and origin routing.</p></article>
+      <article class="hop"><div class="num">02 · VERIFIED</div><h3>AKS DR ingress</h3><p>A self-hosted response arrived through the Front Door origin FQDN and restricted load balancer.</p></article>
+      <article class="hop"><div class="num">03 · VERIFIED</div><h3>Self-hosted APIM</h3><p>Data-plane headers identify the gateway; ARM independently confirms registration and <code>dr-api</code> association.</p></article>
+      <article class="hop"><div class="num">04 · VERIFIED</div><h3>AKS backend</h3><p>The cluster-local service returns the same backend marker and correlated request ID.</p></article>
+    </div>
+  </section>
+
+  <section aria-labelledby="screens-title">
+    <h2 class="section-title" id="screens-title">Captured application evidence</h2>
+    <div class="evidence-grid">
+      <figure>
+        <img src="../docs/happy-path-evidence.png" data-evidence-image="happy-path-evidence.png" alt="Happy route showing Front Door, private Application Gateway, managed APIM, and the AKS backend verified">
+        <figcaption>Happy path: four independent proof signals tied to one request ID.</figcaption>
+      </figure>
+      <figure>
+        <img src="../docs/dr-path-evidence.png" data-evidence-image="dr-path-evidence.png" alt="DR route showing Front Door, AKS ingress, the APIM self-hosted gateway, and backend verified">
+        <figcaption>DR path: data-plane gateway identity plus APIM control-plane association proof.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="signals-title">
+    <h2 class="section-title" id="signals-title">What each signal actually proves</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Signal</th><th>Evidence source</th><th>Claim supported</th></tr></thead>
+        <tbody>
+          <tr><td>Front Door request reference</td><td><code>x-azure-ref</code></td><td>The response traversed Azure Front Door.</td></tr>
+          <tr><td>Application Gateway marker</td><td><code>X-AppGateway-Hop: private-waf-v2</code></td><td>The happy response traversed the configured private Application Gateway listener and rewrite set.</td></tr>
+          <tr><td>APIM route identity</td><td><code>X-APIM-Gateway</code> and <code>X-Scenario-Route</code></td><td>The request was processed by the intended managed or self-hosted APIM data plane.</td></tr>
+          <tr><td>Gateway registration</td><td>App Service managed identity reading APIM through ARM</td><td><code>mock-onprem-gateway</code> is registered and associated with <code>dr-api</code>.</td></tr>
+          <tr><td>Backend correlation</td><td><code>X-Backend-Service</code> plus echoed request ID</td><td>The final AKS pod handled the same request initiated by the tester.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="findings-title">
+    <h2 class="section-title" id="findings-title">Engineering findings</h2>
+    <div class="finding-grid">
+      <article class="finding"><h3>Private does not mean public-IP-free here</h3><p>Application Gateway Private Link is not currently supported with the enhanced private-only gateway mode. The template therefore creates a public frontend required by the platform but attaches no listener or routing rule to it.</p></article>
+      <article class="finding"><h3>DR proof needs both planes</h3><p>A response header proves the self-hosted data plane served the request. A scoped managed-identity ARM read separately proves the gateway is registered to central APIM and owns <code>dr-api</code>.</p></article>
+      <article class="finding"><h3>Subnet policy decides origin reachability</h3><p>The DR origin regressed when a delayed default-deny subnet NSG blocked Front Door before the request reached the Kubernetes service. The scenario now owns that NSG and permits only Azure Front Door backend traffic on port 80 plus load-balancer probes.</p></article>
+    </div>
+  </section>
+
+  <section aria-labelledby="recovery-title">
+    <h2 class="section-title" id="recovery-title">Operational recovery evidence</h2>
+    <div class="callout">
+      <h3>Stopped origins look like routing failures</h3>
+      <p>During follow-up validation, Application Gateway and AKS were both found stopped while their configuration remained intact. The recovery scripts now restore only stopped resources, wait for Application Gateway <code>Running</code> and AKS <code>Running/Succeeded</code>, and the test suite checks those states before making data-plane assertions. The available evidence is consistent with lab cost-control automation; it does not identify a specific caller.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="boundaries-title">
+    <h2 class="section-title" id="boundaries-title">Security posture and proof boundaries</h2>
+    <div class="two-col">
+      <div class="list-panel">
+        <h3>Controls demonstrated</h3>
+        <ul>
+          <li>Front Door and Application Gateway WAF policies run in prevention mode.</li>
+          <li>The happy listener is private and reachable through Front Door Private Link.</li>
+          <li>APIM Premium is injected in internal VNet mode.</li>
+          <li>DR ingress is subnet-restricted to Azure Front Door backend traffic.</li>
+          <li>The backend runs non-root with dropped capabilities and a read-only root filesystem.</li>
+          <li>ARM evidence uses managed identity with Reader scoped only to APIM.</li>
+        </ul>
+      </div>
+      <div class="list-panel">
+        <h3>Not claimed by this POC</h3>
+        <ul>
+          <li>The two explicit paths are not automatic health-based failover.</li>
+          <li>AKS models on-premises Kubernetes; it is not a separate physical site.</li>
+          <li>The DR origin uses HTTP for transparent lab validation.</li>
+          <li>A one-node cluster and single APIM region are not resilient production topology.</li>
+          <li>The 29-day self-hosted gateway token is not the recommended production identity model.</li>
+          <li>The report contains captured proof, not continuous health evidence.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="next-title">
+    <h2 class="section-title" id="next-title">Reproduce the result</h2>
+    <div class="list-panel">
+      <h3>Deploy, recover, validate, and remove the complete lab</h3>
+      <p class="intro-copy">The scenario guide includes Bicep, PowerShell and Bash automation, validation logic, estimated cost, troubleshooting, cleanup, and the production work still required.</p>
+      <div class="actions">
+        <a class="button" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/front-door-private-appgw-apim-self-hosted-dr">Open the scenario guide</a>
+        <a class="button secondary" href="https://clouddev.blog/azure-scenario-hub/">Browse Scenario Hub</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  Azure Scenario Hub · evidence captured from a disposable learning environment · not production guidance
+</footer>
+
+<script>
+  const isPublishedReport = window.location.pathname.includes('/reports/front-door-private-appgw-apim-self-hosted-dr/');
+  const imageBase = isPublishedReport ? '../../assets/front-door-private-appgw-apim-self-hosted-dr/' : '../docs/';
+  document.querySelectorAll('[data-evidence-image]').forEach((image) => {
+    image.src = imageBase + image.dataset.evidenceImage;
+  });
+</script>
+</body>
+</html>

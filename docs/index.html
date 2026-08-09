@@ -155,6 +155,10 @@
   .feature-cta { display: flex; gap: 11px; flex-wrap: wrap; }
   .feature-media { position: relative; z-index: 1; }
   .feature-media img { display: block; width: 100%; height: auto; }
+  .feature + .feature { margin-top: 20px; }
+  .hybrid-feature { background: linear-gradient(135deg, #10294a, #101d36); }
+  .hybrid-feature .feature-media { align-self: center; padding: 24px; }
+  .hybrid-feature .feature-media img { border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 18px 45px rgba(0,0,0,.36); }
 
   /* ---------- controls ---------- */
   .controls { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; }
@@ -196,6 +200,7 @@
   .status.legacy { color: var(--amber); } .status.legacy .d { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
   .card h3 { font-size: 18px; margin: 0 0 8px; letter-spacing: -.3px; line-height: 1.25; }
   .card p { color: var(--muted); font-size: 14px; margin: 0 0 18px; flex: 1; }
+  .card-media { display: block; width: calc(100% + 44px); aspect-ratio: 16 / 9; object-fit: cover; object-position: top; margin: -22px -22px 18px; border-radius: 16px 16px 0 0; border-bottom: 1px solid var(--line); }
   .card-links { display: flex; gap: 9px; flex-wrap: wrap; }
   .lnk { font-size: 13.5px; font-weight: 600; padding: 8px 14px; border-radius: 10px; display: inline-flex; align-items: center; gap: 7px; transition: .15s; }
   .lnk.code { color: var(--ink); background: rgba(255,255,255,.05); border: 1px solid var(--line); }
@@ -279,10 +284,10 @@
       <a class="btn ghost" href="https://github.com/Ricky-G/azure-scenario-hub" target="_blank" rel="noopener">★ Star on GitHub</a>
     </div>
     <div class="stats">
-      <div class="stat"><div class="n b">24</div><div class="l">Scenarios</div></div>
-      <div class="stat"><div class="n g">21</div><div class="l">Ready now</div></div>
+      <div class="stat"><div class="n b">25</div><div class="l">Scenarios</div></div>
+      <div class="stat"><div class="n g">22</div><div class="l">Ready now</div></div>
       <div class="stat"><div class="n p">2</div><div class="l">IaC languages</div></div>
-      <div class="stat"><div class="n a">2</div><div class="l">Visual reports</div></div>
+      <div class="stat"><div class="n a">3</div><div class="l">Visual reports</div></div>
     </div>
   </div>
 </header>
@@ -301,7 +306,7 @@
 <!-- FEATURED -->
 <section class="sec" id="featured">
   <div class="wrap">
-    <p class="eyebrow">★ Featured learning hub</p>
+    <p class="eyebrow">★ Featured work</p>
 
     <!-- Featured: Agent Governance Toolkit (hub) -->
     <div class="feature reveal">
@@ -355,6 +360,29 @@
           <span class="path-link">Explore MAF demos →</span>
         </a>
       </div>
+    </div>
+
+    <div class="feature hybrid-feature reveal">
+      <div class="feature-body">
+        <div class="tag-row">
+          <span class="chip net">Networking · API Management</span>
+          <span class="status ready"><span class="d"></span>Ready · Azure validated</span>
+        </div>
+        <h3>Hybrid API routing with visible proof</h3>
+        <p>One Front Door endpoint exercises a private managed Azure path and an APIM self-hosted gateway DR path on AKS. Every successful node is backed by edge, gateway, control-plane, or backend evidence.</p>
+        <div class="finding">
+          <span class="g">4 / 4 hops</span> · verified on both routes<br/>
+          <span class="g">1 request ID</span> · echoed by the final AKS pod<br/>
+          <span class="g">Live ARM proof</span> · gateway registration + <code>dr-api</code> association
+        </div>
+        <div class="feature-cta">
+          <a class="btn primary" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/front-door-private-appgw-apim-self-hosted-dr" target="_blank" rel="noopener">&lt;/&gt; Open scenario</a>
+          <a class="btn ghost" href="reports/front-door-private-appgw-apim-self-hosted-dr/">View report →</a>
+        </div>
+      </div>
+      <a class="feature-media" href="reports/front-door-private-appgw-apim-self-hosted-dr/">
+        <img src="assets/front-door-private-appgw-apim-self-hosted-dr/dr-path-evidence.png" alt="DR route showing Front Door, AKS ingress, APIM self-hosted gateway, and backend verified">
+      </a>
     </div>
   </div>
 </section>
@@ -444,6 +472,14 @@
           <a class="lnk report" href="reports/app-gateway-mtls-passthrough-apim-validation/">📊 Report</a>
           <a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/app-gateway-mtls-passthrough-apim-validation" target="_blank" rel="noopener">&lt;/&gt; Code</a>
         </div>
+      </article>
+
+      <article class="card reveal feat" data-cat="net" data-text="front door premium private link application gateway waf apim premium internal vnet self-hosted gateway aks hybrid disaster recovery dr hello world test ui correlated evidence recovery">
+        <img class="card-media" src="assets/front-door-private-appgw-apim-self-hosted-dr/happy-path-evidence.png" alt="Happy path showing four verified request hops">
+        <div class="card-top"><span class="left"><span class="chip net">Networking &amp; Security</span><span class="feat-tag">★ Featured</span></span><span class="status ready"><span class="d"></span>Ready</span></div>
+        <h3>Front Door + Private App Gateway + APIM Hybrid DR</h3>
+        <p>Azure-validated dual-path API scenario with Front Door Private Link, private App Gateway WAF_v2, internal APIM, and an AKS-hosted APIM self-hosted gateway. Includes request-correlated proof, a visual report, recovery automation, and live gateway/API registration checks.</p>
+        <div class="card-links"><a class="lnk report" href="reports/front-door-private-appgw-apim-self-hosted-dr/">Report</a><a class="lnk code" href="https://github.com/Ricky-G/azure-scenario-hub/tree/main/src/front-door-private-appgw-apim-self-hosted-dr" target="_blank" rel="noopener">&lt;/&gt; Scenario guide</a></div>
       </article>
 
       <article class="card reveal" data-cat="net" data-text="event grid private endpoints secure event-driven logic apps zero public exposure">

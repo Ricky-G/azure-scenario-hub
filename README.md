@@ -2,7 +2,7 @@
 
 **Tested Azure cloud and Microsoft AI engineering scenarios:** deployable architectures, runnable demos, benchmarks, and evidence-backed investigations.
 
-[![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-24-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) [![Ready](https://img.shields.io/badge/Ready%20Now-21-34d399?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) [![Latest Release](https://img.shields.io/github/v/release/Ricky-G/azure-scenario-hub?style=for-the-badge&label=Release)](https://github.com/Ricky-G/azure-scenario-hub/releases/latest) [![License](https://img.shields.io/badge/License-MIT-f5b342?style=for-the-badge)](LICENSE)
+[![Live Site](https://img.shields.io/badge/Live%20Site-clouddev.blog-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://clouddev.blog/azure-scenario-hub/) [![Scenarios](https://img.shields.io/badge/Scenarios-25-4ea3ff?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) [![Ready](https://img.shields.io/badge/Ready%20Now-22-34d399?style=for-the-badge)](https://clouddev.blog/azure-scenario-hub/#scenarios) [![Latest Release](https://img.shields.io/github/v/release/Ricky-G/azure-scenario-hub?style=for-the-badge&label=Release)](https://github.com/Ricky-G/azure-scenario-hub/releases/latest) [![License](https://img.shields.io/badge/License-MIT-f5b342?style=for-the-badge)](LICENSE)
 
 > 🌐 **The GitHub Pages experience has been refreshed → [clouddev.blog/azure-scenario-hub](https://clouddev.blog/azure-scenario-hub/)** with faster scenario discovery, category filters, featured learning paths, and direct links to deployable code and evidence reports.
 
@@ -12,9 +12,9 @@
 
 ## ✨ What's New
 
-| APIM Federated Workspaces | Refreshed GitHub Pages Gallery |
+| Hybrid API Routing with Self-Hosted Gateway DR | Refreshed GitHub Pages Gallery |
 |---|---|
-| **[APIM Federated Workspaces](./src/apim-federated-workspaces/)** is a presenter-ready deployment for federated API management on Premium: two team workspaces, scoped RBAC, shared or dedicated workspace gateways, inherited policy governance, products, throttling, centralized logs, validation, and cleanup automation. | The **[interactive Scenario Hub gallery](https://clouddev.blog/azure-scenario-hub/)** now brings the repository into one searchable experience with category filters, readiness status, featured learning paths, visual reports, and direct links back to every scenario. |
+| **[Front Door + Private App Gateway + APIM Hybrid DR](./src/front-door-private-appgw-apim-self-hosted-dr/)** proves two request-correlated paths through one Front Door endpoint: private App Gateway + managed APIM for normal traffic, and an AKS-hosted APIM self-hosted gateway for DR. Includes Bicep, recovery automation, a live proof graph, a [visual evidence report](./src/front-door-private-appgw-apim-self-hosted-dr/report/), and control-plane verification. | The **[interactive Scenario Hub gallery](https://clouddev.blog/azure-scenario-hub/)** now brings the repository into one searchable experience with category filters, readiness status, featured learning paths, visual reports, and direct links back to every scenario. |
 
 ## 🎯 What is this?
 
@@ -92,6 +92,26 @@ Measured evidence showing exactly when app-team Bicep additions do and do not cr
 
 </td>
 </tr>
+<tr>
+<td colspan="2" valign="top">
+
+### [Front Door + Private App Gateway + APIM Hybrid DR](./src/front-door-private-appgw-apim-self-hosted-dr/)
+
+[![DR path showing four verified request hops](./src/front-door-private-appgw-apim-self-hosted-dr/docs/dr-path-evidence.png)](./src/front-door-private-appgw-apim-self-hosted-dr/report/)
+
+A deployable hybrid API routing proof with evidence at every hop.
+
+**[Open the visual evidence report ->](./src/front-door-private-appgw-apim-self-hosted-dr/report/)**
+
+- Front Door Premium to a private Application Gateway listener through Private Link
+- Internal APIM Premium to a shared AKS backend through an internal load balancer
+- Front Door DR route to an APIM self-hosted gateway on AKS
+- Managed-identity proof that `mock-onprem-gateway` is registered and associated with `dr-api`
+- One correlated request ID echoed by the final pod
+- Baseline recovery for policy-driven Application Gateway and AKS stop/start
+
+</td>
+</tr>
 </table>
 
 ## 🏗️ Available Scenarios
@@ -103,6 +123,7 @@ Measured evidence showing exactly when app-team Bicep additions do and do not cr
 | Scenario | Description | Status | Key Features |
 |----------|-------------|--------|--------------|
 | [App Gateway PASSTHROUGH mTLS &rarr; APIM](./src/app-gateway-mtls-passthrough-apim-validation/) | How to do **true client-certificate (mTLS) validation in API Management** when App Gateway (WAF_v2) sits in front in **passthrough** mode: the gateway forwards the cert, **APIM validates it as a real credential** (possession + trust + per-client authorization), not a spoofable header. Includes the proof-of-possession analysis and an HTML report | ✅ Ready | mTLS passthrough (`verifyClientAuthMode`), server-variable header rewrite, APIM internal-VNet validation in policy, Key Vault-sourced Root CA + pinned allow list, WAF_v2 retained, evidence suite + styled report |
+| [Front Door -> Private App Gateway -> APIM with Self-Hosted Gateway DR](./src/front-door-private-appgw-apim-self-hosted-dr/) | Azure-validated hybrid API routing scenario with a managed private path and a mock on-premises DR path, both selected through one Front Door endpoint and proven by a request-correlated visual evidence graph and HTML report | ✅ Ready | Front Door Premium Private Link, private App Gateway WAF_v2 listener, APIM Premium internal VNet mode, APIM self-hosted gateway registration + `dr-api` association, Front Door-restricted AKS ingress, managed-identity proof, baseline recovery, screenshots, visual report, deployment/test/cleanup automation |
 | [Event Grid with Private Endpoints](./src/eventgrid-private-endpoints-scenario/) | Secure event-driven architecture with Event Grid behind private endpoints | ✅ Ready | Zero public exposure, Logic Apps integration |
 | [Event Grid Confidential Compute](./src/eventgrid-confidential-compute/) | Event Grid System Topic with Azure Confidential Compute enabled for enhanced data protection | ✅ Ready | Hardware-based encryption, preview feature, Korea Central & UAE North only |
 | [Function App with Key Vault Private Endpoint](./src/function-app-private-endpoints-access-keyvault-scenario/) | Serverless functions accessing secrets securely via private network | ✅ Ready | Managed Identity, VNet integration, no internet traffic |

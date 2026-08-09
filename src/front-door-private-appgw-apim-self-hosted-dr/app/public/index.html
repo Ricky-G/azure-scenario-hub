@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Azure API path tester</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">Azure Scenario Hub</p>
+        <h1>API path tester</h1>
+      </div>
+      <span class="environment">POC | New Zealand North</span>
+    </header>
+
+    <section class="control-band" aria-labelledby="route-heading">
+      <div>
+        <p class="section-label" id="route-heading">Select route</p>
+        <div class="segmented" role="group" aria-label="API route">
+          <button class="segment active" type="button" data-route="happy" aria-pressed="true">Happy path</button>
+          <button class="segment" type="button" data-route="dr" aria-pressed="false">DR path</button>
+        </div>
+      </div>
+      <button id="run-test" class="run-button" type="button">Run test</button>
+    </section>
+
+    <section class="route-panel" aria-live="polite">
+      <div class="route-header">
+        <div>
+          <p class="section-label">Request route</p>
+          <h2 id="route-title">Managed Azure path</h2>
+        </div>
+        <span id="route-state" class="state idle">Ready</span>
+      </div>
+
+      <ol id="happy-flow" class="flow">
+        <li data-hop="front-door"><span class="hop-number">01</span><strong>Front Door</strong><small>Premium edge</small><span class="hop-verdict"><span class="hop-dot"></span><span class="hop-status">Not tested</span></span><code class="hop-proof">No request evidence yet</code></li>
+        <li data-hop="app-gateway"><span class="hop-number">02</span><strong>App Gateway</strong><small>Private Link + WAF</small><span class="hop-verdict"><span class="hop-dot"></span><span class="hop-status">Not tested</span></span><code class="hop-proof">No request evidence yet</code></li>
+        <li data-hop="managed-apim"><span class="hop-number">03</span><strong>APIM</strong><small>Managed gateway</small><span class="hop-verdict"><span class="hop-dot"></span><span class="hop-status">Not tested</span></span><code class="hop-proof">No request evidence yet</code></li>
+        <li data-hop="backend"><span class="hop-number">04</span><strong>AKS backend</strong><small>Internal load balancer</small><span class="hop-verdict"><span class="hop-dot"></span><span class="hop-status">Not tested</span></span><code class="hop-proof">No request evidence yet</code></li>
+      </ol>
+
+      <ol id="dr-flow" class="flow hidden">
+        <li data-hop="front-door"><span class="hop-number">01</span><strong>Front Door</strong><small>Premium edge</small><span class="hop-verdict"><span class="hop-dot"></span><span class="hop-status">Not tested</span></span><code class="hop-proof">No request evidence yet</code></li>
+        <li data-hop="aks-ingress"><span class="hop-number">02</span><strong>Mock on-prem</strong><small>AKS public load balancer</small><span class="hop-verdict"><span class="hop-dot"></span><span class="hop-status">Not tested</span></span><code class="hop-proof">No request evidence yet</code></li>
+        <li data-hop="self-hosted-gateway"><span class="hop-number">03</span><strong>APIM</strong><small>Self-hosted gateway</small><span class="hop-verdict"><span class="hop-dot"></span><span class="hop-status">Not tested</span></span><code class="hop-proof">No request evidence yet</code></li>
+        <li data-hop="backend"><span class="hop-number">04</span><strong>AKS backend</strong><small>Cluster-local service</small><span class="hop-verdict"><span class="hop-dot"></span><span class="hop-status">Not tested</span></span><code class="hop-proof">No request evidence yet</code></li>
+      </ol>
+    </section>
+
+    <section class="result-grid">
+      <div class="metric"><span>Status</span><strong id="status-code">-</strong></div>
+      <div class="metric"><span>Gateway</span><strong id="gateway-name">-</strong></div>
+      <div class="metric"><span>Latency</span><strong id="latency">-</strong></div>
+      <div class="metric"><span>Request ID</span><strong id="request-id">-</strong></div>
+      <div class="response">
+        <div class="response-heading">
+          <span>Correlated evidence JSON</span>
+          <code id="request-url">Not run</code>
+        </div>
+        <pre id="response-body">Choose a route and run the test.</pre>
+      </div>
+    </section>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
+</html>

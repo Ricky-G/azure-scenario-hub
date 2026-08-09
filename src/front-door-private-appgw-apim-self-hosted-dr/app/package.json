@@ -1,0 +1,12 @@
+{
+  "name": "front-door-apim-dr-path-tester",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser test UI for the Azure Front Door managed and APIM self-hosted gateway paths.",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
