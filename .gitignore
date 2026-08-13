@@ -221,6 +221,8 @@ _pkginfo.txt
 
 # Disposable local Azure deployment workspace.
 /.azure/apim-developer-scratch/
+/.azure
+.azure
 
 # Others
 ClientBin/
