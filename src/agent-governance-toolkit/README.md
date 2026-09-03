@@ -41,7 +41,7 @@ You can follow the whole path or start directly in the runtime you already know.
 | Runtime | Start with the overview | Continue with OWASP 2026 | Guide |
 |---|---|---|---|
 | **.NET / C#** | [`1-agt-overview.verso`](./dotnet-demos/1-agt-overview.verso) | [`2-owasp-agentic-top-10.verso`](./dotnet-demos/2-owasp-agentic-top-10.verso) | [Verso run guide](./dotnet-demos/README.md) |
-| **Python** | [`1-agt-overview.ipynb`](./python-demos/1-agt-overview.ipynb) | [`2-owasp-agentic-top-10.ipynb`](./python-demos/2-owasp-agentic-top-10.ipynb) | [Companion guide](./python-demos/2-owasp-agentic-top-10-companion-guide.md) |
+| **Python** | [`1-agt-overview.ipynb`](./python-demos/1-agt-overview.ipynb) | [`2-owasp-agentic-top-10-v2.ipynb`](./python-demos/2-owasp-agentic-top-10-v2.ipynb) | [Python demo guide](./python-demos/README.md) |
 
 ### Verify the C# notebooks
 

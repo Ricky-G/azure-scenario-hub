@@ -7,11 +7,13 @@ mocks, no API keys, no network.
 | File | What it is | Run / read |
 |---|---|---|
 | [`1-agt-overview.ipynb`](./1-agt-overview.ipynb) | **Notebook** — what AGT is and how it works: the `agt doctor` health check, how a policy decision is made, **10,000 live policy evaluations** at sub-millisecond latency, and a zero-trust gate in front of every tool call | ~2 min |
+| [`2-owasp-agentic-top-10-v2.ipynb`](./2-owasp-agentic-top-10-v2.ipynb) | **Recommended live runbook** — one Contoso Bank loan moves through all ten OWASP risks; every checkpoint separates the simulated attack, unsafe path, real AGT boundary, and mitigation evidence | ~10 min |
 | [`2-owasp-agentic-top-10.ipynb`](./2-owasp-agentic-top-10.ipynb) | **Notebook** — the **OWASP Agentic Top 10** (ASI-01 … ASI-10) as a story inside a fictional bank, each risk attacked and **stopped by a real AGT control** | ~3 min |
 | [`2-owasp-agentic-top-10-companion-guide.md`](./2-owasp-agentic-top-10-companion-guide.md) | **Companion guide** — read alongside notebook 2: what each control is, what the code does, whether it comes out of the box, YAML-configurability, and the questions an audience is likely to ask | reference |
 
-Present the notebooks in order — notebook 1 sets up the mental model, notebook 2 applies it to the ten
-risks — and keep the **companion guide** open beside notebook 2 to answer "what is this code actually doing?".
+Present notebook 1 first to establish the mental model, then use the **V2 runbook** for the clearest live
+walkthrough of all ten risks. The original notebook and its **companion guide** remain available as the
+short-form demo and detailed API reference.
 
 ## The OWASP Agentic Top 10, mapped to real controls
 
