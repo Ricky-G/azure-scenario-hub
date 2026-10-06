@@ -1,0 +1,20 @@
+<policies>
+    <inbound>
+        <choose>
+            <when condition='@(context.Request.Url.Query.GetValueOrDefault("subscription-key", "") != "")'>
+                <return-response>
+                    <set-status code="400" reason="Subscription keys must be sent in the api-key header" />
+                </return-response>
+            </when>
+        </choose>
+        <rate-limit-by-key calls="__CALLS_PER_MINUTE__" renewal-period="60" counter-key='@(context.Api.Id + ":" + context.Subscription.Id)' />
+        <set-header name="api-key" exists-action="delete" />
+        <set-header name="Ocp-Apim-Subscription-Key" exists-action="delete" />
+        <set-header name="Authorization" exists-action="delete" />
+    </inbound>
+    <backend>
+        <forward-request buffer-response="false" />
+    </backend>
+    <outbound />
+    <on-error />
+</policies>

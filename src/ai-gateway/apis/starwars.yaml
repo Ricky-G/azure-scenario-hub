@@ -1,0 +1,72 @@
+openapi: 3.0.3
+info:
+  title: Star Wars API
+  version: 1.0.0
+  description: Public Star Wars characters and planets from swapi.info.
+paths:
+  /people/{id}:
+    get:
+      operationId: getPerson
+      summary: Get a person
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Person details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Person'
+        '404':
+          description: Person not found.
+  /planets/{id}:
+    get:
+      operationId: getPlanet
+      summary: Get a planet
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Planet details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Planet'
+        '404':
+          description: Planet not found.
+security:
+  - subscriptionKey: []
+components:
+  securitySchemes:
+    subscriptionKey:
+      type: apiKey
+      in: header
+      name: api-key
+  schemas:
+    Person:
+      type: object
+      properties:
+        name:
+          type: string
+        height:
+          type: string
+        homeworld:
+          type: string
+          format: uri
+    Planet:
+      type: object
+      properties:
+        name:
+          type: string
+        climate:
+          type: string
+        population:
+          type: string
